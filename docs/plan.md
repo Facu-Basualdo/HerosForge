@@ -19,7 +19,7 @@ Decisiones tomadas por defecto (se pueden cambiar antes de la fase 1; todas qued
 - `CLAUDE.md`, notas transversales en `claude/general/`, índices vacíos en `claude/mod/` y `claude/tests/`.
 - Esqueleto que compila: entrypoint vacío, `fabric.mod.json`, `estadisticasrpg.mixins.json` sin mixins, un gametest de humo.
 - `git init` sin commit.
-- **Falta:** `assets/estadisticasrpg/icon.png` (el `fabric.mod.json` todavía no declara ícono).
+- Ícono: `assets/estadisticasrpg/icon.png`, 256×256 (pixel art; se achicó del original de 1254 px para no inflar el jar).
 
 ## Arquitectura
 

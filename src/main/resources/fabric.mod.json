@@ -8,6 +8,7 @@
 		"FacuBas"
 	],
 	"license": "MIT",
+	"icon": "assets/estadisticasrpg/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
