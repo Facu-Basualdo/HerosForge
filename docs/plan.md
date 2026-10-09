@@ -57,7 +57,7 @@ Un modificador **permanente** por estadística con un `Identifier` fijo (`estadi
 | Minado | `BLOCK_BREAK_SPEED` | `ADD_MULTIPLIED_BASE` | +5 % | 10 | +50 % |
 | Alcance | `BLOCK_INTERACTION_RANGE` + `ENTITY_INTERACTION_RANGE` | `ADD_VALUE` | +0,25 bloques | 8 | +2 bloques |
 | Resistencia al empuje | `KNOCKBACK_RESISTANCE` | `ADD_VALUE` | +0,05 | 10 | +0,5 |
-| Suerte | `LUCK` | `ADD_VALUE` | +0,5 | 6 | +3 (como Suerte marina III, pero también en los cofres) |
+| Suerte | `LUCK` | `ADD_VALUE` | +0,5 | 6 | +3 (lo mismo que Suerte marina III al pescar, y se suma: la pesca usa el encantamiento + `Player.getLuck()`, verificado). No se verificó si alguna tabla de cofres de vanilla usa la suerte (`quality`) |
 
 Los nombres de los atributos están verificados en 26.3 (sin el prefijo `GENERIC_`/`PLAYER_` de 1.21.1). Las fases 1 y 3 se reparten la tabla (ver Fases).
 
@@ -120,9 +120,7 @@ Permisos con `Commands.hasPermission(Commands.LEVEL_GAMEMASTERS)` (en 26.3 no ex
 - `ServerPlayerEvents.COPY_FROM` en el `TAIL` de `restoreFrom`, `ServerPlayerEvents.JOIN`, `AttachmentRegistry.Builder.copyOnDeath()`.
 - **Orden en la carga del jugador:** `LivingEntity.readAdditionalSaveData` lee `attributes` **antes** que `Health`, así que alguien con 20 corazones entra con 20 (si fuera al revés, la vida se cortaría contra el máximo sin los puntos).
 - **Menú:** `AbstractContainerMenu.clicked(int, int, ContainerInput, Player)` (el enum ya no se llama `ClickType`); `sendAllDataToRemote()`, `canTakeItemForPickAll(ItemStack, Slot)` y `canDragTo(Slot)` son públicos; `Slot.mayPickup(Player)` y `Slot.mayPlace(ItemStack)` existen.
-
-**Falta verificar antes de escribir el código que los usa:**
-- **Alcance:** que el cliente vanilla use el `BLOCK_INTERACTION_RANGE` que le manda el servidor (los atributos del jugador se sincronizan, pero confirmar que esos dos están marcados como sincronizables).
+- **Sincronización con el cliente:** `MOVEMENT_SPEED`, `ATTACK_SPEED`, `BLOCK_BREAK_SPEED`, `BLOCK_INTERACTION_RANGE` y `ENTITY_INTERACTION_RANGE` son `isClientSyncable()` (lo verifica el gametest `losAtributosQueUsaElClienteSeSincronizan`).
 
 **Junto con Inventario Compartido** (los dos son tuyos, así que es probable que se instalen juntos):
 - La **experiencia es compartida**: cualquiera que compra gasta los niveles del grupo. Funciona, pero conviene decirlo en el README.
@@ -132,7 +130,7 @@ Permisos con `Commands.hasPermission(Commands.LEVEL_GAMEMASTERS)` (en 26.3 no ex
 
 1. **Base** (0.1.0) — **hecha**: `Configuracion`, `Estadistica` con **vida, daño, armadura y velocidad**, attachment `PUNTOS`, `comprar`, `aplicar`, `JOIN` y respawn, comandos `ver`, `subir`, `dar` y `reiniciar`.
 2. **Menú** (0.2.0) — **hecha**: `MenuDeEstadisticas` y `/estadisticas` sin argumentos lo abre.
-3. **Más estadísticas** (0.3.0): velocidad de ataque, minado, alcance, empuje y suerte.
+3. **Más estadísticas** (0.3.0) — **hecha**: velocidad de ataque, minado, alcance, empuje y suerte.
 4. **Config y pulido** (0.4.0): `config/estadisticasrpg.json`, `recargar`, sonidos y partículas al comprar, README completo.
 5. **Opcional — con Inventario Compartido** (0.5.0): puntos del grupo si los dos mods están cargados (`FabricLoader.isModLoaded("inventariocompartido")`).
 

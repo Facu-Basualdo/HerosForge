@@ -20,6 +20,11 @@ Todo está en `EstadisticasRPGGameTest`. Cada test crea su propio jugador y lo s
 | `unaEstadisticaDesconocidaNoBorraLasDemas` | El codec ignora un id que no existe y lee los demás |
 | `reiniciarDejaTodoEnCero` | Puntos vacíos, sin modificadores, vida recortada a 20 en el momento |
 | `comandos` | `subir` compra y cobra, `/stats` funciona, `dar` sin op no hace nada, una estadística desconocida no cobra |
+| `estadisticasDeLaFase3AlMaximo` | Velocidad de ataque 5,2 con la mano vacía · minado 1,5 · alcance 6,5 a bloques y 5 a entidades · empuje 0,5 · `getLuck()` 3 |
+| `losAtributosQueUsaElClienteSeSincronizan` | Los atributos que calcula el cliente son `isClientSyncable()` (lista a mano: hay que sumar ahí cualquier estadística nueva que use el cliente) |
+| `cadaEstadisticaTieneConfigYSlot` | Toda `Estadistica` está en `Configuracion.POR_DEFECTO` y tiene un slot propio en la fila del medio del menú |
+
+Los valores con decimales (porcentajes, alcance) se comparan con `assertCerca` (tolerancia 1e-9), no con `assertValueEqual`: `0,1 × 1,2` no da exactamente `0,12` en `double`.
 
 ## assertValueEqual va al revés de lo que parece
 

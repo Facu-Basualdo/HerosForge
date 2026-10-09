@@ -16,7 +16,13 @@ public enum Estadistica {
 	VIDA("vida", "Vida", Items.GOLDEN_APPLE, AttributeModifier.Operation.ADD_VALUE, List.of(Attributes.MAX_HEALTH), Estadistica::corazones),
 	DANIO("danio", "Daño", Items.IRON_SWORD, AttributeModifier.Operation.ADD_VALUE, List.of(Attributes.ATTACK_DAMAGE), valor -> conSigno(valor) + " de daño"),
 	ARMADURA("armadura", "Armadura", Items.IRON_CHESTPLATE, AttributeModifier.Operation.ADD_VALUE, List.of(Attributes.ARMOR), valor -> conSigno(valor) + " de armadura"),
-	VELOCIDAD("velocidad", "Velocidad", Items.SUGAR, AttributeModifier.Operation.ADD_MULTIPLIED_BASE, List.of(Attributes.MOVEMENT_SPEED), valor -> conSigno(valor * 100) + " % de velocidad");
+	VELOCIDAD("velocidad", "Velocidad", Items.SUGAR, AttributeModifier.Operation.ADD_MULTIPLIED_BASE, List.of(Attributes.MOVEMENT_SPEED), valor -> conSigno(valor * 100) + " % de velocidad"),
+	VELOCIDAD_ATAQUE("velocidad_ataque", "Velocidad de ataque", Items.FEATHER, AttributeModifier.Operation.ADD_MULTIPLIED_BASE, List.of(Attributes.ATTACK_SPEED), valor -> conSigno(valor * 100) + " % de velocidad de ataque"),
+	MINADO("minado", "Minado", Items.IRON_PICKAXE, AttributeModifier.Operation.ADD_MULTIPLIED_BASE, List.of(Attributes.BLOCK_BREAK_SPEED), valor -> conSigno(valor * 100) + " % de velocidad de minado"),
+	// Los dos rangos juntos: con sólo el de bloques, llegarías a un bloque pero no al mob parado al lado
+	ALCANCE("alcance", "Alcance", Items.FISHING_ROD, AttributeModifier.Operation.ADD_VALUE, List.of(Attributes.BLOCK_INTERACTION_RANGE, Attributes.ENTITY_INTERACTION_RANGE), valor -> conSigno(valor) + (valor == 1 ? " bloque" : " bloques") + " de alcance"),
+	EMPUJE("empuje", "Resistencia al empuje", Items.ANVIL, AttributeModifier.Operation.ADD_VALUE, List.of(Attributes.KNOCKBACK_RESISTANCE), valor -> conSigno(valor * 100) + " % de resistencia al empuje"),
+	SUERTE("suerte", "Suerte", Items.RABBIT_FOOT, AttributeModifier.Operation.ADD_VALUE, List.of(Attributes.LUCK), valor -> conSigno(valor) + " de suerte");
 
 	private final String id;
 	private final String nombre;

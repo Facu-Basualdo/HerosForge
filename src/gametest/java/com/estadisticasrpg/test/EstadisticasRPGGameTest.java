@@ -1,6 +1,8 @@
 package com.estadisticasrpg.test;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import com.mojang.authlib.GameProfile;
@@ -129,6 +131,47 @@ public class EstadisticasRPGGameTest {
 		helper.assertTrue(Math.abs(velocidad - base * 1.2) < 1e-9, "Velocidad +20 % (" + velocidad + ")");
 
 		salir(helper, jugador);
+		helper.succeed();
+	}
+
+	@GameTest
+	public void estadisticasDeLaFase3AlMaximo(GameTestHelper helper) {
+		ServerPlayer jugador = entrar(helper, "completo");
+		for (Estadistica estadistica : List.of(Estadistica.VELOCIDAD_ATAQUE, Estadistica.MINADO, Estadistica.ALCANCE, Estadistica.EMPUJE, Estadistica.SUERTE)) {
+			Mejoras.dar(jugador, estadistica, 100);
+		}
+
+		// Con la mano vacía: 4 de base × 1,3
+		assertCerca(helper, jugador.getAttributeValue(Attributes.ATTACK_SPEED), 5.2, "Velocidad de ataque +30 %");
+		assertCerca(helper, jugador.getAttributeValue(Attributes.BLOCK_BREAK_SPEED), 1.5, "Minado +50 %");
+		assertCerca(helper, jugador.getAttributeValue(Attributes.BLOCK_INTERACTION_RANGE), 6.5, "Alcance a bloques: 4,5 + 2");
+		assertCerca(helper, jugador.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE), 5.0, "Alcance a entidades: 3 + 2");
+		assertCerca(helper, jugador.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE), 0.5, "Resistencia al empuje");
+		assertCerca(helper, jugador.getLuck(), 3.0, "Suerte (la que usa la pesca)");
+
+		salir(helper, jugador);
+		helper.succeed();
+	}
+
+	/** Si uno no se sincronizara, el cliente vanilla no vería el efecto: minaría, alcanzaría o caminaría como antes. */
+	@GameTest
+	public void losAtributosQueUsaElClienteSeSincronizan(GameTestHelper helper) {
+		for (var atributo : List.of(Attributes.MOVEMENT_SPEED, Attributes.ATTACK_SPEED, Attributes.BLOCK_BREAK_SPEED,
+				Attributes.BLOCK_INTERACTION_RANGE, Attributes.ENTITY_INTERACTION_RANGE)) {
+			helper.assertTrue(atributo.value().isClientSyncable(), atributo.getRegisteredName() + " se manda al cliente");
+		}
+		helper.succeed();
+	}
+
+	@GameTest
+	public void cadaEstadisticaTieneConfigYSlot(GameTestHelper helper) {
+		Set<Integer> slots = new HashSet<>();
+		for (Estadistica estadistica : Estadistica.values()) {
+			helper.assertTrue(EstadisticasRPG.config().de(estadistica) != null, estadistica + " está en Configuracion.POR_DEFECTO");
+			int slot = MenuDeEstadisticas.slotDe(estadistica);
+			helper.assertTrue(slot >= 9 && slot < 18, estadistica + " está en la fila del medio (slot " + slot + ")");
+			helper.assertTrue(slots.add(slot), estadistica + " no comparte slot con otra (slot " + slot + ")");
+		}
 		helper.succeed();
 	}
 
@@ -299,6 +342,10 @@ public class EstadisticasRPGGameTest {
 		jugador.closeContainer();
 		salir(helper, jugador);
 		helper.succeed();
+	}
+
+	private static void assertCerca(GameTestHelper helper, double actual, double esperado, String mensaje) {
+		helper.assertTrue(Math.abs(actual - esperado) < 1e-9, mensaje + ": esperaba " + esperado + ", dio " + actual);
 	}
 
 	private static void ejecutar(GameTestHelper helper, ServerPlayer jugador, String comando) {

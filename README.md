@@ -2,21 +2,21 @@
 
 Mod de Fabric para **Minecraft Java 26.3** para mejorar a tu personaje estilo RPG. Pagás **1 nivel de experiencia** y subís **1 punto** de la estadística que quieras: más vida, más daño, más armadura, más velocidad… Los puntos son tuyos para siempre: no se pierden al morir.
 
-> **Estado:** en desarrollo. Ya se pueden comprar vida, daño, armadura y velocidad desde el menú o por comando; el resto de las estadísticas viene en las próximas fases ([docs/plan.md](docs/plan.md)).
+> **Estado:** en desarrollo. Ya se pueden comprar las 9 estadísticas desde el menú o por comando; falta poder cambiar los números en un archivo de config ([docs/plan.md](docs/plan.md)).
 
 ## En el juego
 
-| Estadística | Id | Por punto | Máximo | |
-|---|---|---|---|---|
-| Vida | `vida` | +1 corazón | +10 corazones | ✅ |
-| Daño | `danio` | +0,5 | +5 | ✅ |
-| Armadura | `armadura` | +1 | +10 | ✅ |
-| Velocidad | `velocidad` | +2 % | +20 % | ✅ |
-| Velocidad de ataque | | +3 % | +30 % | próximamente |
-| Minado | | +5 % | +50 % | próximamente |
-| Alcance | | +0,25 bloques | +2 bloques | próximamente |
-| Resistencia al empuje | | +5 % | +50 % | próximamente |
-| Suerte | | +0,5 | +3 | próximamente |
+| Estadística | Id | Por punto | Máximo |
+|---|---|---|---|
+| Vida | `vida` | +1 corazón | +10 corazones |
+| Daño | `danio` | +0,5 | +5 |
+| Armadura | `armadura` | +1 | +10 |
+| Velocidad | `velocidad` | +2 % | +20 % |
+| Velocidad de ataque | `velocidad_ataque` | +3 % | +30 % |
+| Minado | `minado` | +5 % | +50 % |
+| Alcance (a bloques y a mobs) | `alcance` | +0,25 bloques | +2 bloques |
+| Resistencia al empuje | `empuje` | +5 % | +50 % |
+| Suerte (al pescar) | `suerte` | +0,5 | +3 |
 
 - **Cada punto cuesta 1 nivel**, igual que encantar: conviene comprar cuando te sobra un nivel, no acumular.
 - **Se compra lo que entra:** si pedís 5 y te faltan niveles o llegás al máximo antes, se compran los que se pueda y se cobran sólo esos.
@@ -26,7 +26,7 @@ Mod de Fabric para **Minecraft Java 26.3** para mejorar a tu personaje estilo RP
 
 ### El menú
 
-`/estadisticas` (o `/stats`) abre un cofre con un ítem por estadística: manzana dorada (vida), espada de hierro (daño), peto de hierro (armadura) y azúcar (velocidad). Arriba, una botella de experiencia muestra cuántos niveles tenés.
+`/estadisticas` (o `/stats`) abre un cofre con un ítem por estadística: manzana dorada (vida), espada (daño), peto (armadura), azúcar (velocidad), pluma (velocidad de ataque), pico (minado), caña de pescar (alcance), yunque (empuje) y pata de conejo (suerte). Arriba, una botella de experiencia muestra cuántos niveles tenés.
 
 - **Click:** compra 1 punto. **Shift + click:** compra 5 (o los que entren).
 - Cada ítem muestra tus puntos, el efecto que te dan, lo que suma el próximo y cuánto cuesta: en verde si te alcanza, en rojo si no.
@@ -89,6 +89,8 @@ Las pruebas verifican que:
 - `reiniciar` deja todo en 0 y la vida no queda por encima del máximo;
 - los comandos `subir`, el alias `/stats` y el permiso de op de `dar` funcionan.
 - en el menú, un click compra 1 y shift + click compra 5, y ningún ítem de muestra se puede sacar (doble click, arrastrar, teclas numéricas, tirar) ni se puede meter nada.
+- las 9 estadísticas al máximo dan los valores de la tabla, y las que tiene que ver el cliente (velocidad, velocidad de ataque, minado y alcance) se le mandan al cliente vanilla;
+- toda estadística tiene sus números en la config y su lugar en el menú.
 
 Para probar a mano, mirá [claude/general/probar-en-el-juego.md](claude/general/probar-en-el-juego.md).
 

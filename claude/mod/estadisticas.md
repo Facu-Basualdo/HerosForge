@@ -75,12 +75,31 @@ El attachment va en el NBT del jugador (`playerdata/<uuid>.dat`), bajo los attac
 - La estadística es un `StringArgumentType.word()` con sugerencias de los ids, no un argumento propio: un tipo de argumento nuevo obligaría a tener el mod en el cliente.
 - Todos los textos son `Component.literal` en castellano: sin el mod en el cliente no hay archivo de idioma.
 
+## Qué atributo toca cada una y quién lo usa
+
+| Estadística (`id`) | Atributo(s) | Operación | Lo calcula |
+|---|---|---|---|
+| Vida (`vida`) | `MAX_HEALTH` | `ADD_VALUE` | servidor (el cliente recibe la vida) |
+| Daño (`danio`) | `ATTACK_DAMAGE` | `ADD_VALUE` | servidor |
+| Armadura (`armadura`) | `ARMOR` | `ADD_VALUE` | servidor (el cliente la dibuja: es sincronizable) |
+| Velocidad (`velocidad`) | `MOVEMENT_SPEED` | `ADD_MULTIPLIED_BASE` | **cliente** (predice el movimiento) |
+| Velocidad de ataque (`velocidad_ataque`) | `ATTACK_SPEED` | `ADD_MULTIPLIED_BASE` | **cliente** (la barra de recarga del golpe) y servidor |
+| Minado (`minado`) | `BLOCK_BREAK_SPEED` | `ADD_MULTIPLIED_BASE` | **cliente** (el progreso de romper) y servidor |
+| Alcance (`alcance`) | `BLOCK_INTERACTION_RANGE` **y** `ENTITY_INTERACTION_RANGE` | `ADD_VALUE` | **cliente** (a qué apunta) y servidor (valida la distancia) |
+| Resistencia al empuje (`empuje`) | `KNOCKBACK_RESISTANCE` | `ADD_VALUE` | servidor (manda el empuje ya calculado) |
+| Suerte (`suerte`) | `LUCK` | `ADD_VALUE` | servidor |
+
+- **Lo que calcula el cliente tiene que ser un atributo `isClientSyncable()`.** Si no, el servidor tendría los puntos pero el cliente vanilla minaría, caminaría o apuntaría como siempre. Los cinco de la tabla lo son en 26.3, y lo verifica el gametest `losAtributosQueUsaElClienteSeSincronizan`.
+- **El alcance usa los dos rangos a la vez.** Con sólo el de bloques, el jugador llegaría a un bloque lejano pero no a un mob a la misma distancia. Como `Estadistica.atributos()` es una lista, `aplicar` pone el mismo modificador en los dos.
+- **La suerte se nota sobre todo al pescar.** `FishingHook` usa la suerte de Suerte marina más `Player.getLuck()`, que es el atributo `LUCK`: con +3 es como tener otra Suerte marina III. Las tablas de botín sólo la usan en las entradas con `quality`, y **no está verificado** que alguna tabla de cofres de vanilla las tenga. Por eso el README dice "al pescar" y no promete nada de los cofres.
+
 ## Agregar una estadística
 
 1. Un valor en `Estadistica`: `id` (para siempre, ver Formato en disco), nombre, ítem del menú (`icono`), operación, atributo(s) y cómo se describe el efecto.
-2. Su `Mejora` en `Configuracion.POR_DEFECTO`, o NPE.
+2. Su `Mejora` en `Configuracion.POR_DEFECTO`, o NPE (lo atrapa el gametest `cadaEstadisticaTieneConfigYSlot`).
 3. Si es vida, o algo que necesite un efecto inmediato al comprar, se agrega en `Mejoras.sumar`.
-4. Una fila en la tabla del `README.md` y un gametest con el valor del atributo.
+4. Si el cliente usa el atributo, agregalo a `losAtributosQueUsaElClienteSeSincronizan` (ver la tabla de arriba).
+5. Una fila en la tabla del `README.md` y un gametest con el valor del atributo. El menú tiene lugar para 9 en la fila del medio: la décima pide cambiar `MenuDeEstadisticas.slotDe` (ver [Menú de estadísticas](menu.md)).
 
 Con `ADD_MULTIPLIED_BASE`, el porcentaje se aplica sobre la base **más todos los `ADD_VALUE`**, incluido el del arma (ver [docs/plan.md](../../docs/plan.md)).
 
