@@ -27,8 +27,7 @@ public final class ComandoEstadisticas {
 
 	public static void registrar(CommandDispatcher<CommandSourceStack> dispatcher) {
 		LiteralCommandNode<CommandSourceStack> raiz = dispatcher.register(Commands.literal("estadisticas")
-				// Fase 2: sin argumentos abre el menú
-				.executes(ctx -> ver(ctx, ctx.getSource().getPlayerOrException()))
+				.executes(ComandoEstadisticas::abrir)
 				.then(Commands.literal("ver")
 						.executes(ctx -> ver(ctx, ctx.getSource().getPlayerOrException()))
 						.then(Commands.argument("jugador", EntityArgument.player())
@@ -52,8 +51,13 @@ public final class ComandoEstadisticas {
 
 		// Un redirect no hereda el executes del nodo destino: sin el propio, "/stats" solo no haría nada
 		dispatcher.register(Commands.literal("stats")
-				.executes(ctx -> ver(ctx, ctx.getSource().getPlayerOrException()))
+				.executes(ComandoEstadisticas::abrir)
 				.redirect(raiz));
+	}
+
+	private static int abrir(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+		MenuDeEstadisticas.abrir(ctx.getSource().getPlayerOrException());
+		return 1;
 	}
 
 	private static RequiredArgumentBuilder<CommandSourceStack, String> estadistica() {

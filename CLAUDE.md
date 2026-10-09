@@ -40,6 +40,7 @@ Se agregan con `/docs` a medida que se implementan las fases de [docs/plan.md](d
 | Feature | Mod | Tests |
 |---|---|---|
 | Comprar y aplicar estadísticas (fase 1) | [estadisticas](claude/mod/estadisticas.md) | [estadisticas](claude/tests/estadisticas.md) |
+| Menú de cofre (fase 2) | [menu](claude/mod/menu.md) | [menu](claude/tests/menu.md) |
 
 ## Reglas de workflow
 

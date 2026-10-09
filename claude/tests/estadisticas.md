@@ -54,4 +54,5 @@ Antes de dar por bueno un test de un evento, comentá el registro del evento y c
 ## Ver también
 
 - [Estadísticas: puntos, compra y aplicación](../mod/estadisticas.md)
+- [Tests del menú](menu.md)
 - [Probar en el juego](../general/probar-en-el-juego.md)

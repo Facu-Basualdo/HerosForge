@@ -1,0 +1,198 @@
+package com.estadisticasrpg;
+
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+
+import org.jspecify.annotations.Nullable;
+
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.ItemLore;
+import net.minecraft.world.item.component.TooltipDisplay;
+
+/**
+ * Un cofre de 3 filas armado en el servidor: el cliente vanilla lo ve como {@code GENERIC_9x3}, así que no
+ * hace falta el mod del lado del cliente. Los ítems son de muestra: un click compra, nunca se mueven.
+ */
+public class MenuDeEstadisticas extends AbstractContainerMenu {
+	private static final int FILAS = 3;
+	private static final int TAMANIO = FILAS * 9;
+	private static final int SLOT_INFO = 4;
+	private static final int CON_SHIFT = 5;
+	private static final Component TITULO = Component.literal("Estadísticas");
+
+	private final ServerPlayer jugador;
+	private final SimpleContainer muestra = new SimpleContainer(TAMANIO);
+	private int nivelesMostrados = -1;
+	private @Nullable PuntosDelJugador puntosMostrados;
+
+	private MenuDeEstadisticas(int id, ServerPlayer jugador) {
+		super(MenuType.GENERIC_9x3, id);
+		this.jugador = jugador;
+		for (int fila = 0; fila < FILAS; fila++) {
+			for (int columna = 0; columna < 9; columna++) {
+				addSlot(new SlotDeMuestra(muestra, columna + fila * 9, 8 + columna * 18, 18 + fila * 18));
+			}
+		}
+		addStandardInventorySlots(jugador.getInventory(), 8, 18 + FILAS * 18 + 13);
+		redibujar();
+	}
+
+	public static void abrir(ServerPlayer jugador) {
+		jugador.openMenu(new SimpleMenuProvider((id, inventario, quien) -> new MenuDeEstadisticas(id, jugador), TITULO));
+	}
+
+	/** El slot del menú donde está una estadística: centradas en la fila del medio. */
+	public static int slotDe(Estadistica estadistica) {
+		int cantidad = Estadistica.values().length;
+		int indice = estadistica.ordinal();
+		// Con pocas, separadas por un hueco; con más de 5 no entran separadas en 9 slots
+		if (cantidad <= 5) {
+			return 9 + (9 - (2 * cantidad - 1)) / 2 + 2 * indice;
+		}
+		return 9 + (9 - cantidad) / 2 + indice;
+	}
+
+	private static @Nullable Estadistica estadisticaEn(int slot) {
+		for (Estadistica estadistica : Estadistica.values()) {
+			if (slotDe(estadistica) == slot) {
+				return estadistica;
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public void clicked(int slotId, int boton, ContainerInput entrada, Player quien) {
+		if (slotId < 0 || slotId >= TAMANIO) {
+			super.clicked(slotId, boton, entrada, quien);
+			return;
+		}
+		Estadistica estadistica = estadisticaEn(slotId);
+		if (estadistica != null && (entrada == ContainerInput.PICKUP || entrada == ContainerInput.QUICK_MOVE)) {
+			Mejoras.Compra compra = Mejoras.comprar(jugador, estadistica, entrada == ContainerInput.QUICK_MOVE ? CON_SHIFT : 1);
+			jugador.sendSystemMessage(Mejoras.mensaje(compra), true);
+			redibujar();
+		}
+		// El cliente vanilla ya movió el ítem en pantalla antes de mandar el click: sin reenviar todo,
+		// el ítem queda "fantasma" en su cursor
+		sendAllDataToRemote();
+	}
+
+	/** El doble click en el inventario del jugador junta los ítems iguales de todos los slots, también los de muestra. */
+	@Override
+	public boolean canTakeItemForPickAll(ItemStack cursor, Slot slot) {
+		return !(slot instanceof SlotDeMuestra) && super.canTakeItemForPickAll(cursor, slot);
+	}
+
+	/** Arrastrar empieza en un slot del jugador y puede pasar por los del menú. */
+	@Override
+	public boolean canDragTo(Slot slot) {
+		return !(slot instanceof SlotDeMuestra) && super.canDragTo(slot);
+	}
+
+	@Override
+	public ItemStack quickMoveStack(Player quien, int slot) {
+		return ItemStack.EMPTY;
+	}
+
+	@Override
+	public boolean stillValid(Player quien) {
+		return true;
+	}
+
+	/** Si cambian los niveles (juntó experiencia) o los puntos (un op usó {@code dar}) con el menú abierto. */
+	@Override
+	public void broadcastChanges() {
+		if (jugador.experienceLevel != nivelesMostrados || !Mejoras.puntos(jugador).equals(puntosMostrados)) {
+			redibujar();
+		}
+		super.broadcastChanges();
+	}
+
+	private void redibujar() {
+		Configuracion config = EstadisticasRPG.config();
+		PuntosDelJugador puntos = Mejoras.puntos(jugador);
+		for (int slot = 0; slot < TAMANIO; slot++) {
+			muestra.setItem(slot, relleno());
+		}
+		muestra.setItem(SLOT_INFO, info(config));
+		for (Estadistica estadistica : Estadistica.values()) {
+			muestra.setItem(slotDe(estadistica), icono(estadistica, config, puntos.de(estadistica)));
+		}
+		nivelesMostrados = jugador.experienceLevel;
+		puntosMostrados = puntos;
+	}
+
+	private ItemStack info(Configuracion config) {
+		return item(new ItemStack(Items.EXPERIENCE_BOTTLE), texto("Tenés " + Mejoras.niveles(jugador.experienceLevel), ChatFormatting.GREEN), List.of(
+				texto("Cada punto cuesta " + Mejoras.niveles(config.costoPorPunto()), ChatFormatting.GRAY),
+				texto("Click: comprar 1 punto", ChatFormatting.DARK_GRAY),
+				texto("Shift + click: comprar " + CON_SHIFT, ChatFormatting.DARK_GRAY)));
+	}
+
+	private ItemStack icono(Estadistica estadistica, Configuracion config, int puntos) {
+		Configuracion.Mejora mejora = config.de(estadistica);
+		List<Component> lore = new ArrayList<>();
+		lore.add(texto("Puntos: " + puntos + "/" + mejora.tope(), ChatFormatting.GRAY));
+		if (puntos > 0) {
+			lore.add(texto("Ahora: " + estadistica.describir(mejora.efecto(puntos)), ChatFormatting.GRAY));
+		}
+		if (puntos >= mejora.tope()) {
+			return item(new ItemStack(Items.STAINED_GLASS_PANE.gray()), texto(estadistica.nombre() + " · máximo", ChatFormatting.GRAY), lore);
+		}
+		boolean alcanza = jugador.experienceLevel >= config.costoPorPunto();
+		lore.add(texto("Próximo punto: " + estadistica.describir(mejora.porPunto()), ChatFormatting.AQUA));
+		lore.add(texto("Cuesta " + Mejoras.niveles(config.costoPorPunto()), alcanza ? ChatFormatting.GREEN : ChatFormatting.RED));
+		ItemStack icono = item(new ItemStack(estadistica.icono()), texto(estadistica.nombre(), alcanza ? ChatFormatting.GREEN : ChatFormatting.RED), lore);
+		// La espada y el peto mostrarían su daño y su armadura de vanilla, que no tienen nada que ver con los puntos
+		icono.set(DataComponents.TOOLTIP_DISPLAY, new TooltipDisplay(false, new LinkedHashSet<>(List.of(DataComponents.ATTRIBUTE_MODIFIERS))));
+		return icono;
+	}
+
+	private static ItemStack relleno() {
+		ItemStack relleno = new ItemStack(Items.STAINED_GLASS_PANE.black());
+		relleno.set(DataComponents.TOOLTIP_DISPLAY, new TooltipDisplay(true, new LinkedHashSet<>()));
+		return relleno;
+	}
+
+	private static ItemStack item(ItemStack stack, Component nombre, List<Component> lore) {
+		stack.set(DataComponents.ITEM_NAME, nombre);
+		stack.set(DataComponents.LORE, new ItemLore(lore));
+		return stack;
+	}
+
+	/** Vanilla pone el lore en cursiva: sin el {@code withItalic(false)} todo el menú se ve torcido. */
+	private static Component texto(String texto, ChatFormatting color) {
+		return Component.literal(texto).withStyle(color).withStyle(estilo -> estilo.withItalic(false));
+	}
+
+	/** No se saca ni se pone nada: un click se convierte en una compra en {@link #clicked}. */
+	private static final class SlotDeMuestra extends Slot {
+		SlotDeMuestra(SimpleContainer contenedor, int indice, int x, int y) {
+			super(contenedor, indice, x, y);
+		}
+
+		@Override
+		public boolean mayPickup(Player quien) {
+			return false;
+		}
+
+		@Override
+		public boolean mayPlace(ItemStack stack) {
+			return false;
+		}
+	}
+}

@@ -131,7 +131,7 @@ Permisos con `Commands.hasPermission(Commands.LEVEL_GAMEMASTERS)` (en 26.3 no ex
 ## Fases (cada una termina con `gradlew runGameTest` en verde, la versión subida y `/docs`)
 
 1. **Base** (0.1.0) — **hecha**: `Configuracion`, `Estadistica` con **vida, daño, armadura y velocidad**, attachment `PUNTOS`, `comprar`, `aplicar`, `JOIN` y respawn, comandos `ver`, `subir`, `dar` y `reiniciar`.
-2. **Menú** (0.2.0): `MenuDeEstadisticas` y `/estadisticas` sin argumentos lo abre.
+2. **Menú** (0.2.0) — **hecha**: `MenuDeEstadisticas` y `/estadisticas` sin argumentos lo abre.
 3. **Más estadísticas** (0.3.0): velocidad de ataque, minado, alcance, empuje y suerte.
 4. **Config y pulido** (0.4.0): `config/estadisticasrpg.json`, `recargar`, sonidos y partículas al comprar, README completo.
 5. **Opcional — con Inventario Compartido** (0.5.0): puntos del grupo si los dos mods están cargados (`FabricLoader.isModLoaded("inventariocompartido")`).

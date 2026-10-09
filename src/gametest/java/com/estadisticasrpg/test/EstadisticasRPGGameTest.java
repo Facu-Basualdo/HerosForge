@@ -1,5 +1,6 @@
 package com.estadisticasrpg.test;
 
+import java.util.List;
 import java.util.UUID;
 
 import com.mojang.authlib.GameProfile;
@@ -8,6 +9,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.estadisticasrpg.Estadistica;
 import com.estadisticasrpg.EstadisticasRPG;
+import com.estadisticasrpg.MenuDeEstadisticas;
 import com.estadisticasrpg.Mejoras;
 import com.estadisticasrpg.PuntosDelJugador;
 
@@ -27,6 +29,10 @@ import net.minecraft.server.players.PlayerList;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.TagValueOutput;
@@ -218,6 +224,79 @@ public class EstadisticasRPGGameTest {
 		ejecutar(helper, jugador, "estadisticas subir inexistente");
 		helper.assertValueEqual(jugador.experienceLevel, 2, "Una estadística que no existe no cobra");
 
+		salir(helper, jugador);
+		helper.succeed();
+	}
+
+	@GameTest
+	public void menuCompraConClick(GameTestHelper helper) {
+		ServerPlayer jugador = entrar(helper, "cliqueador");
+		jugador.setExperienceLevels(10);
+
+		ejecutar(helper, jugador, "estadisticas");
+		helper.assertTrue(jugador.containerMenu instanceof MenuDeEstadisticas, "/estadisticas abre el menú");
+		AbstractContainerMenu menu = jugador.containerMenu;
+		int vida = MenuDeEstadisticas.slotDe(Estadistica.VIDA);
+
+		menu.clicked(vida, 0, ContainerInput.PICKUP, jugador);
+		helper.assertValueEqual(Mejoras.puntos(jugador).de(Estadistica.VIDA), 1, "Un click compra 1");
+		helper.assertValueEqual(jugador.experienceLevel, 9, "Un click cobra 1 nivel");
+		helper.assertTrue(menu.getCarried().isEmpty(), "El cursor queda vacío");
+		helper.assertTrue(menu.getSlot(vida).getItem().is(Items.GOLDEN_APPLE), "El ícono sigue en su lugar");
+
+		menu.clicked(vida, 0, ContainerInput.QUICK_MOVE, jugador);
+		helper.assertValueEqual(Mejoras.puntos(jugador).de(Estadistica.VIDA), 6, "Shift + click compra 5");
+		helper.assertValueEqual(jugador.experienceLevel, 4, "Shift + click cobra 5 niveles");
+
+		// Tecla numérica, tirar (Q) y click del medio no compran ni sacan el ítem
+		for (ContainerInput entrada : List.of(ContainerInput.SWAP, ContainerInput.THROW, ContainerInput.CLONE)) {
+			menu.clicked(vida, 0, entrada, jugador);
+			helper.assertValueEqual(Mejoras.puntos(jugador).de(Estadistica.VIDA), 6, entrada + " no compra");
+			helper.assertTrue(menu.getSlot(vida).getItem().is(Items.GOLDEN_APPLE), entrada + " no saca el ícono");
+		}
+		helper.assertTrue(jugador.getInventory().getItem(0).isEmpty(), "La tecla numérica no pasa el ícono a la barra");
+
+		// Un op le da puntos con el menú abierto: se redibuja en el próximo broadcastChanges
+		Mejoras.dar(jugador, Estadistica.VIDA, 10);
+		menu.broadcastChanges();
+		helper.assertTrue(menu.getSlot(vida).getItem().is(Items.STAINED_GLASS_PANE.gray()), "En el máximo se ve vidrio gris");
+
+		jugador.closeContainer();
+		salir(helper, jugador);
+		helper.succeed();
+	}
+
+	@GameTest
+	public void menuNoDejaSacarNiPonerItems(GameTestHelper helper) {
+		ServerPlayer jugador = entrar(helper, "tramposo");
+		MenuDeEstadisticas.abrir(jugador);
+		AbstractContainerMenu menu = jugador.containerMenu;
+		int vida = MenuDeEstadisticas.slotDe(Estadistica.VIDA);
+		int primeroDelJugador = 27;
+
+		// Doble click en el inventario con una copia exacta del ícono en el cursor: vanilla junta los ítems con los
+		// mismos componentes de todos los slots (una manzana común no cuenta: le faltan el nombre y el lore)
+		menu.setCarried(menu.getSlot(vida).getItem().copy());
+		menu.clicked(primeroDelJugador, 0, ContainerInput.PICKUP_ALL, jugador);
+		helper.assertValueEqual(menu.getCarried().getCount(), 1, "El doble click no junta la manzana del menú");
+		helper.assertTrue(menu.getSlot(vida).getItem().is(Items.GOLDEN_APPLE), "La manzana del menú sigue ahí");
+
+		// Arrastrar tierra por un slot del jugador, el de vida y otro del jugador
+		menu.setCarried(new ItemStack(Items.DIRT, 2));
+		menu.clicked(-999, AbstractContainerMenu.getQuickcraftMask(AbstractContainerMenu.QUICKCRAFT_HEADER_START, AbstractContainerMenu.QUICKCRAFT_TYPE_CHARITABLE), ContainerInput.QUICK_CRAFT, jugador);
+		for (int slot : new int[] {primeroDelJugador + 1, vida, primeroDelJugador + 2}) {
+			menu.clicked(slot, AbstractContainerMenu.getQuickcraftMask(AbstractContainerMenu.QUICKCRAFT_HEADER_CONTINUE, AbstractContainerMenu.QUICKCRAFT_TYPE_CHARITABLE), ContainerInput.QUICK_CRAFT, jugador);
+		}
+		menu.clicked(-999, AbstractContainerMenu.getQuickcraftMask(AbstractContainerMenu.QUICKCRAFT_HEADER_END, AbstractContainerMenu.QUICKCRAFT_TYPE_CHARITABLE), ContainerInput.QUICK_CRAFT, jugador);
+		helper.assertTrue(menu.getSlot(vida).getItem().is(Items.GOLDEN_APPLE), "Arrastrar no pone nada en el menú");
+		helper.assertValueEqual(menu.getSlot(primeroDelJugador + 1).getItem().getCount() + menu.getSlot(primeroDelJugador + 2).getItem().getCount(), 2, "La tierra se reparte sólo en el inventario");
+		helper.assertTrue(!menu.canDragTo(menu.getSlot(vida)) && !menu.getSlot(vida).mayPlace(new ItemStack(Items.DIRT)), "Los slots del menú no aceptan nada");
+
+		// Shift + click desde el inventario no mete nada en el menú
+		menu.clicked(primeroDelJugador + 1, 0, ContainerInput.QUICK_MOVE, jugador);
+		helper.assertTrue(menu.getSlot(primeroDelJugador + 1).getItem().is(Items.DIRT), "Shift + click desde el inventario no mueve nada");
+
+		jugador.closeContainer();
 		salir(helper, jugador);
 		helper.succeed();
 	}

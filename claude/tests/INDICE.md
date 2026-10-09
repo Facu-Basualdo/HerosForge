@@ -9,3 +9,4 @@ Los tests de cada fase están listados en [docs/plan.md](../../docs/plan.md#veri
 | Nota | De qué trata |
 |---|---|
 | [Tests de estadísticas](estadisticas.md) | En 26.3 `assertValueEqual(actual, esperado, …)`: al revés, el mensaje miente · los jugadores de prueba no tickean (conexión falsa), así que lo que vanilla hace "en el próximo tick" no pasa · supervivencia con `entrar()`, no `makeMockServerPlayerInLevel` · morir = `respawn(j, false, KILLED)`, End = `true` · guardar/cargar sacando `"UUID"` · el jugador de prueba no es op · comentá el registro del evento para ver que el test falla |
+| [Tests del menú](menu.md) | Los clicks se simulan con `menu.clicked(slot, botón, ContainerInput, jugador)`; el arrastre con `getQuickcraftMask` · para el doble click, el cursor tiene que tener una **copia exacta** del ícono: una manzana común no junta la del menú, con o sin protección, y el test pasaría siempre · `broadcastChanges` hay que llamarlo a mano |

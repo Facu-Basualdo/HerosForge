@@ -49,7 +49,7 @@ Comprobado con el gametest `alReaparecerConservaPuntosYVida`: sin el registro de
 - **Los niveles se descuentan con `ServerPlayer.giveExperienceLevels`**, que pone `lastSentExp = -1`. Si se tocara `experienceLevel` directo, la barra del cliente no bajaría: vanilla sólo la reenvía cuando cambia `totalExperience`, y bajar niveles no lo cambia.
 - **El modo creativo paga igual.** Si fuera gratis, alcanzaría con pasar a creativo, comprar todo y volver.
 - `Mejoras.dar` (comando `dar`) no cobra pero **respeta el tope**.
-- `Mejoras.mensaje(Compra)` arma el texto para el jugador; lo usa el comando y lo va a usar el menú.
+- `Mejoras.mensaje(Compra)` arma el texto para el jugador; lo usan el comando y el menú (ver [Menú de estadísticas](menu.md)).
 
 ## Config y topes
 
@@ -77,7 +77,7 @@ El attachment va en el NBT del jugador (`playerdata/<uuid>.dat`), bajo los attac
 
 ## Agregar una estadística
 
-1. Un valor en `Estadistica`: `id` (para siempre, ver Formato en disco), nombre, operación, atributo(s) y cómo se describe el efecto.
+1. Un valor en `Estadistica`: `id` (para siempre, ver Formato en disco), nombre, ítem del menú (`icono`), operación, atributo(s) y cómo se describe el efecto.
 2. Su `Mejora` en `Configuracion.POR_DEFECTO`, o NPE.
 3. Si es vida, o algo que necesite un efecto inmediato al comprar, se agrega en `Mejoras.sumar`.
 4. Una fila en la tabla del `README.md` y un gametest con el valor del atributo.
@@ -87,5 +87,6 @@ Con `ADD_MULTIPLIED_BASE`, el porcentaje se aplica sobre la base **más todos lo
 ## Ver también
 
 - [Tests de estadísticas](../tests/estadisticas.md)
+- [Menú de estadísticas](menu.md)
 - [Minecraft 26.x sin ofuscar](../general/minecraft-26-sin-ofuscar.md)
 - [Probar en el juego](../general/probar-en-el-juego.md)

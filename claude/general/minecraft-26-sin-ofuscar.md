@@ -21,6 +21,7 @@
 | Que los modificadores permanentes sobrevivan a la muerte | **No sobreviven**: `ServerPlayer.restoreFrom` al morir hace sólo `assignBaseValues` y después `setHealth(getMaxHealth())` con el máximo sin modificadores. Al volver del End sí copia todo (`assignPermanentModifiers`) |
 | Que bajar niveles actualice la barra sola | Sólo con el override de `ServerPlayer.giveExperienceLevels`, que pone `lastSentExp = -1`: vanilla reenvía la barra cuando cambia `totalExperience`, y bajar niveles no lo cambia |
 | `.requires(src -> src.hasPermission(2))` | `.requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))` |
+| `Items.GRAY_STAINED_GLASS_PANE`, `Items.RED_WOOL`… | **Los ítems de color están agrupados en una `ColorCollection`:** `Items.STAINED_GLASS_PANE.gray()`, `.black()`, `.pick(DyeColor)` |
 | `AbstractContainerMenu.clicked(int, int, ClickType, Player)` | El enum se llama **`ContainerInput`**: `clicked(int, int, ContainerInput, Player)` |
 | `GameTestHelper.assertValueEqual(esperado, actual, …)` | Al revés: **`assertValueEqual(actual, esperado, …)`**. El mensaje dice "Expected … to be `<esperado>`: was `<actual>`" |
 

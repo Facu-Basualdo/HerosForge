@@ -2,7 +2,7 @@
 
 Mod de Fabric para **Minecraft Java 26.3** para mejorar a tu personaje estilo RPG. Pagás **1 nivel de experiencia** y subís **1 punto** de la estadística que quieras: más vida, más daño, más armadura, más velocidad… Los puntos son tuyos para siempre: no se pierden al morir.
 
-> **Estado:** en desarrollo. Ya se pueden comprar vida, daño, armadura y velocidad por comando; el menú y el resto de las estadísticas vienen en las próximas fases ([docs/plan.md](docs/plan.md)).
+> **Estado:** en desarrollo. Ya se pueden comprar vida, daño, armadura y velocidad desde el menú o por comando; el resto de las estadísticas viene en las próximas fases ([docs/plan.md](docs/plan.md)).
 
 ## En el juego
 
@@ -24,12 +24,22 @@ Mod de Fabric para **Minecraft Java 26.3** para mejorar a tu personaje estilo RP
 - Al comprar vida, el corazón nuevo aparece lleno.
 - Los números son los de por defecto; se van a poder cambiar en `config/estadisticasrpg.json`.
 
+### El menú
+
+`/estadisticas` (o `/stats`) abre un cofre con un ítem por estadística: manzana dorada (vida), espada de hierro (daño), peto de hierro (armadura) y azúcar (velocidad). Arriba, una botella de experiencia muestra cuántos niveles tenés.
+
+- **Click:** compra 1 punto. **Shift + click:** compra 5 (o los que entren).
+- Cada ítem muestra tus puntos, el efecto que te dan, lo que suma el próximo y cuánto cuesta: en verde si te alcanza, en rojo si no.
+- Una estadística al máximo se ve como vidrio gris.
+- Los ítems del menú son de muestra: no se pueden sacar, ni con doble click, arrastrando o con las teclas numéricas.
+- Funciona con un cliente sin el mod: es un cofre común armado por el servidor.
+
 ### Comandos
 
 | Comando | Qué hace | Quién |
 |---|---|---|
-| `/estadisticas` o `/stats` | Muestra tus puntos, el efecto de cada estadística y cuánto cuesta (más adelante, abre el menú) | todos |
-| `/estadisticas ver [jugador]` | Lo mismo, de otro jugador | todos (otro jugador: op) |
+| `/estadisticas` o `/stats` | Abre el menú | todos |
+| `/estadisticas ver [jugador]` | Tus puntos (o los de otro jugador) en el chat: efecto de cada estadística y cuánto cuesta | todos (otro jugador: op) |
 | `/estadisticas subir <estadística> [cantidad]` | Compra puntos (por defecto, 1) | todos |
 | `/estadisticas dar <jugador> <estadística> <cantidad>` | Da puntos sin cobrar, hasta el máximo | op |
 | `/estadisticas reiniciar <jugador>` | Pone todo en 0 sin devolver los niveles | op |
@@ -78,6 +88,7 @@ Las pruebas verifican que:
 - una estadística desconocida en el archivo guardado no borra las demás;
 - `reiniciar` deja todo en 0 y la vida no queda por encima del máximo;
 - los comandos `subir`, el alias `/stats` y el permiso de op de `dar` funcionan.
+- en el menú, un click compra 1 y shift + click compra 5, y ningún ítem de muestra se puede sacar (doble click, arrastrar, teclas numéricas, tirar) ni se puede meter nada.
 
 Para probar a mano, mirá [claude/general/probar-en-el-juego.md](claude/general/probar-en-el-juego.md).
 
