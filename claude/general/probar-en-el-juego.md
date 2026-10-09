@@ -37,3 +37,4 @@ Los gametests cubren la lógica, pero no muestran cómo se ve el menú en un cli
 
 - [Entorno Java y Gradle](entorno-java-gradle.md)
 - [Minecraft 26.x sin ofuscar](minecraft-26-sin-ofuscar.md)
+- [Estadísticas (mod)](../mod/estadisticas.md) y [sus tests](../tests/estadisticas.md): lo que los gametests no pueden ver

@@ -12,7 +12,6 @@ Java 25 · Fabric API 0.162.0+26.3 (attachments, eventos de jugador, comandos) �
 
 ## Notas
 
-Todavía no hay: se crean con `/docs` después de la fase 1.
-
 | Nota | De qué trata |
 |---|---|
+| [Estadísticas: puntos, compra y aplicación](estadisticas.md) | Los puntos del attachment mandan; `aplicar` recalcula los modificadores (idempotente, id fijo por estadística) en compra, `JOIN` y `COPY_FROM` · al morir hay que reponer la vida con el máximo nuevo · `aplicar` recorta la vida en el momento porque vanilla espera al próximo tick · se compra lo que entra, con `giveExperienceLevels` de `ServerPlayer` para que baje la barra · codec por id de texto: un id desconocido se ignora, y un id **no se renombra nunca** · toda `Estadistica` tiene que estar en `Configuracion.POR_DEFECTO` o NPE · el alias `/stats` necesita su propio `executes` |

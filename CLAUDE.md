@@ -35,10 +35,11 @@ El mismo tema en distintas áreas usa el mismo nombre de archivo (`claude/mod/es
 
 ## Features que cruzan áreas
 
-Todavía ninguna: se agregan con `/docs` a medida que se implementan las fases de [docs/plan.md](docs/plan.md).
+Se agregan con `/docs` a medida que se implementan las fases de [docs/plan.md](docs/plan.md).
 
 | Feature | Mod | Tests |
 |---|---|---|
+| Comprar y aplicar estadísticas (fase 1) | [estadisticas](claude/mod/estadisticas.md) | [estadisticas](claude/tests/estadisticas.md) |
 
 ## Reglas de workflow
 

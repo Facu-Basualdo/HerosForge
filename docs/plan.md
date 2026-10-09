@@ -31,7 +31,7 @@ Paquete `com.estadisticasrpg`. **En principio no hace falta ningún mixin**: los
 | `Configuracion.java` | Record con costo, valor por punto y tope de cada estadística, con valores por defecto. En la fase 4 se carga de `config/estadisticasrpg.json` con Gson |
 | `Estadistica.java` | Enum con cada estadística: id (`vida`, `danio`…), atributo(s), operación, ítem que la representa en el menú y nombre en castellano |
 | `PuntosDelJugador.java` | Record **inmutable** `Map<Estadistica, Integer>` con su `Codec`. Es el valor del attachment |
-| `Mejoras.java` | `comprar(ServerPlayer, Estadistica, cantidad)` → `Resultado` (`OK` con los puntos comprados, `SIN_NIVELES`, `TOPE`) · `aplicar(ServerPlayer)` pone o quita los modificadores según los puntos · `reiniciar` |
+| `Mejoras.java` | `comprar(ServerPlayer, Estadistica, cantidad)` → `Compra(estadistica, pedidos, comprados, resultado)`: `resultado` es `OK`, o `TOPE`/`SIN_NIVELES` según qué cortó la compra (con `comprados == 0` no se compró nada) · `aplicar(ServerPlayer)` pone o quita los modificadores según los puntos · `reiniciar` |
 | `MenuDeEstadisticas.java` | Subclase de `ChestMenu` (3 filas) que no deja mover ítems: un click compra y redibuja el menú |
 | `ComandoEstadisticas.java` | Comandos (ver §5) |
 
@@ -130,7 +130,7 @@ Permisos con `Commands.hasPermission(Commands.LEVEL_GAMEMASTERS)` (en 26.3 no ex
 
 ## Fases (cada una termina con `gradlew runGameTest` en verde, la versión subida y `/docs`)
 
-1. **Base** (0.1.0): `Configuracion`, `Estadistica` con **vida, daño, armadura y velocidad**, attachment `PUNTOS`, `comprar`, `aplicar`, `JOIN` y respawn, comandos `ver`, `subir`, `dar` y `reiniciar`.
+1. **Base** (0.1.0) — **hecha**: `Configuracion`, `Estadistica` con **vida, daño, armadura y velocidad**, attachment `PUNTOS`, `comprar`, `aplicar`, `JOIN` y respawn, comandos `ver`, `subir`, `dar` y `reiniciar`.
 2. **Menú** (0.2.0): `MenuDeEstadisticas` y `/estadisticas` sin argumentos lo abre.
 3. **Más estadísticas** (0.3.0): velocidad de ataque, minado, alcance, empuje y suerte.
 4. **Config y pulido** (0.4.0): `config/estadisticasrpg.json`, `recargar`, sonidos y partículas al comprar, README completo.

@@ -4,7 +4,8 @@ Fabric GameTest API · `gradlew runGameTest` levanta un servidor sin ventana, co
 
 [← Hub](../../CLAUDE.md)
 
-Hoy hay un solo test de humo (`EstadisticasRPGGameTest.modCargado`) que confirma que el mod carga. Los tests de cada fase están listados en [docs/plan.md](../../docs/plan.md#verificación).
+Los tests de cada fase están listados en [docs/plan.md](../../docs/plan.md#verificación).
 
 | Nota | De qué trata |
 |---|---|
+| [Tests de estadísticas](estadisticas.md) | En 26.3 `assertValueEqual(actual, esperado, …)`: al revés, el mensaje miente · los jugadores de prueba no tickean (conexión falsa), así que lo que vanilla hace "en el próximo tick" no pasa · supervivencia con `entrar()`, no `makeMockServerPlayerInLevel` · morir = `respawn(j, false, KILLED)`, End = `true` · guardar/cargar sacando `"UUID"` · el jugador de prueba no es op · comentá el registro del evento para ver que el test falla |
