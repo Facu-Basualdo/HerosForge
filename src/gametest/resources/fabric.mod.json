@@ -1,0 +1,15 @@
+{
+	"schemaVersion": 1,
+	"id": "estadisticasrpg-test",
+	"version": "1.0.0",
+	"name": "Estadísticas RPG - Tests",
+	"environment": "*",
+	"entrypoints": {
+		"fabric-gametest": [
+			"com.estadisticasrpg.test.EstadisticasRPGGameTest"
+		]
+	},
+	"depends": {
+		"estadisticasrpg": "*"
+	}
+}

@@ -1,0 +1,45 @@
+# gradle
+
+.gradle/
+build/
+out/
+classes/
+
+# eclipse
+
+*.launch
+
+# idea
+
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# vscode
+
+.settings/
+.vscode/
+bin/
+.classpath
+.project
+
+# claude code (los permisos locales son de cada uno; .claude/commands sí va)
+
+.claude/settings.local.json
+
+# macos
+
+*.DS_Store
+
+# fabric
+
+run/
+run-client2/
+
+# java
+
+hs_err_*.log
+replay_*.log
+*.hprof
+*.jfr

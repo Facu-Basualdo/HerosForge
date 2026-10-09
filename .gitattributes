@@ -1,0 +1,15 @@
+#
+# https://help.github.com/articles/dealing-with-line-endings/
+#
+# Todo lo de texto se guarda con LF en el repo, aunque se edite en Windows
+* text=auto
+
+# El script de Linux tiene que tener LF
+/gradlew        text eol=lf
+
+# Los scripts de Windows, CRLF
+*.bat           text eol=crlf
+
+# Binarios: que git no les toque los finales de línea
+*.jar           binary
+*.png           binary
