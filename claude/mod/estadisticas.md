@@ -50,10 +50,11 @@ Comprobado con el gametest `alReaparecerConservaPuntosYVida`: sin el registro de
 - **El modo creativo paga igual.** Si fuera gratis, alcanzaría con pasar a creativo, comprar todo y volver.
 - `Mejoras.dar` (comando `dar`) no cobra pero **respeta el tope**.
 - `Mejoras.mensaje(Compra)` arma el texto para el jugador; lo usan el comando y el menú (ver [Menú de estadísticas](menu.md)).
+- **Los efectos van dentro de `comprar`** (`Mejoras.efectos`): si compró, sonido de subir de nivel y partículas `HAPPY_VILLAGER`; si no, el "no" del aldeano. Desde el menú, la barra de acción queda opacada detrás del cofre, y el sonido es lo que avisa que no se compró. `dar` no tiene efectos. Se usa `level.playSound(null, …)`, que lo escuchan todos los que están cerca, incluido el que compra: con el jugador como primer argumento, vanilla se lo saltearía justo a él.
 
 ## Config y topes
 
-`Configuracion.POR_DEFECTO` tiene el costo y una `Mejora(porPunto, tope)` por estadística. **Ningún número de balance va fuera de `Configuracion`.**
+`Configuracion.POR_DEFECTO` tiene el costo y una `Mejora(porPunto, tope)` por estadística. **Ningún número de balance va fuera de `Configuracion`.** El archivo `config/estadisticasrpg.json` pisa esos valores: cómo se lee, valida y recarga está en [Configuración](configuracion.md).
 
 - **Si se baja un tope, los puntos de más se conservan pero no suman:** `Mejora.efecto` usa `min(puntos, tope)`. Si se vuelve a subir el tope, vuelven a contar sin que el jugador pague de nuevo.
 - `Configuracion.de(estadistica)` devuelve `null` si falta en el mapa, y entonces `aplicar` y `comprar` revientan con NPE. **Cada valor de `Estadistica` tiene que estar en `POR_DEFECTO`.**
@@ -107,5 +108,6 @@ Con `ADD_MULTIPLIED_BASE`, el porcentaje se aplica sobre la base **más todos lo
 
 - [Tests de estadísticas](../tests/estadisticas.md)
 - [Menú de estadísticas](menu.md)
+- [Configuración](configuracion.md)
 - [Minecraft 26.x sin ofuscar](../general/minecraft-26-sin-ofuscar.md)
 - [Probar en el juego](../general/probar-en-el-juego.md)

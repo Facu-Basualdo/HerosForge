@@ -37,6 +37,7 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 	private final SimpleContainer muestra = new SimpleContainer(TAMANIO);
 	private int nivelesMostrados = -1;
 	private @Nullable PuntosDelJugador puntosMostrados;
+	private @Nullable Configuracion configMostrada;
 
 	private MenuDeEstadisticas(int id, ServerPlayer jugador) {
 		super(MenuType.GENERIC_9x3, id);
@@ -113,10 +114,10 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 		return true;
 	}
 
-	/** Si cambian los niveles (juntó experiencia) o los puntos (un op usó {@code dar}) con el menú abierto. */
+	/** Si cambian los niveles (juntó experiencia), los puntos (un op usó {@code dar}) o la config ({@code recargar}) con el menú abierto. */
 	@Override
 	public void broadcastChanges() {
-		if (jugador.experienceLevel != nivelesMostrados || !Mejoras.puntos(jugador).equals(puntosMostrados)) {
+		if (jugador.experienceLevel != nivelesMostrados || !Mejoras.puntos(jugador).equals(puntosMostrados) || EstadisticasRPG.config() != configMostrada) {
 			redibujar();
 		}
 		super.broadcastChanges();
@@ -134,6 +135,7 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 		}
 		nivelesMostrados = jugador.experienceLevel;
 		puntosMostrados = puntos;
+		configMostrada = config;
 	}
 
 	private ItemStack info(Configuracion config) {

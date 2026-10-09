@@ -1,8 +1,12 @@
 package com.estadisticasrpg;
 
 import net.minecraft.core.Holder;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -39,6 +43,7 @@ public final class Mejoras {
 		int comprados = Math.min(cantidad, Math.min(margen, alcanzan));
 		Resultado resultado = comprados == cantidad ? Resultado.OK : margen <= alcanzan ? Resultado.TOPE : Resultado.SIN_NIVELES;
 		if (comprados == 0) {
+			efectos(jugador, false);
 			return new Compra(estadistica, cantidad, 0, resultado);
 		}
 
@@ -46,6 +51,7 @@ public final class Mejoras {
 		// vanilla sólo la reenvía cuando cambia totalExperience y bajar niveles no lo toca
 		jugador.giveExperienceLevels(-config.costoPorPunto() * comprados);
 		sumar(jugador, estadistica, comprados);
+		efectos(jugador, true);
 		return new Compra(estadistica, cantidad, comprados, resultado);
 	}
 
@@ -123,6 +129,18 @@ public final class Mejoras {
 
 	static String niveles(int cantidad) {
 		return cantidad + (cantidad == 1 ? " nivel" : " niveles");
+	}
+
+	/** Con sonido para todos los que están cerca: comprar es un momento, como subir de nivel. */
+	private static void efectos(ServerPlayer jugador, boolean compro) {
+		ServerLevel level = jugador.level();
+		if (compro) {
+			level.playSound(null, jugador.getX(), jugador.getY(), jugador.getZ(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.6f, 1.4f);
+			level.sendParticles(ParticleTypes.HAPPY_VILLAGER, jugador.getX(), jugador.getY() + 1, jugador.getZ(), 12, 0.4, 0.6, 0.4, 0);
+		} else {
+			// Desde el menú, el mensaje de la barra de acción queda opacado detrás del cofre: el sonido avisa que no se compró
+			level.playSound(null, jugador.getX(), jugador.getY(), jugador.getZ(), SoundEvents.VILLAGER_NO, SoundSource.PLAYERS, 0.5f, 1.0f);
+		}
 	}
 
 	private static void sumar(ServerPlayer jugador, Estadistica estadistica, int cantidad) {

@@ -23,6 +23,7 @@ Los gametests cubren la lógica, pero no muestran cómo se ve el menú en un cli
 | `/xp add @s 30 levels` | Tener niveles para comprar |
 | `/estadisticas` | Abrir el menú |
 | `/estadisticas dar <jugador> <estadistica> <cantidad>` | Saltear el costo (op) |
+| `/estadisticas recargar` | Probar cambios en `run/config/estadisticasrpg.json` sin reiniciar el servidor (op) |
 | `/attribute @s minecraft:max_health get` | Ver el valor real del atributo con los puntos |
 | `/kill @s` | Confirmar que los puntos y la vida máxima siguen después de reaparecer |
 

@@ -28,7 +28,7 @@ Paquete `com.estadisticasrpg`. **En principio no hace falta ningún mixin**: los
 | Archivo | Responsabilidad |
 |---|---|
 | `EstadisticasRPG.java` | Entrypoint `main`: registra el attachment, los eventos (`JOIN`, `COPY_FROM`) y el comando |
-| `Configuracion.java` | Record con costo, valor por punto y tope de cada estadística, con valores por defecto. En la fase 4 se carga de `config/estadisticasrpg.json` con Gson |
+| `Configuracion.java` | Record con costo, valor por punto y tope de cada estadística, con valores por defecto. Se carga de `config/estadisticasrpg.json` con Gson en `ArchivoDeConfiguracion` |
 | `Estadistica.java` | Enum con cada estadística: id (`vida`, `danio`…), atributo(s), operación, ítem que la representa en el menú y nombre en castellano |
 | `PuntosDelJugador.java` | Record **inmutable** `Map<Estadistica, Integer>` con su `Codec`. Es el valor del attachment |
 | `Mejoras.java` | `comprar(ServerPlayer, Estadistica, cantidad)` → `Compra(estadistica, pedidos, comprados, resultado)`: `resultado` es `OK`, o `TOPE`/`SIN_NIVELES` según qué cortó la compra (con `comprados == 0` no se compró nada) · `aplicar(ServerPlayer)` pone o quita los modificadores según los puntos · `reiniciar` |
@@ -131,7 +131,7 @@ Permisos con `Commands.hasPermission(Commands.LEVEL_GAMEMASTERS)` (en 26.3 no ex
 1. **Base** (0.1.0) — **hecha**: `Configuracion`, `Estadistica` con **vida, daño, armadura y velocidad**, attachment `PUNTOS`, `comprar`, `aplicar`, `JOIN` y respawn, comandos `ver`, `subir`, `dar` y `reiniciar`.
 2. **Menú** (0.2.0) — **hecha**: `MenuDeEstadisticas` y `/estadisticas` sin argumentos lo abre.
 3. **Más estadísticas** (0.3.0) — **hecha**: velocidad de ataque, minado, alcance, empuje y suerte.
-4. **Config y pulido** (0.4.0): `config/estadisticasrpg.json`, `recargar`, sonidos y partículas al comprar, README completo.
+4. **Config y pulido** (0.4.0) — **hecha**: `config/estadisticasrpg.json`, `recargar`, sonidos y partículas al comprar, README completo.
 5. **Opcional — con Inventario Compartido** (0.5.0): puntos del grupo si los dos mods están cargados (`FabricLoader.isModLoaded("inventariocompartido")`).
 
 ## Verificación

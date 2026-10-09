@@ -11,6 +11,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -47,7 +48,10 @@ public final class ComandoEstadisticas {
 				.then(Commands.literal("reiniciar")
 						.requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
 						.then(Commands.argument("jugador", EntityArgument.player())
-								.executes(ComandoEstadisticas::reiniciar))));
+								.executes(ComandoEstadisticas::reiniciar)))
+				.then(Commands.literal("recargar")
+						.requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+						.executes(ComandoEstadisticas::recargar)));
 
 		// Un redirect no hereda el executes del nodo destino: sin el propio, "/stats" solo no haría nada
 		dispatcher.register(Commands.literal("stats")
@@ -119,6 +123,18 @@ public final class ComandoEstadisticas {
 		ServerPlayer jugador = EntityArgument.getPlayer(ctx, "jugador");
 		Mejoras.reiniciar(jugador);
 		ctx.getSource().sendSuccess(() -> Component.literal("Las estadísticas de " + jugador.getName().getString() + " volvieron a 0"), true);
+		return 1;
+	}
+
+	private static int recargar(CommandContext<CommandSourceStack> ctx) {
+		CommandSourceStack fuente = ctx.getSource();
+		ArchivoDeConfiguracion.Lectura lectura = EstadisticasRPG.recargar(fuente.getServer());
+		lectura.avisos().forEach(aviso -> fuente.sendSuccess(() -> Component.literal(aviso).withStyle(ChatFormatting.YELLOW), false));
+		if (!lectura.ok()) {
+			fuente.sendFailure(Component.literal("Se sigue usando la config anterior"));
+			return 0;
+		}
+		fuente.sendSuccess(() -> Component.literal("Config recargada" + (lectura.avisos().isEmpty() ? "" : " (con " + lectura.avisos().size() + " avisos)")), true);
 		return 1;
 	}
 

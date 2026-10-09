@@ -2,9 +2,11 @@
 
 Mod de Fabric para **Minecraft Java 26.3** para mejorar a tu personaje estilo RPG. Pagás **1 nivel de experiencia** y subís **1 punto** de la estadística que quieras: más vida, más daño, más armadura, más velocidad… Los puntos son tuyos para siempre: no se pierden al morir.
 
-> **Estado:** en desarrollo. Ya se pueden comprar las 9 estadísticas desde el menú o por comando; falta poder cambiar los números en un archivo de config ([docs/plan.md](docs/plan.md)).
+> **Estado:** las 9 estadísticas, el menú y la config están hechos. Falta probarlo a fondo en un servidor real y, opcionalmente, la integración con Inventario Compartido ([docs/plan.md](docs/plan.md)).
 
 ## En el juego
+
+Valores por defecto (se cambian en la [config](#configuración)):
 
 | Estadística | Id | Por punto | Máximo |
 |---|---|---|---|
@@ -18,11 +20,12 @@ Mod de Fabric para **Minecraft Java 26.3** para mejorar a tu personaje estilo RP
 | Resistencia al empuje | `empuje` | +5 % | +50 % |
 | Suerte (al pescar) | `suerte` | +0,5 | +3 |
 
-- **Cada punto cuesta 1 nivel**, igual que encantar: conviene comprar cuando te sobra un nivel, no acumular.
+- **Cada punto cuesta 1 nivel** (por defecto), igual que encantar: un nivel vale más experiencia cuanto más alto estás, así que conviene comprar cuando te sobra uno, no acumular.
 - **Se compra lo que entra:** si pedís 5 y te faltan niveles o llegás al máximo antes, se compran los que se pueda y se cobran sólo esos.
 - **Los puntos son para siempre:** se conservan al morir, al reconectar y al volver del End, y reaparecés con la vida llena contando los corazones extra.
 - Al comprar vida, el corazón nuevo aparece lleno.
-- Los números son los de por defecto; se van a poder cambiar en `config/estadisticasrpg.json`.
+- Comprar suena como subir de nivel y suelta unas chispas verdes; si no te alcanza o ya estás al máximo, suena el "no" del aldeano.
+- **El modo creativo paga igual**: si no, alcanzaría con pasar a creativo, comprar todo y volver.
 
 ### El menú
 
@@ -43,8 +46,42 @@ Mod de Fabric para **Minecraft Java 26.3** para mejorar a tu personaje estilo RP
 | `/estadisticas subir <estadística> [cantidad]` | Compra puntos (por defecto, 1) | todos |
 | `/estadisticas dar <jugador> <estadística> <cantidad>` | Da puntos sin cobrar, hasta el máximo | op |
 | `/estadisticas reiniciar <jugador>` | Pone todo en 0 sin devolver los niveles | op |
+| `/estadisticas recargar` | Vuelve a leer `config/estadisticasrpg.json` y lo aplica a los que están conectados | op |
 
 `/stats` sirve en lugar de `/estadisticas` en todos.
+
+## Configuración
+
+Al arrancar por primera vez, el servidor crea `config/estadisticasrpg.json` con los valores por defecto:
+
+```json
+{
+  "costoPorPunto": 1,
+  "estadisticas": {
+    "vida": { "porPunto": 2.0, "tope": 10 },
+    "danio": { "porPunto": 0.5, "tope": 10 },
+    ...
+  }
+}
+```
+
+| Campo | Qué es |
+|---|---|
+| `costoPorPunto` | Niveles que cuesta cada punto (entero, 0 o más; con 0 es gratis) |
+| `porPunto` | Cuánto suma cada punto, en las unidades del atributo de Minecraft: la vida va en medios corazones (`2.0` = 1 corazón), y los porcentajes como fracción (`0.02` = 2 %). Mayor que 0 |
+| `tope` | Máximo de puntos de esa estadística (entero, 0 o más; con 0 no se puede comprar) |
+
+- Después de editarlo, `/estadisticas recargar` lo aplica sin reiniciar el servidor.
+- **Un valor inválido no rompe nada:** se usa el de por defecto para ese campo y `recargar` (o el log, al arrancar) dice cuál. Si el JSON está roto, se sigue usando la config anterior y el archivo no se toca.
+- Si le falta una estadística (por ejemplo, después de actualizar el mod), se agrega sola al archivo con sus valores por defecto.
+- **Bajar un tope no le quita puntos a nadie:** los de más se guardan pero no suman, y vuelven a contar si lo subís de nuevo.
+
+## Con Inventario Compartido
+
+Se puede usar junto con Inventario Compartido (el mod que comparte inventario, vida y experiencia entre todos los jugadores), pero hay dos cosas para saber:
+
+- **La experiencia es compartida:** lo que compra cualquiera sale de los niveles de todos.
+- **La vida es compartida, pero la vida máxima no:** cada uno tiene sus corazones extra, y el que tiene menos le corta la vida al grupo. Conviene que todos suban la vida parejo.
 
 ## Requisitos
 
@@ -87,10 +124,11 @@ Las pruebas verifican que:
 - guardar y cargar al jugador conserva los puntos y la vida (aunque sea más de 20);
 - una estadística desconocida en el archivo guardado no borra las demás;
 - `reiniciar` deja todo en 0 y la vida no queda por encima del máximo;
-- los comandos `subir`, el alias `/stats` y el permiso de op de `dar` funcionan.
-- en el menú, un click compra 1 y shift + click compra 5, y ningún ítem de muestra se puede sacar (doble click, arrastrar, teclas numéricas, tirar) ni se puede meter nada.
+- los comandos `subir`, el alias `/stats`, `dar` y `recargar` funcionan, y `dar` sólo para op;
+- en el menú, un click compra 1 y shift + click compra 5, y ningún ítem de muestra se puede sacar (doble click, arrastrar, teclas numéricas, tirar) ni se puede meter nada;
 - las 9 estadísticas al máximo dan los valores de la tabla, y las que tiene que ver el cliente (velocidad, velocidad de ataque, minado y alcance) se le mandan al cliente vanilla;
-- toda estadística tiene sus números en la config y su lugar en el menú.
+- toda estadística tiene sus números en la config y su lugar en el menú;
+- la config se crea con los valores por defecto, respeta lo que cambiaste, avisa de lo inválido sin pisarlo, completa lo que falta, no usa un JSON roto, y un cambio se aplica a los que están conectados.
 
 Para probar a mano, mirá [claude/general/probar-en-el-juego.md](claude/general/probar-en-el-juego.md).
 

@@ -1,0 +1,61 @@
+# Configuración
+
+[← Índice Mod](INDICE.md)
+
+Síntomas que esta nota evita: un dueño de servidor escribe mal un tope y pierde todos sus números; después de actualizar el mod, una estadística nueva no aparece en el archivo y nadie sabe que existe; `recargar` cambia los números pero los jugadores conectados siguen con los viejos; el menú abierto muestra el costo anterior.
+
+## Dónde y cómo
+
+`config/estadisticasrpg.json` (`EstadisticasRPG.archivoDeConfiguracion()`, con `FabricLoader.getConfigDir()`). Se lee en `onInitialize` y con `/estadisticas recargar` (op).
+
+```json
+{
+  "costoPorPunto": 1,
+  "estadisticas": {
+    "vida": { "porPunto": 2.0, "tope": 10 },
+    ...
+  }
+}
+```
+
+**`porPunto` va en las unidades del atributo de vanilla**, no en las que ve el jugador: la vida en medios corazones (`2.0` = 1 corazón) y las de `ADD_MULTIPLIED_BASE` como fracción (`0.02` = +2 %). Las claves de `estadisticas` son los `Estadistica.id()`: **por eso un id no se renombra nunca**, igual que en el attachment (ver [Estadísticas](estadisticas.md#formato-en-disco)).
+
+`Configuracion.POR_DEFECTO` sigue siendo la fuente de los valores por defecto. El archivo sólo los pisa.
+
+## Leer: un error no tira abajo todo
+
+`ArchivoDeConfiguracion.cargar(Path)` devuelve una `Lectura(config, avisos)`. La config es `null` sólo si el archivo no se puede usar.
+
+| Caso | Resultado | ¿Reescribe el archivo? |
+|---|---|---|
+| No existe | `POR_DEFECTO` | Sí, lo crea |
+| JSON roto, o no es un objeto | `config == null` + 1 aviso; **quien llama se queda con la config que tenía** | **No**: es el archivo del dueño, que lo arregle él |
+| Campo inválido (no es número, `porPunto <= 0`, entero negativo o con decimales) | Ese campo con el valor por defecto + aviso | No |
+| Id que no es una estadística | Se ignora + aviso | No |
+| Falta una estadística, `costoPorPunto` o `estadisticas`, **sin avisos** | Lo que falta con el valor por defecto | **Sí, con lo leído** (no con los valores por defecto), así aparecen las estadísticas nuevas de una actualización |
+
+- **Con avisos no se reescribe nunca,** aunque falte algo: si no, el valor mal escrito se reemplazaría por el de por defecto y el dueño perdería lo que quiso poner. Primero que corrija; en la próxima lectura sin avisos se completa.
+- **`porPunto` tiene que ser mayor que 0:** con uno negativo, el jugador pagaría niveles para empeorar.
+- `costoPorPunto` 0 es válido (gratis), y `tope` 0 también (la estadística no se puede comprar y en el menú aparece como vidrio gris).
+- Al arrancar, los avisos van al log con `[config]`; con `recargar`, al que ejecutó el comando, en amarillo.
+
+## Aplicar: los conectados ya, los demás al entrar
+
+`EstadisticasRPG.usar(config, servidor)` cambia la config y llama a `Mejoras.aplicar` para **cada jugador conectado**. Los que no están conectados la toman en `JOIN`, que también llama a `aplicar` (ver [Estadísticas](estadisticas.md)).
+
+Como los puntos son la fuente de verdad, cambiar la config **nunca toca los puntos**, sólo lo que valen:
+
+- **Bajar un tope:** los puntos de más se guardan pero no suman (`Mejora.efecto` usa `min(puntos, tope)`). Si se vuelve a subir, vuelven a contar sin pagar de nuevo.
+- **Bajar la vida:** `aplicar` recorta la vida actual en el momento.
+
+**El menú abierto se redibuja solo**, porque `MenuDeEstadisticas.broadcastChanges` compara `EstadisticasRPG.config()` con la última config que dibujó, **por identidad** (`!=`). Cada `usar` pone un objeto nuevo, así que siempre redibuja, aunque los valores sean iguales. Ver [Menú de estadísticas](menu.md).
+
+## La config es global
+
+`EstadisticasRPG.config` es un `static volatile`: hay una sola por servidor. **Un test que la cambie tiene que restaurarla en un `finally`** (ver [Tests de configuración](../tests/configuracion.md)).
+
+## Ver también
+
+- [Estadísticas: puntos, compra y aplicación](estadisticas.md)
+- [Menú de estadísticas](menu.md)
+- [Tests de configuración](../tests/configuracion.md)

@@ -1,7 +1,12 @@
 package com.estadisticasrpg.test;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -9,6 +14,8 @@ import com.mojang.authlib.GameProfile;
 import io.netty.channel.embedded.EmbeddedChannel;
 import org.jspecify.annotations.Nullable;
 
+import com.estadisticasrpg.ArchivoDeConfiguracion;
+import com.estadisticasrpg.Configuracion;
 import com.estadisticasrpg.Estadistica;
 import com.estadisticasrpg.EstadisticasRPG;
 import com.estadisticasrpg.MenuDeEstadisticas;
@@ -24,6 +31,7 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
@@ -267,6 +275,13 @@ public class EstadisticasRPGGameTest {
 		ejecutar(helper, jugador, "estadisticas subir inexistente");
 		helper.assertValueEqual(jugador.experienceLevel, 2, "Una estadística que no existe no cobra");
 
+		// Desde la consola (op): dar funciona, y recargar lee el archivo del servidor de prueba sin romper nada
+		MinecraftServer servidor = helper.getLevel().getServer();
+		servidor.getCommands().performPrefixedCommand(servidor.createCommandSourceStack(), "estadisticas dar comandante vida 5");
+		helper.assertValueEqual(Mejoras.puntos(jugador).de(Estadistica.VIDA), 7, "dar desde la consola");
+		servidor.getCommands().performPrefixedCommand(servidor.createCommandSourceStack(), "estadisticas recargar");
+		helper.assertValueEqual(jugador.getAttributeValue(Attributes.MAX_HEALTH), 34.0, "Después de recargar, los puntos siguen aplicados");
+
 		salir(helper, jugador);
 		helper.succeed();
 	}
@@ -340,6 +355,101 @@ public class EstadisticasRPGGameTest {
 		helper.assertTrue(menu.getSlot(primeroDelJugador + 1).getItem().is(Items.DIRT), "Shift + click desde el inventario no mueve nada");
 
 		jugador.closeContainer();
+		salir(helper, jugador);
+		helper.succeed();
+	}
+
+	@GameTest
+	public void configNuevaSeCreaConLosValoresPorDefecto(GameTestHelper helper) throws IOException {
+		Path archivo = Files.createTempDirectory("estadisticasrpg").resolve("estadisticasrpg.json");
+
+		ArchivoDeConfiguracion.Lectura creada = ArchivoDeConfiguracion.cargar(archivo);
+		helper.assertTrue(Files.exists(archivo), "Se crea el archivo");
+		helper.assertValueEqual(creada.config(), Configuracion.POR_DEFECTO, "Con los valores por defecto");
+
+		ArchivoDeConfiguracion.Lectura releida = ArchivoDeConfiguracion.cargar(archivo);
+		helper.assertValueEqual(releida.config(), Configuracion.POR_DEFECTO, "Leer lo que se escribió da lo mismo");
+		helper.assertValueEqual(releida.avisos(), List.of(), "Sin avisos");
+		helper.succeed();
+	}
+
+	@GameTest
+	public void configRespetaLoCambiadoYAvisaLoInvalido(GameTestHelper helper) throws IOException {
+		Path archivo = Files.createTempDirectory("estadisticasrpg").resolve("estadisticasrpg.json");
+		String escrito = """
+				{
+				  "costoPorPunto": 2,
+				  "estadisticas": {
+				    "vida": { "porPunto": 4, "tope": 5 },
+				    "danio": { "porPunto": -1, "tope": 3 },
+				    "armadura": { "tope": "mucho" },
+				    "volar": { "porPunto": 1, "tope": 1 }
+				  }
+				}
+				""";
+		Files.writeString(archivo, escrito);
+
+		ArchivoDeConfiguracion.Lectura lectura = ArchivoDeConfiguracion.cargar(archivo);
+		Configuracion config = lectura.config();
+		helper.assertValueEqual(config.costoPorPunto(), 2, "costoPorPunto");
+		helper.assertValueEqual(config.de(Estadistica.VIDA), new Configuracion.Mejora(4, 5), "vida, como la escribió");
+		helper.assertValueEqual(config.de(Estadistica.DANIO), new Configuracion.Mejora(0.5, 3), "daño: el porPunto negativo vuelve al de por defecto, el tope se respeta");
+		helper.assertValueEqual(config.de(Estadistica.ARMADURA), Configuracion.POR_DEFECTO.de(Estadistica.ARMADURA), "armadura: un tope que no es número vuelve al de por defecto");
+		helper.assertValueEqual(config.de(Estadistica.SUERTE), Configuracion.POR_DEFECTO.de(Estadistica.SUERTE), "Una que falta usa la de por defecto");
+		helper.assertValueEqual(lectura.avisos().size(), 3, "Avisa del porPunto negativo, el tope que no es número y \"volar\" (" + lectura.avisos() + ")");
+		helper.assertValueEqual(Files.readString(archivo), escrito, "Con avisos no se reescribe: el dueño corrige lo que escribió mal");
+		helper.succeed();
+	}
+
+	@GameTest
+	public void configSinAvisosAgregaLasQueFaltan(GameTestHelper helper) throws IOException {
+		Path archivo = Files.createTempDirectory("estadisticasrpg").resolve("estadisticasrpg.json");
+		Files.writeString(archivo, "{ \"costoPorPunto\": 3, \"estadisticas\": { \"vida\": { \"porPunto\": 1, \"tope\": 20 } } }");
+
+		ArchivoDeConfiguracion.cargar(archivo);
+		Configuracion releida = ArchivoDeConfiguracion.cargar(archivo).config();
+		helper.assertValueEqual(releida.costoPorPunto(), 3, "Se conserva el costo");
+		helper.assertValueEqual(releida.de(Estadistica.VIDA), new Configuracion.Mejora(1, 20), "Se conserva la vida");
+		String texto = Files.readString(archivo);
+		for (Estadistica estadistica : Estadistica.values()) {
+			helper.assertTrue(texto.contains("\"" + estadistica.id() + "\""), "El archivo ahora tiene " + estadistica.id());
+		}
+		helper.succeed();
+	}
+
+	@GameTest
+	public void configRotaNoSeUsa(GameTestHelper helper) throws IOException {
+		Path archivo = Files.createTempDirectory("estadisticasrpg").resolve("estadisticasrpg.json");
+		Files.writeString(archivo, "{ \"costoPorPunto\": 2, ");
+
+		ArchivoDeConfiguracion.Lectura lectura = ArchivoDeConfiguracion.cargar(archivo);
+		helper.assertTrue(!lectura.ok(), "Un JSON roto no da config");
+		helper.assertValueEqual(lectura.avisos().size(), 1, "Dice por qué");
+		helper.assertValueEqual(Files.readString(archivo), "{ \"costoPorPunto\": 2, ", "No se pisa el archivo del dueño");
+		helper.succeed();
+	}
+
+	/** Cambia la config global: se restaura en el finally antes de que corra cualquier otro test. */
+	@GameTest
+	public void cambiarLaConfigSeAplicaALosConectados(GameTestHelper helper) {
+		ServerPlayer jugador = entrar(helper, "reconfigurado");
+		Mejoras.dar(jugador, Estadistica.VIDA, 2);
+		MinecraftServer servidor = helper.getLevel().getServer();
+		Map<Estadistica, Configuracion.Mejora> mejoras = new EnumMap<>(Configuracion.POR_DEFECTO.mejoras());
+		mejoras.put(Estadistica.VIDA, new Configuracion.Mejora(4, 1));
+		try {
+			EstadisticasRPG.usar(new Configuracion(3, mejoras), servidor);
+			helper.assertValueEqual(jugador.getAttributeValue(Attributes.MAX_HEALTH), 24.0, "Con el tope en 1, los 2 puntos valen como 1 de 4");
+			helper.assertValueEqual(Mejoras.puntos(jugador).de(Estadistica.VIDA), 2, "Bajar el tope no borra puntos");
+
+			jugador.setExperienceLevels(5);
+			Mejoras.comprar(jugador, Estadistica.DANIO, 1);
+			helper.assertValueEqual(jugador.experienceLevel, 2, "Cobra el costo de la config");
+		} finally {
+			EstadisticasRPG.usar(Configuracion.POR_DEFECTO, servidor);
+		}
+		helper.assertValueEqual(jugador.getAttributeValue(Attributes.MAX_HEALTH), 24.0, "De vuelta: 2 puntos de 2");
+
 		salir(helper, jugador);
 		helper.succeed();
 	}
