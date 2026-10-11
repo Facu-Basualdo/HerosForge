@@ -82,7 +82,7 @@ public class EstadisticasRPGCliente implements ClientModInitializer {
 			return;
 		}
 		if (!servidorConElMod()) {
-			cliente.player.sendOverlayMessage(Component.literal("Este servidor no tiene Estadísticas RPG (o tiene una versión sin la pantalla)"));
+			cliente.player.sendOverlayMessage(Component.literal("Este servidor no tiene Hero's Forge (o tiene una versión sin la pantalla)"));
 			return;
 		}
 		if (config.usarPantalla()) {

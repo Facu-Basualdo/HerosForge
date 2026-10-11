@@ -2,7 +2,7 @@
 	"schemaVersion": 1,
 	"id": "estadisticasrpg-test",
 	"version": "1.0.0",
-	"name": "Estadísticas RPG - Tests",
+	"name": "Hero's Forge - Tests",
 	"environment": "*",
 	"entrypoints": {
 		"fabric-gametest": [

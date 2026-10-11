@@ -1,6 +1,8 @@
-# Estadísticas RPG
+# Hero's Forge
 
 Mod de Fabric para **Minecraft Java 26.3** para mejorar a tu personaje estilo RPG. Pagás **experiencia** y subís **puntos** de la estadística que quieras, hasta 100 en cada una: más vida, más daño (también con arco y ballesta), más armadura, más velocidad… Cada punto cuesta siempre lo mismo: **30 puntos de experiencia**. Los puntos son tuyos para siempre: no se pierden al morir.
+
+> Antes se llamaba **Estadísticas RPG**. Por dentro sigue con el id `estadisticasrpg` (el jar, `config/estadisticasrpg.json` y los puntos guardados), así que actualizar no le borra nada a nadie.
 
 > **Estado:** las 10 estadísticas, el menú, la config y los puntos compartidos con Inventario Compartido están hechos. Falta probarlo a fondo en un servidor real ([docs/plan.md](docs/plan.md)).
 
@@ -48,7 +50,7 @@ Cada estadística sube hasta **100 puntos**:
 
 Si además instalás el mod **en tu cliente**, tenés una pantalla propia para ver y subir las estadísticas, más cómoda que el cofre:
 
-- **Se abre con la tecla K** (se cambia en *Opciones → Controles → Estadísticas RPG*), **o desde el inventario (E)** con el botón de la botella de experiencia que aparece al lado del libro de recetas. Con el inventario abierto, la K también la abre.
+- **Se abre con la tecla K** (se cambia en *Opciones → Controles → Hero's Forge*), **o desde el inventario (E)** con el botón de la botella de experiencia que aparece al lado del libro de recetas. Con el inventario abierto, la K también la abre.
 - Una fila por estadística: tus puntos, lo que te dan y una barra que se llena hasta el máximo. Pasando el mouse por una fila ves lo que suma el próximo punto y cuánto cuesta.
 - **+1** compra 1 punto y **+5** compra 5 (o los que alcancen). Arriba dice cuánta experiencia tenés y para cuántos puntos te alcanza; abajo, cómo salió la última compra.
 - Se actualiza sola mientras juntás experiencia o si un op te da puntos.
