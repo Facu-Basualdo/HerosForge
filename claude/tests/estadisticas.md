@@ -10,21 +10,24 @@ Todo está en `EstadisticasRPGGameTest`. Cada test crea su propio jugador y lo s
 
 | Test | Qué verifica |
 |---|---|
-| `comprarVidaCobraUnNivelYLlenaElCorazon` | Con 5 niveles: queda en 4, `MAX_HEALTH` 22, vida 22; `aplicar` dos veces no apila |
+| `comprarVidaCobraUnNivelYLlenaLaVida` | Con 5 niveles: queda en 4, `MAX_HEALTH` 20,6, vida 20,6; `aplicar` dos veces no apila |
 | `sinNivelesNoCambiaNada` | `SIN_NIVELES`, 0 comprados, `MAX_HEALTH` sigue en 20 |
 | `enElTopeNoCobra` | `TOPE` sin cobrar; `dar` tampoco pasa el tope |
 | `compraLoQueEntra` | Pide 5 con 3 de margen → compra 3 (`TOPE`); pide 5 con 2 niveles → compra 2 (`SIN_NIVELES`) |
-| `velocidadEsPorcentajeDeLaBase` | 10 puntos → `MOVEMENT_SPEED` = base × 1,2 |
-| `alReaparecerConservaPuntosYVida` | Morir: puntos, `MAX_HEALTH` 40 y vida 40 · volver del End: vida actual (30) |
-| `guardarYCargarConservaPuntosYVida` | Guardar y cargar: puntos, `MAX_HEALTH` 40 y vida 33 |
+| `elCostoSubeConLosPuntosComprados` | Con `puntosPorAumento − 1` puntos repartidos en dos estadísticas: comprar 2 cobra 1 + 2 · el próximo cuesta 2 · con 1 nivel no compra · con 3 niveles y pidiendo 5 compra 1 |
+| `velocidadEsPorcentajeDeLaBase` | 100 puntos → `MOVEMENT_SPEED` = base × 1,2 |
+| `alReaparecerConservaPuntosYVida` | Morir: puntos, `MAX_HEALTH` 50 y vida 50 · volver del End: vida actual (30) |
+| `guardarYCargarConservaPuntosYVida` | Guardar y cargar: puntos, `MAX_HEALTH` 50 y vida 33 |
 | `unaEstadisticaDesconocidaNoBorraLasDemas` | El codec ignora un id que no existe y lee los demás |
 | `reiniciarDejaTodoEnCero` | Puntos vacíos, sin modificadores, vida recortada a 20 en el momento |
 | `comandos` | `subir` compra y cobra, `/stats` funciona, `dar` sin op no hace nada, una estadística desconocida no cobra |
-| `estadisticasDeLaFase3AlMaximo` | Velocidad de ataque 5,2 con la mano vacía · minado 1,5 · alcance 6,5 a bloques y 5 a entidades · empuje 0,5 · `getLuck()` 3 |
+| `estadisticasDeLaFase3AlMaximo` | Velocidad de ataque 5,2 con la mano vacía · minado 2 · alcance 6,5 a bloques y 5 a entidades · empuje 0,5 · `getLuck()` 3 |
 | `losAtributosQueUsaElClienteSeSincronizan` | Los atributos que calcula el cliente son `isClientSyncable()` (lista a mano: hay que sumar ahí cualquier estadística nueva que use el cliente) |
 | `cadaEstadisticaTieneConfigYSlot` | Toda `Estadistica` está en `Configuracion.POR_DEFECTO` y tiene un slot propio en la fila del medio del menú |
 
-Los valores con decimales (porcentajes, alcance) se comparan con `assertCerca` (tolerancia 1e-9), no con `assertValueEqual`: `0,1 × 1,2` no da exactamente `0,12` en `double`.
+Los valores con decimales (porcentajes, alcance, y la vida, que con 0,6 por punto casi nunca es entera) se comparan con `assertCerca`, no con `assertValueEqual`: `0,1 × 1,2` no da exactamente `0,12` en `double`. **La tolerancia es 1e-4 y no 1e-9 porque la vida actual es `float`:** `20,6f` pasado a `double` es 20,600000381…
+
+**Los números de los tests salen de `POR_DEFECTO`:** si se cambia un `porPunto` o un tope, hay que rehacer las cuentas acá (los topes de 100 obligan a `dar(…, 100)` para llegar al máximo). El test del costo lee `puntosPorAumento` de `POR_DEFECTO` para no depender del número.
 
 ## assertValueEqual va al revés de lo que parece
 

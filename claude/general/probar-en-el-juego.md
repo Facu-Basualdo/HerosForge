@@ -30,7 +30,7 @@ Los gametests cubren la lógica, pero no muestran cómo se ve el menú en un cli
 ## Qué mirar
 
 - Que la barra de experiencia baje **en el momento** de comprar, sin reconectar.
-- Que el corazón nuevo aparezca lleno al comprar vida, y que al reaparecer tengas la vida máxima con los puntos.
+- Que la vida nueva aparezca llena al comprar vida, y que al reaparecer tengas la vida máxima con los puntos.
 - En el menú: que el ítem no se pueda sacar ni quede "fantasma" en el cursor, y que el lore se actualice después de cada compra.
 - **Con un cliente vanilla sin el mod:** todo lo anterior tiene que verse igual, y los textos tienen que estar en castellano (no claves de traducción crudas). El mod no tiene que hacer falta del lado del cliente.
 

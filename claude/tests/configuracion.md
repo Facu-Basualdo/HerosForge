@@ -7,15 +7,17 @@ Síntoma que esta nota evita: un test cambia la config global, falla a la mitad,
 | Test | Qué verifica |
 |---|---|
 | `configNuevaSeCreaConLosValoresPorDefecto` | Sin archivo: lo crea con `POR_DEFECTO`, y leerlo de nuevo da lo mismo, sin avisos |
-| `configRespetaLoCambiadoYAvisaLoInvalido` | Respeta lo válido · `porPunto` negativo y `tope` que no es número vuelven al valor por defecto · ignora un id inexistente · 3 avisos · con avisos **no reescribe** el archivo |
-| `configSinAvisosAgregaLasQueFaltan` | Con sólo `vida` en el archivo: conserva lo escrito y agrega todas las demás |
+| `configRespetaLoCambiadoYAvisaLoInvalido` | Respeta lo válido (incluido `puntosPorAumento`) · `porPunto` negativo y `tope` que no es número vuelven al valor por defecto · ignora un id inexistente · 3 avisos · con avisos **no reescribe** el archivo |
+| `configSinAvisosAgregaLasQueFaltan` | Con sólo `costoPorPunto` y `vida` en el archivo: conserva lo escrito y agrega `puntosPorAumento` y todas las demás |
 | `configRotaNoSeUsa` | JSON cortado: `ok()` falso, 1 aviso, el archivo queda como estaba |
-| `cambiarLaConfigSeAplicaALosConectados` | `usar` reaplica a un jugador conectado · bajar el tope no borra puntos · `comprar` cobra el `costoPorPunto` nuevo |
+| `cambiarLaConfigSeAplicaALosConectados` | `usar` reaplica a un jugador conectado · bajar el tope no borra puntos · `comprar` cobra el `costoPorPunto` nuevo (con `puntosPorAumento` 0, para que el número no dependa del escalón) |
 | `comandos` (parte de consola) | `dar` y `recargar` desde `servidor.createCommandSourceStack()`, que es op |
 
 ## Archivos de prueba
 
 **Los tests de lectura usan `Files.createTempDirectory`, nunca el archivo real.** El servidor de gametest crea el suyo en `build/run/gameTest/config/estadisticasrpg.json` al arrancar, y `recargar` (en el test `comandos`) lee ése. Si un test lo editara, `recargar` cargaría esos valores para todos los tests que vienen después.
+
+**`runGameTest` borra `build/run/gameTest/config` antes de arrancar** (un `doFirst` en `build.gradle`). Ese archivo sobrevive entre corridas, y el mod no pisa un archivo que ya existe: después de cambiar `POR_DEFECTO`, los tests corrían con los valores viejos y fallaban con números que no tenían sentido (topes de 10 con el código pidiendo 100).
 
 ## Cambiar la config global
 

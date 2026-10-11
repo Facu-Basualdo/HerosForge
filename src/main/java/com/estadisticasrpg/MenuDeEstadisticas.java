@@ -140,7 +140,10 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 
 	private ItemStack info(Configuracion config) {
 		List<Component> lore = new ArrayList<>();
-		lore.add(texto("Cada punto cuesta " + Mejoras.niveles(config.costoPorPunto()), ChatFormatting.GRAY));
+		lore.add(texto("El próximo punto cuesta " + Mejoras.niveles(Mejoras.costoDelProximo(jugador)), ChatFormatting.GRAY));
+		if (config.puntosPorAumento() > 0) {
+			lore.add(texto("Sube 1 nivel cada " + config.puntosPorAumento() + " puntos comprados", ChatFormatting.GRAY));
+		}
 		if (Mejoras.puntosDelGrupo()) {
 			lore.add(texto("Los puntos son de todo el grupo:", ChatFormatting.GOLD));
 			lore.add(texto("lo que compra uno lo tienen todos", ChatFormatting.GOLD));
@@ -160,9 +163,10 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 		if (puntos >= mejora.tope()) {
 			return item(new ItemStack(Items.STAINED_GLASS_PANE.gray()), texto(estadistica.nombre() + " · máximo", ChatFormatting.GRAY), lore);
 		}
-		boolean alcanza = jugador.experienceLevel >= config.costoPorPunto();
+		int costo = Mejoras.costoDelProximo(jugador);
+		boolean alcanza = jugador.experienceLevel >= costo;
 		lore.add(texto("Próximo punto: " + estadistica.describir(mejora.porPunto()), ChatFormatting.AQUA));
-		lore.add(texto("Cuesta " + Mejoras.niveles(config.costoPorPunto()), alcanza ? ChatFormatting.GREEN : ChatFormatting.RED));
+		lore.add(texto("Cuesta " + Mejoras.niveles(costo), alcanza ? ChatFormatting.GREEN : ChatFormatting.RED));
 		ItemStack icono = item(new ItemStack(estadistica.icono()), texto(estadistica.nombre(), alcanza ? ChatFormatting.GREEN : ChatFormatting.RED), lore);
 		// La espada y el peto mostrarían su daño y su armadura de vanilla, que no tienen nada que ver con los puntos
 		icono.set(DataComponents.TOOLTIP_DISPLAY, new TooltipDisplay(false, new LinkedHashSet<>(List.of(DataComponents.ATTRIBUTE_MODIFIERS))));

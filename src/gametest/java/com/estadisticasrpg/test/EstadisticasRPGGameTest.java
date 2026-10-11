@@ -56,7 +56,7 @@ public class EstadisticasRPGGameTest {
 	}
 
 	@GameTest
-	public void comprarVidaCobraUnNivelYLlenaElCorazon(GameTestHelper helper) {
+	public void comprarVidaCobraUnNivelYLlenaLaVida(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "comprador");
 		jugador.setExperienceLevels(5);
 
@@ -65,11 +65,11 @@ public class EstadisticasRPGGameTest {
 		helper.assertValueEqual(compra.comprados(), 1, "Puntos comprados");
 		helper.assertValueEqual(jugador.experienceLevel, 4, "Niveles después de comprar");
 		helper.assertValueEqual(Mejoras.puntos(jugador).de(Estadistica.VIDA), 1, "Puntos de vida");
-		helper.assertValueEqual(jugador.getAttributeValue(Attributes.MAX_HEALTH), 22.0, "Vida máxima");
-		helper.assertValueEqual(jugador.getHealth(), 22.0f, "El corazón nuevo aparece lleno");
+		assertCerca(helper, jugador.getAttributeValue(Attributes.MAX_HEALTH), 20.6, "Vida máxima");
+		assertCerca(helper, jugador.getHealth(), 20.6, "La vida nueva aparece llena");
 
 		Mejoras.aplicar(jugador);
-		helper.assertValueEqual(jugador.getAttributeValue(Attributes.MAX_HEALTH), 22.0, "Aplicar dos veces no apila");
+		assertCerca(helper, jugador.getAttributeValue(Attributes.MAX_HEALTH), 20.6, "Aplicar dos veces no apila");
 
 		salir(helper, jugador);
 		helper.succeed();
@@ -92,7 +92,7 @@ public class EstadisticasRPGGameTest {
 	@GameTest
 	public void enElTopeNoCobra(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "topeado");
-		Mejoras.dar(jugador, Estadistica.VIDA, 10);
+		Mejoras.dar(jugador, Estadistica.VIDA, 100);
 		jugador.setExperienceLevels(5);
 
 		Mejoras.Compra compra = Mejoras.comprar(jugador, Estadistica.VIDA, 1);
@@ -109,22 +109,54 @@ public class EstadisticasRPGGameTest {
 	public void compraLoQueEntra(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "parcial");
 
-		// Corta el tope: 7 de 10, pide 5
-		Mejoras.dar(jugador, Estadistica.DANIO, 7);
+		// Corta el tope: 97 de 100, pide 5
+		Mejoras.dar(jugador, Estadistica.DANIO, 97);
 		jugador.setExperienceLevels(30);
 		Mejoras.Compra porTope = Mejoras.comprar(jugador, Estadistica.DANIO, 5);
 		helper.assertValueEqual(porTope.comprados(), 3, "Con 3 de margen compra 3");
 		helper.assertValueEqual(porTope.resultado(), Mejoras.Resultado.TOPE, "Lo cortó el tope");
 		helper.assertValueEqual(jugador.experienceLevel, 27, "Cobra sólo los 3");
-		helper.assertValueEqual(jugador.getAttributeValue(Attributes.ATTACK_DAMAGE), 6.0, "Daño: 1 de base + 10 × 0,5");
+		assertCerca(helper, jugador.getAttributeValue(Attributes.ATTACK_DAMAGE), 26.0, "Daño: 1 de base + 100 × 0,25");
 
-		// Cortan los niveles: margen 10, 2 niveles, pide 5
+		// Cortan los niveles: margen 100, 2 niveles, pide 5
 		jugador.setExperienceLevels(2);
 		Mejoras.Compra porNiveles = Mejoras.comprar(jugador, Estadistica.ARMADURA, 5);
 		helper.assertValueEqual(porNiveles.comprados(), 2, "Con 2 niveles compra 2");
 		helper.assertValueEqual(porNiveles.resultado(), Mejoras.Resultado.SIN_NIVELES, "Lo cortaron los niveles");
 		helper.assertValueEqual(jugador.experienceLevel, 0, "Gastó los 2 niveles");
-		helper.assertValueEqual(jugador.getAttributeValue(Attributes.ARMOR), 2.0, "Armadura");
+		assertCerca(helper, jugador.getAttributeValue(Attributes.ARMOR), 0.16, "Armadura");
+
+		salir(helper, jugador);
+		helper.succeed();
+	}
+
+	@GameTest
+	public void elCostoSubeConLosPuntosComprados(GameTestHelper helper) {
+		ServerPlayer jugador = entrar(helper, "veterano");
+		int aumento = Configuracion.POR_DEFECTO.puntosPorAumento();
+		// Repartidos en dos estadísticas: el costo cuenta el total, no los de cada una
+		Mejoras.dar(jugador, Estadistica.MINADO, 100);
+		Mejoras.dar(jugador, Estadistica.SUERTE, aumento - 101);
+		helper.assertValueEqual(Mejoras.costoDelProximo(jugador), 1, "Antes del escalón cuesta 1");
+
+		// El primero cuesta 1 y el segundo ya 2: comprar de a varios cobra cada uno con su costo
+		jugador.setExperienceLevels(10);
+		Mejoras.Compra compra = Mejoras.comprar(jugador, Estadistica.VIDA, 2);
+		helper.assertValueEqual(compra.comprados(), 2, "Compra los 2");
+		helper.assertValueEqual(jugador.experienceLevel, 7, "Cobra 1 + 2");
+		helper.assertValueEqual(compra.costoDelProximo(), 2, "El próximo cuesta 2");
+
+		jugador.setExperienceLevels(1);
+		Mejoras.Compra sinNiveles = Mejoras.comprar(jugador, Estadistica.VIDA, 1);
+		helper.assertValueEqual(sinNiveles.resultado(), Mejoras.Resultado.SIN_NIVELES, "Con 1 nivel no alcanza");
+		helper.assertValueEqual(jugador.experienceLevel, 1, "No cobra nada");
+
+		// Con 3 niveles y pidiendo 5, entra uno (cuesta 2) y el segundo ya no
+		jugador.setExperienceLevels(3);
+		Mejoras.Compra parcial = Mejoras.comprar(jugador, Estadistica.VIDA, 5);
+		helper.assertValueEqual(parcial.comprados(), 1, "Compra lo que alcanza");
+		helper.assertValueEqual(parcial.resultado(), Mejoras.Resultado.SIN_NIVELES, "Lo cortaron los niveles");
+		helper.assertValueEqual(jugador.experienceLevel, 1, "Cobra sólo el que compró");
 
 		salir(helper, jugador);
 		helper.succeed();
@@ -135,7 +167,7 @@ public class EstadisticasRPGGameTest {
 		ServerPlayer jugador = entrar(helper, "veloz");
 		double base = jugador.getAttributeBaseValue(Attributes.MOVEMENT_SPEED);
 
-		Mejoras.dar(jugador, Estadistica.VELOCIDAD, 10);
+		Mejoras.dar(jugador, Estadistica.VELOCIDAD, 100);
 		double velocidad = jugador.getAttributeValue(Attributes.MOVEMENT_SPEED);
 		helper.assertTrue(Math.abs(velocidad - base * 1.2) < 1e-9, "Velocidad +20 % (" + velocidad + ")");
 
@@ -152,7 +184,7 @@ public class EstadisticasRPGGameTest {
 
 		// Con la mano vacía: 4 de base × 1,3
 		assertCerca(helper, jugador.getAttributeValue(Attributes.ATTACK_SPEED), 5.2, "Velocidad de ataque +30 %");
-		assertCerca(helper, jugador.getAttributeValue(Attributes.BLOCK_BREAK_SPEED), 1.5, "Minado +50 %");
+		assertCerca(helper, jugador.getAttributeValue(Attributes.BLOCK_BREAK_SPEED), 2.0, "Minado +100 %");
 		assertCerca(helper, jugador.getAttributeValue(Attributes.BLOCK_INTERACTION_RANGE), 6.5, "Alcance a bloques: 4,5 + 2");
 		assertCerca(helper, jugador.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE), 5.0, "Alcance a entidades: 3 + 2");
 		assertCerca(helper, jugador.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE), 0.5, "Resistencia al empuje");
@@ -187,19 +219,19 @@ public class EstadisticasRPGGameTest {
 	@GameTest
 	public void alReaparecerConservaPuntosYVida(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "renacido");
-		Mejoras.dar(jugador, Estadistica.VIDA, 10);
+		Mejoras.dar(jugador, Estadistica.VIDA, 50);
 		PlayerList jugadores = helper.getLevel().getServer().getPlayerList();
 
 		// Al morir, restoreFrom pierde los modificadores y deja la vida en el máximo sin los puntos
 		ServerPlayer reaparecido = jugadores.respawn(jugador, false, Entity.RemovalReason.KILLED);
-		helper.assertValueEqual(Mejoras.puntos(reaparecido).de(Estadistica.VIDA), 10, "Los puntos sobreviven a la muerte");
-		helper.assertValueEqual(reaparecido.getAttributeValue(Attributes.MAX_HEALTH), 40.0, "La vida máxima sobrevive a la muerte");
-		helper.assertValueEqual(reaparecido.getHealth(), 40.0f, "Reaparece con la vida máxima con los puntos");
+		helper.assertValueEqual(Mejoras.puntos(reaparecido).de(Estadistica.VIDA), 50, "Los puntos sobreviven a la muerte");
+		assertCerca(helper, reaparecido.getAttributeValue(Attributes.MAX_HEALTH), 50.0, "La vida máxima sobrevive a la muerte");
+		assertCerca(helper, reaparecido.getHealth(), 50.0, "Reaparece con la vida máxima con los puntos");
 
 		// Volver del End copia todo, incluida la vida actual
 		reaparecido.setHealth(30);
 		ServerPlayer delEnd = jugadores.respawn(reaparecido, true, Entity.RemovalReason.CHANGED_DIMENSION);
-		helper.assertValueEqual(delEnd.getAttributeValue(Attributes.MAX_HEALTH), 40.0, "Volver del End no apila ni pierde");
+		assertCerca(helper, delEnd.getAttributeValue(Attributes.MAX_HEALTH), 50.0, "Volver del End no apila ni pierde");
 		helper.assertValueEqual(delEnd.getHealth(), 30.0f, "Volver del End conserva la vida actual");
 
 		salir(helper, delEnd);
@@ -209,7 +241,7 @@ public class EstadisticasRPGGameTest {
 	@GameTest
 	public void guardarYCargarConservaPuntosYVida(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "guardado");
-		Mejoras.dar(jugador, Estadistica.VIDA, 10);
+		Mejoras.dar(jugador, Estadistica.VIDA, 50);
 		jugador.setHealth(33);
 
 		TagValueOutput salida = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, jugador.registryAccess());
@@ -219,8 +251,8 @@ public class EstadisticasRPGGameTest {
 		salir(helper, jugador);
 
 		ServerPlayer cargado = entrar(helper, "guardado-otra-vez", guardado);
-		helper.assertValueEqual(Mejoras.puntos(cargado).de(Estadistica.VIDA), 10, "Los puntos se guardan");
-		helper.assertValueEqual(cargado.getAttributeValue(Attributes.MAX_HEALTH), 40.0, "La vida máxima se guarda");
+		helper.assertValueEqual(Mejoras.puntos(cargado).de(Estadistica.VIDA), 50, "Los puntos se guardan");
+		assertCerca(helper, cargado.getAttributeValue(Attributes.MAX_HEALTH), 50.0, "La vida máxima se guarda");
 		// Si los atributos se leyeran después que Health, la vida quedaría cortada en 20
 		helper.assertValueEqual(cargado.getHealth(), 33.0f, "La vida actual se guarda");
 
@@ -242,9 +274,9 @@ public class EstadisticasRPGGameTest {
 	@GameTest
 	public void reiniciarDejaTodoEnCero(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "reiniciado");
-		Mejoras.dar(jugador, Estadistica.VIDA, 10);
+		Mejoras.dar(jugador, Estadistica.VIDA, 50);
 		Mejoras.dar(jugador, Estadistica.VELOCIDAD, 4);
-		helper.assertValueEqual(jugador.getHealth(), 40.0f, "Arranca con 40 de vida");
+		assertCerca(helper, jugador.getHealth(), 50.0, "Arranca con 50 de vida");
 
 		Mejoras.reiniciar(jugador);
 		helper.assertValueEqual(Mejoras.puntos(jugador), PuntosDelJugador.vacio(), "Todos los puntos en 0");
@@ -281,7 +313,7 @@ public class EstadisticasRPGGameTest {
 		servidor.getCommands().performPrefixedCommand(servidor.createCommandSourceStack(), "estadisticas dar comandante vida 5");
 		helper.assertValueEqual(Mejoras.puntos(jugador).de(Estadistica.VIDA), 7, "dar desde la consola");
 		servidor.getCommands().performPrefixedCommand(servidor.createCommandSourceStack(), "estadisticas recargar");
-		helper.assertValueEqual(jugador.getAttributeValue(Attributes.MAX_HEALTH), 34.0, "Después de recargar, los puntos siguen aplicados");
+		assertCerca(helper, jugador.getAttributeValue(Attributes.MAX_HEALTH), 24.2, "Después de recargar, los puntos siguen aplicados");
 
 		salir(helper, jugador);
 		helper.succeed();
@@ -316,7 +348,7 @@ public class EstadisticasRPGGameTest {
 		helper.assertTrue(jugador.getInventory().getItem(0).isEmpty(), "La tecla numérica no pasa el ícono a la barra");
 
 		// Un op le da puntos con el menú abierto: se redibuja en el próximo broadcastChanges
-		Mejoras.dar(jugador, Estadistica.VIDA, 10);
+		Mejoras.dar(jugador, Estadistica.VIDA, 100);
 		menu.broadcastChanges();
 		helper.assertTrue(menu.getSlot(vida).getItem().is(Items.STAINED_GLASS_PANE.gray()), "En el máximo se ve vidrio gris");
 
@@ -380,6 +412,7 @@ public class EstadisticasRPGGameTest {
 		String escrito = """
 				{
 				  "costoPorPunto": 2,
+				  "puntosPorAumento": 10,
 				  "estadisticas": {
 				    "vida": { "porPunto": 4, "tope": 5 },
 				    "danio": { "porPunto": -1, "tope": 3 },
@@ -393,8 +426,9 @@ public class EstadisticasRPGGameTest {
 		ArchivoDeConfiguracion.Lectura lectura = ArchivoDeConfiguracion.cargar(archivo);
 		Configuracion config = lectura.config();
 		helper.assertValueEqual(config.costoPorPunto(), 2, "costoPorPunto");
+		helper.assertValueEqual(config.puntosPorAumento(), 10, "puntosPorAumento");
 		helper.assertValueEqual(config.de(Estadistica.VIDA), new Configuracion.Mejora(4, 5), "vida, como la escribió");
-		helper.assertValueEqual(config.de(Estadistica.DANIO), new Configuracion.Mejora(0.5, 3), "daño: el porPunto negativo vuelve al de por defecto, el tope se respeta");
+		helper.assertValueEqual(config.de(Estadistica.DANIO), new Configuracion.Mejora(Configuracion.POR_DEFECTO.de(Estadistica.DANIO).porPunto(), 3), "daño: el porPunto negativo vuelve al de por defecto, el tope se respeta");
 		helper.assertValueEqual(config.de(Estadistica.ARMADURA), Configuracion.POR_DEFECTO.de(Estadistica.ARMADURA), "armadura: un tope que no es número vuelve al de por defecto");
 		helper.assertValueEqual(config.de(Estadistica.SUERTE), Configuracion.POR_DEFECTO.de(Estadistica.SUERTE), "Una que falta usa la de por defecto");
 		helper.assertValueEqual(lectura.avisos().size(), 3, "Avisa del porPunto negativo, el tope que no es número y \"volar\" (" + lectura.avisos() + ")");
@@ -410,8 +444,10 @@ public class EstadisticasRPGGameTest {
 		ArchivoDeConfiguracion.cargar(archivo);
 		Configuracion releida = ArchivoDeConfiguracion.cargar(archivo).config();
 		helper.assertValueEqual(releida.costoPorPunto(), 3, "Se conserva el costo");
+		helper.assertValueEqual(releida.puntosPorAumento(), Configuracion.POR_DEFECTO.puntosPorAumento(), "El aumento que faltaba toma el de por defecto");
 		helper.assertValueEqual(releida.de(Estadistica.VIDA), new Configuracion.Mejora(1, 20), "Se conserva la vida");
 		String texto = Files.readString(archivo);
+		helper.assertTrue(texto.contains("\"puntosPorAumento\""), "El archivo ahora tiene puntosPorAumento");
 		for (Estadistica estadistica : Estadistica.values()) {
 			helper.assertTrue(texto.contains("\"" + estadistica.id() + "\""), "El archivo ahora tiene " + estadistica.id());
 		}
@@ -439,7 +475,7 @@ public class EstadisticasRPGGameTest {
 		Map<Estadistica, Configuracion.Mejora> mejoras = new EnumMap<>(Configuracion.POR_DEFECTO.mejoras());
 		mejoras.put(Estadistica.VIDA, new Configuracion.Mejora(4, 1));
 		try {
-			EstadisticasRPG.usar(new Configuracion(3, mejoras), servidor);
+			EstadisticasRPG.usar(new Configuracion(3, 0, mejoras), servidor);
 			helper.assertValueEqual(jugador.getAttributeValue(Attributes.MAX_HEALTH), 24.0, "Con el tope en 1, los 2 puntos valen como 1 de 4");
 			helper.assertValueEqual(Mejoras.puntos(jugador).de(Estadistica.VIDA), 2, "Bajar el tope no borra puntos");
 
@@ -449,7 +485,7 @@ public class EstadisticasRPGGameTest {
 		} finally {
 			EstadisticasRPG.usar(Configuracion.POR_DEFECTO, servidor);
 		}
-		helper.assertValueEqual(jugador.getAttributeValue(Attributes.MAX_HEALTH), 24.0, "De vuelta: 2 puntos de 2");
+		assertCerca(helper, jugador.getAttributeValue(Attributes.MAX_HEALTH), 21.2, "De vuelta: 2 puntos de 0,6");
 
 		salir(helper, jugador);
 		helper.succeed();
@@ -464,7 +500,7 @@ public class EstadisticasRPGGameTest {
 			Mejoras.comprar(a, Estadistica.VIDA, 1);
 			helper.assertValueEqual(a.experienceLevel, 4, "Paga el que compra (Inventario Compartido después lo reparte)");
 			helper.assertValueEqual(Mejoras.puntos(b).de(Estadistica.VIDA), 1, "B ve el punto que compró A");
-			helper.assertValueEqual(b.getAttributeValue(Attributes.MAX_HEALTH), 22.0, "B tiene el corazón extra");
+			assertCerca(helper, b.getAttributeValue(Attributes.MAX_HEALTH), 20.6, "B tiene la vida extra");
 			helper.assertValueEqual(a.getAttachedOrCreate(EstadisticasRPG.PUNTOS).de(Estadistica.VIDA), 0, "El attachment de A no se toca");
 
 			Mejoras.reiniciar(b);
@@ -487,9 +523,9 @@ public class EstadisticasRPGGameTest {
 			Mejoras.alEntrar(p);
 			helper.assertValueEqual(Mejoras.puntos(p).de(Estadistica.VIDA), 3, "Entra P: el grupo toma su vida");
 			Mejoras.alEntrar(q);
-			helper.assertValueEqual(Mejoras.puntos(p).de(Estadistica.VIDA), 5, "Entra Q: el máximo, no la suma (3 + 5 pasaría el tope)");
+			helper.assertValueEqual(Mejoras.puntos(p).de(Estadistica.VIDA), 5, "Entra Q: el máximo, no la suma (que podría pasar el tope)");
 			helper.assertValueEqual(Mejoras.puntos(p).de(Estadistica.DANIO), 2, "El daño de P sigue");
-			helper.assertValueEqual(p.getAttributeValue(Attributes.MAX_HEALTH), 30.0, "A P le llega la vida de Q");
+			assertCerca(helper, p.getAttributeValue(Attributes.MAX_HEALTH), 23.0, "A P le llega la vida de Q");
 
 			Mejoras.reiniciar(p);
 			Mejoras.alEntrar(q);
@@ -506,10 +542,10 @@ public class EstadisticasRPGGameTest {
 		ServerPlayer jugador = entrar(helper, "grupo-renacido");
 		ServerPlayer[] reaparecido = new ServerPlayer[1];
 		conPuntosDelGrupo(helper, () -> {
-			Mejoras.dar(jugador, Estadistica.VIDA, 10);
+			Mejoras.dar(jugador, Estadistica.VIDA, 50);
 			reaparecido[0] = helper.getLevel().getServer().getPlayerList().respawn(jugador, false, Entity.RemovalReason.KILLED);
-			helper.assertValueEqual(reaparecido[0].getAttributeValue(Attributes.MAX_HEALTH), 40.0, "Los puntos del grupo siguen después de morir");
-			helper.assertValueEqual(reaparecido[0].getHealth(), 40.0f, "Reaparece con la vida llena");
+			assertCerca(helper, reaparecido[0].getAttributeValue(Attributes.MAX_HEALTH), 50.0, "Los puntos del grupo siguen después de morir");
+			assertCerca(helper, reaparecido[0].getHealth(), 50.0, "Reaparece con la vida llena");
 		});
 		salir(helper, reaparecido[0]);
 		helper.succeed();
@@ -533,7 +569,8 @@ public class EstadisticasRPGGameTest {
 	}
 
 	private static void assertCerca(GameTestHelper helper, double actual, double esperado, String mensaje) {
-		helper.assertTrue(Math.abs(actual - esperado) < 1e-9, mensaje + ": esperaba " + esperado + ", dio " + actual);
+		// La vida es float: con 1e-9, 20,6f no daría igual a 20,6
+		helper.assertTrue(Math.abs(actual - esperado) < 1e-4, mensaje + ": esperaba " + esperado + ", dio " + actual);
 	}
 
 	private static void ejecutar(GameTestHelper helper, ServerPlayer jugador, String comando) {
