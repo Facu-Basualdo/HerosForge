@@ -52,6 +52,20 @@ public class PantallaClientGameTest implements FabricClientGameTest {
 			}
 			contexto.takeScreenshot("estadisticas-despues-de-comprar");
 
+			// El primer "-1" también es el de la vida: baja el punto y devuelve la mitad
+			contexto.clickScreenButton("-1");
+			mundo.getConnection().waitForServerboundPackets();
+			mundo.getConnection().waitForClientboundPackets();
+			contexto.waitTicks(2);
+			vida = mundo.getServer().computeOnServer(servidor -> Mejoras.puntos(servidor.getPlayerList().getPlayers().getFirst()).de(Estadistica.VIDA));
+			if (vida != 40) {
+				throw new AssertionError("Bajar desde la pantalla tenía que dejar 40 puntos de vida, quedaron " + vida);
+			}
+			experiencia = mundo.getServer().computeOnServer(servidor -> Mejoras.experiencia(servidor.getPlayerList().getPlayers().getFirst()));
+			if (experiencia != COSTO * 6 + COSTO / 2) {
+				throw new AssertionError("Tenía que devolver " + COSTO / 2 + " de experiencia, quedaron " + experiencia);
+			}
+
 			// La misma tecla la cierra, y desde el inventario se vuelve a abrir con el botón
 			contexto.getInput().pressKey(InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_K));
 			contexto.waitFor(cliente -> cliente.gui.screen() == null);
@@ -74,6 +88,15 @@ public class PantallaClientGameTest implements FabricClientGameTest {
 			contexto.waitForScreen(PantallaDeEstadisticas.class);
 			contexto.waitTicks(2);
 			contexto.takeScreenshot("estadisticas-pantalla-chica");
+			// El caso de la captura original: millones de XP no deben invadir la otra columna.
+			mundo.getServer().runCommand("xp set @a 989 levels");
+			mundo.getConnection().waitForClientboundPackets();
+			contexto.waitTicks(4);
+			contexto.getInput().setCursorPos(0, 0);
+			contexto.takeScreenshot("estadisticas-experiencia-alta");
+			contexto.getInput().resizeWindow(1280, 800);
+			contexto.waitTicks(4);
+			contexto.takeScreenshot("estadisticas-pantalla-amplia");
 			// Abierta desde el inventario, "Listo" también vuelve ahí
 			contexto.clickScreenButton("Listo");
 			contexto.waitForScreen(InventoryScreen.class);

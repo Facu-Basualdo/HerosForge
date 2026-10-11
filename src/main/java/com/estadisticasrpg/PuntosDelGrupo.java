@@ -13,9 +13,9 @@ import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
 
 /**
- * Los puntos de todo el servidor cuando está Inventario Compartido: ahí la experiencia y la vida son de
+ * Los puntos de todo el servidor cuando está Soul Link: ahí la experiencia y la vida son de
  * todos, así que los puntos también. Se guarda en {@code data/estadisticasrpg/puntos_del_grupo.dat} dentro
- * del mundo. El attachment de cada jugador no se toca: si se saca Inventario Compartido, cada uno vuelve a
+ * del mundo. El attachment de cada jugador no se toca: si se saca Soul Link, cada uno vuelve a
  * tener los suyos.
  */
 public class PuntosDelGrupo extends SavedData {

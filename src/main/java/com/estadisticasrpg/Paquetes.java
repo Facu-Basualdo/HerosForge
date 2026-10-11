@@ -15,7 +15,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
  * vanilla no registra estos canales: el servidor nunca le manda nada y para él todo sigue siendo el cofre.
  */
 public final class Paquetes {
-	// Sobra para las 9 estadísticas: es sólo para que un paquete roto no reserve una lista enorme al leerlo
+	// Sobra para las 15 estadísticas: es sólo para que un paquete roto no reserve una lista enorme al leerlo
 	private static final int MAXIMO_DE_FILAS = 64;
 
 	private Paquetes() {
@@ -26,6 +26,7 @@ public final class Paquetes {
 		PayloadTypeRegistry.clientboundPlay().register(Resultado.TIPO, Resultado.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(AbrirPantalla.TIPO, AbrirPantalla.CODEC);
 		PayloadTypeRegistry.serverboundPlay().register(Comprar.TIPO, Comprar.CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(Bajar.TIPO, Bajar.CODEC);
 		PayloadTypeRegistry.serverboundPlay().register(Preferencia.TIPO, Preferencia.CODEC);
 		PayloadTypeRegistry.serverboundPlay().register(AbrirCofre.TIPO, AbrirCofre.CODEC);
 	}
@@ -34,14 +35,20 @@ public final class Paquetes {
 	 * Servidor → cliente: todo lo que muestra la pantalla. Los textos van armados en el servidor, como en el
 	 * cofre: así la pantalla dice lo mismo aunque el cliente tenga otra versión del mod u otra config.
 	 *
+	 * <p>El canal se llama {@code estado_v2} desde que trae {@code devolucion}: un cliente de antes (con el canal
+	 * {@code estado}) no lo registra, así que el servidor no se lo manda y le abre el cofre. Con el mismo nombre, ese
+	 * cliente leería un paquete con un campo de más y se desconectaría.
+	 *
 	 * @param experiencia puntos de experiencia del jugador (o del grupo), los mismos que usa {@link Mejoras#comprar}
+	 * @param devolucion la experiencia que se devuelve al bajar un punto
 	 */
-	public record Estado(int experiencia, int nivel, int costo, boolean grupo, List<Fila> filas) implements CustomPacketPayload {
-		public static final Type<Estado> TIPO = new Type<>(EstadisticasRPG.id("estado"));
+	public record Estado(int experiencia, int nivel, int costo, int devolucion, boolean grupo, List<Fila> filas) implements CustomPacketPayload {
+		public static final Type<Estado> TIPO = new Type<>(EstadisticasRPG.id("estado_v2"));
 		public static final StreamCodec<ByteBuf, Estado> CODEC = StreamCodec.composite(
 				ByteBufCodecs.VAR_INT, Estado::experiencia,
 				ByteBufCodecs.VAR_INT, Estado::nivel,
 				ByteBufCodecs.VAR_INT, Estado::costo,
+				ByteBufCodecs.VAR_INT, Estado::devolucion,
 				ByteBufCodecs.BOOL, Estado::grupo,
 				Fila.CODEC.apply(ByteBufCodecs.list(MAXIMO_DE_FILAS)), Estado::filas,
 				Estado::new);
@@ -69,6 +76,20 @@ public final class Paquetes {
 
 		public boolean enElTope() {
 			return puntos >= tope;
+		}
+	}
+
+	/** Cliente → servidor: bajar puntos desde la pantalla. Como {@link Comprar}, el servidor valida todo (ver {@link InterfazDelCliente#bajar}). */
+	public record Bajar(String id, int cantidad) implements CustomPacketPayload {
+		public static final Type<Bajar> TIPO = new Type<>(EstadisticasRPG.id("bajar"));
+		public static final StreamCodec<ByteBuf, Bajar> CODEC = StreamCodec.composite(
+				ByteBufCodecs.STRING_UTF8, Bajar::id,
+				ByteBufCodecs.VAR_INT, Bajar::cantidad,
+				Bajar::new);
+
+		@Override
+		public Type<Bajar> type() {
+			return TIPO;
 		}
 	}
 

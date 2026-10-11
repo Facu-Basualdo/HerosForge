@@ -10,9 +10,9 @@ Síntoma que esta nota evita: después de un test de puntos compartidos, otros t
 | `grupoSumaLosPuntosIndividualesUnaSolaVez` | Al entrar se toma el máximo por estadística, no la suma · después de `reiniciar`, reconectar no devuelve los puntos viejos · los attachments quedan intactos |
 | `grupoAlReaparecerConservaLosPuntos` | Morir y reaparecer con los puntos del grupo: vida máxima 40 y vida llena |
 
-## Inventario Compartido no está cargado
+## Soul Link no está cargado
 
-**Los tests fuerzan el modo con `Mejoras.usarPuntosDelGrupo(true)`.** Inventario Compartido no está en el classpath de los gametests, así que lo que hace ese mod no se prueba: que reparta la experiencia gastada y la curación del corazón nuevo. En los tests paga y se cura sólo el que compra. Eso queda para la prueba a mano (ver [Puntos del grupo](../mod/grupo.md)).
+**Los tests fuerzan el modo con `Mejoras.usarPuntosDelGrupo(true)`.** Soul Link no está en el classpath de los gametests, así que lo que hace ese mod no se prueba: que reparta la experiencia gastada y la curación del corazón nuevo. En los tests paga y se cura sólo el que compra. Eso se probó a mano en la 0.9.1 (ver [Puntos del grupo](../mod/grupo.md#probado-a-mano-con-los-dos-mods)).
 
 ## conPuntosDelGrupo
 

@@ -8,7 +8,7 @@ Los tests son `menuCompraConClick` y `menuNoDejaSacarNiPonerItems`, en `Estadist
 
 | Test | Qué verifica |
 |---|---|
-| `menuCompraConClick` | `/estadisticas` abre `MenuDeEstadisticas` · click compra 1 y cobra 1 · shift + click compra 5 · el cursor queda vacío y el ícono en su lugar · `SWAP`, `THROW` y `CLONE` no compran ni sacan nada · con el tope, el slot pasa a vidrio gris después de `broadcastChanges` |
+| `menuCompraConClick` | `/estadisticas` abre `MenuDeEstadisticas` · click compra 1 y cobra 1 · shift + click compra 5 · click derecho baja 1 y devuelve la mitad · shift + click derecho baja 5 · el cursor queda vacío y el ícono en su lugar · `SWAP`, `THROW` y `CLONE` no compran ni sacan nada · con el tope, el slot pasa a vidrio gris después de `broadcastChanges` |
 | `menuNoDejaSacarNiPonerItems` | Doble click con una copia del ícono no lo junta · arrastrar tierra por un slot del menú sólo la reparte en el inventario · shift + click desde el inventario no mueve nada |
 
 ## Simular clicks
@@ -18,6 +18,7 @@ Los tests son `menuCompraConClick` y `menuNoDejaSacarNiPonerItems`, en `Estadist
 | Acción del jugador | Llamada |
 |---|---|
 | Click | `clicked(slot, 0, PICKUP, j)` |
+| Click derecho (bajar) | `clicked(slot, 1, PICKUP, j)`; con shift, `clicked(slot, 1, QUICK_MOVE, j)` |
 | Shift + click | `clicked(slot, 0, QUICK_MOVE, j)` |
 | Tecla numérica, Q, click del medio | `SWAP`, `THROW`, `CLONE` |
 | Doble click | `setCarried(…)` y `clicked(slotDelJugador, 0, PICKUP_ALL, j)` |

@@ -39,6 +39,11 @@ public final class ComandoEstadisticas {
 								.executes(ctx -> subir(ctx, 1))
 								.then(Commands.argument("cantidad", IntegerArgumentType.integer(1))
 										.executes(ctx -> subir(ctx, IntegerArgumentType.getInteger(ctx, "cantidad"))))))
+				.then(Commands.literal("bajar")
+						.then(estadistica()
+								.executes(ctx -> bajar(ctx, 1))
+								.then(Commands.argument("cantidad", IntegerArgumentType.integer(1))
+										.executes(ctx -> bajar(ctx, IntegerArgumentType.getInteger(ctx, "cantidad"))))))
 				.then(Commands.literal("dar")
 						.requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
 						.then(Commands.argument("jugador", EntityArgument.player())
@@ -80,6 +85,7 @@ public final class ComandoEstadisticas {
 		PuntosDelJugador puntos = Mejoras.puntos(jugador);
 		StringBuilder texto = new StringBuilder("Estadísticas ").append(deQuien(jugador))
 				.append(" · cada punto cuesta ").append(Mejoras.experiencia(config.experienciaPorPunto()))
+				.append(" y bajarlo devuelve ").append(config.devolucionPorPunto())
 				.append(" · tenés ").append(Mejoras.experiencia(Mejoras.experiencia(jugador)));
 		for (Estadistica estadistica : Estadistica.values()) {
 			Configuracion.Mejora mejora = config.de(estadistica);
@@ -104,6 +110,16 @@ public final class ComandoEstadisticas {
 			ctx.getSource().sendSuccess(() -> Mejoras.mensaje(compra), false);
 		}
 		return compra.comprados();
+	}
+
+	private static int bajar(CommandContext<CommandSourceStack> ctx, int cantidad) throws CommandSyntaxException {
+		Mejoras.Devolucion devolucion = Mejoras.bajar(ctx.getSource().getPlayerOrException(), leerEstadistica(ctx), cantidad);
+		if (devolucion.bajados() == 0) {
+			ctx.getSource().sendFailure(Mejoras.mensaje(devolucion));
+		} else {
+			ctx.getSource().sendSuccess(() -> Mejoras.mensaje(devolucion), false);
+		}
+		return devolucion.bajados();
 	}
 
 	private static int dar(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {

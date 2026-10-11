@@ -2,7 +2,7 @@
 
 [← Índice Mod](INDICE.md)
 
-Síntomas que esta nota evita: el ítem de muestra queda "fantasma" en el cursor después de comprar; un jugador se lleva la manzana dorada del menú; la espada del menú muestra "+6 de daño de ataque", que no tiene nada que ver con los puntos; todo el lore se ve en cursiva.
+Síntomas que esta nota evita: el ítem de muestra queda "fantasma" en el cursor después de comprar o bajar; un jugador se lleva la manzana dorada del menú; la espada del menú muestra "+6 de daño de ataque", que no tiene nada que ver con los puntos; todo el lore se ve en cursiva.
 
 ## Qué es
 
@@ -16,20 +16,17 @@ Síntomas que esta nota evita: el ítem de muestra queda "fantasma" en el cursor
 | `slotDe(estadistica)` (filas 2 y 3) | `Estadistica.icono()`, o vidrio gris (`Items.STAINED_GLASS_PANE.gray()`) si llegó al tope |
 | El resto | Vidrio negro con el tooltip oculto |
 
-`slotDe` reparte según cuántas estadísticas hay, **en el orden del enum `Estadistica`**:
+`slotDe` reparte **por `Estadistica.combate()`, en el orden del enum**: las de combate en la fila del medio (slots 9–17) y las demás en la de abajo (18–26). Dentro de cada fila, con 5 o menos van separadas por un hueco; con más, seguidas y centradas. Hoy son 7 (vida, daño, daño a distancia, armadura, velocidad de ataque, regeneración, robo de vida) y 8 (velocidad, minado, alcance, empuje, suerte, salto, caída, respiración).
 
-- **Hasta 9, en la fila del medio.** Con 5 o menos, separadas por un hueco; con más, seguidas y centradas.
-- **Con más de 9, en las dos filas de abajo:** la primera mitad (`ceil(n/2)`) arriba y el resto abajo, cada fila con la misma regla. Con las 10 de hoy quedan 5 y 5 separadas: slots 9–17 de a dos (vida, daño, daño a distancia, armadura, velocidad de ataque: el combate) y 18–26 de a dos (velocidad, minado, alcance, empuje, suerte).
+La fila de arriba es de la botella de experiencia (slot 4). **Con más de 9 en una categoría no entran:** se pisarían con la fila de abajo (lo atrapa el gametest `cadaEstadisticaTieneConfigYSlot`) y haría falta un cofre más grande.
 
-La fila de arriba es de la botella de experiencia (slot 4). Con más de 18 no entran: haría falta un cofre más grande.
+## Un click compra o baja, nada se mueve
 
-## Un click compra, nada se mueve
-
-**`clicked` no llama a `super` para los slots del menú (0–26):** con `PICKUP` (click) compra 1, con `QUICK_MOVE` (shift + click) compra `CON_SHIFT` (5), y cualquier otra entrada (`SWAP`, `THROW`, `CLONE`, `QUICK_CRAFT`) no hace nada. Los slots del jugador y los clicks fuera de la ventana (`slotId` -999) van a `super` y funcionan normal.
+**`clicked` no llama a `super` para los slots del menú (0–26):** con `PICKUP` (click) compra 1, con `QUICK_MOVE` (shift + click) compra `CON_SHIFT` (5). **Con el botón derecho (`boton == 1`) baja en vez de comprar** (`Mejoras.bajar`, que devuelve la mitad de la experiencia): vanilla manda el botón también con shift, así que shift + click derecho baja 5. El vidrio gris de una estadística al máximo también se puede bajar. Cualquier otra entrada (`SWAP`, `THROW`, `CLONE`, `QUICK_CRAFT`) no hace nada. Los slots del jugador y los clicks fuera de la ventana (`slotId` -999) van a `super` y funcionan normal.
 
 **Después de cada click en el menú se llama a `sendAllDataToRemote()`, compre o no.** El cliente vanilla **predice** el resultado del click y mueve el ítem en pantalla antes de que el servidor conteste. Si el servidor no reenvía el estado completo, el ítem queda en el cursor del cliente aunque en el servidor nunca se movió.
 
-El mensaje de la compra (`Mejoras.mensaje`) va a la **barra de acción** (`sendSystemMessage(…, true)`), para no llenar el chat con un mensaje por click.
+El mensaje de la compra o la baja (`Mejoras.mensaje`) va a la **barra de acción** (`sendSystemMessage(…, true)`), para no llenar el chat con un mensaje por click.
 
 ## Por qué interceptar clicked no alcanza
 

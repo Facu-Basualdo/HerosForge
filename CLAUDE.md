@@ -1,8 +1,8 @@
 # Hero's Forge (antes Estadísticas RPG) — mod de Minecraft
 
-Mod de Fabric para **Minecraft Java 26.3** para subir las estadísticas del jugador estilo RPG: se pagan **puntos de experiencia** (30 por punto, siempre los mismos; no niveles) por **puntos** de vida, daño, daño a distancia, armadura, velocidad u otra estadística, hasta 100 por cada una. Los valores por defecto están balanceados contra Mobs Poderosos (mobs de nivel 1 a 100). Los puntos son permanentes (sobreviven a la muerte) y se compran desde un menú tipo cofre (`/estadisticas`) o por comando. Java 25, Gradle 9.7 + Fabric Loom 1.18, Fabric Loader 0.19.5, Fabric API 0.162.0+26.3. Toda la lógica corre en el servidor: los jugadores no necesitan instalar nada. Quien instala el mismo jar en su cliente suma una pantalla propia opcional (tecla K o botón en el inventario) que habla con el servidor por paquetes de red.
+Mod de Fabric para **Minecraft Java 26.3** para subir las estadísticas del jugador estilo RPG: se pagan **puntos de experiencia** (30 por punto, siempre los mismos; no niveles) por **puntos** de vida, daño, daño a distancia, armadura, regeneración, robo de vida, velocidad u otra de las 15 estadísticas, hasta 100 por cada una. Bajar un punto devuelve la mitad. Los valores por defecto están balanceados contra Bloodmoon & Bosses (mobs de nivel 1 a 100). Los puntos son permanentes (sobreviven a la muerte) y se compran desde un menú tipo cofre (`/estadisticas`) o por comando. Java 25, Gradle 9.7 + Fabric Loom 1.18, Fabric Loader 0.19.5, Fabric API 0.162.0+26.3. Toda la lógica corre en el servidor: los jugadores no necesitan instalar nada. Quien instala el mismo jar en su cliente suma una pantalla propia opcional (tecla K o botón en el inventario) que habla con el servidor por paquetes de red.
 
-> **Estado:** las 5 fases de [docs/plan.md](docs/plan.md) hechas, más el daño a distancia (0.8.0): las 10 estadísticas, el menú de cofre, la config con `recargar` y los puntos del grupo con Inventario Compartido. Falta la prueba a mano en un servidor real (sobre todo con Inventario Compartido cargado: los gametests fuerzan el modo grupo).
+> **Estado:** las 5 fases de [docs/plan.md](docs/plan.md) hechas, más el daño a distancia (0.8.0), la pantalla propia (0.9.0) y las 5 estadísticas nuevas con bajar puntos (0.10.0). La 0.9.1 se probó a mano en un servidor con Soul Link y Bloodmoon & Bosses y anda; lo de la 0.10.0 todavía no se probó así.
 
 ## Cómo obtener contexto
 
@@ -22,7 +22,7 @@ El mismo tema en distintas áreas usa el mismo nombre de archivo (`claude/mod/es
 
 | Área | Carpeta | Stack | Índice |
 |---|---|---|---|
-| Mod | `src/main/` | Java 25 · Fabric API (attachments, eventos de jugador, comandos) · un mixin (`ProyectilMixin`) · nombres oficiales de Mojang | [claude/mod/INDICE.md](claude/mod/INDICE.md) |
+| Mod | `src/main/` | Java 25 · Fabric API (attachments, eventos de jugador y de daño, comandos) · un mixin (`ProyectilMixin`) · nombres oficiales de Mojang | [claude/mod/INDICE.md](claude/mod/INDICE.md) |
 | Mod (cliente) | `src/client/` | Pantalla propia opcional · `splitEnvironmentSourceSets` · Fabric screen, key mapping y networking API · `GuiGraphicsExtractor` | [claude/mod/INDICE.md](claude/mod/INDICE.md) (nota [pantalla](claude/mod/pantalla.md)) |
 | Tests | `src/gametest/` | Fabric GameTest API · servidor sin ventana · client gametest con ventana para la pantalla | [claude/tests/INDICE.md](claude/tests/INDICE.md) |
 
@@ -43,9 +43,11 @@ Se agregan con `/docs` a medida que se implementan las fases de [docs/plan.md](d
 | Comprar y aplicar estadísticas (fase 1) | [estadisticas](claude/mod/estadisticas.md) | [estadisticas](claude/tests/estadisticas.md) |
 | Menú de cofre (fase 2) | [menu](claude/mod/menu.md) | [menu](claude/tests/menu.md) |
 | Config y recargar (fase 4) | [configuracion](claude/mod/configuracion.md) | [configuracion](claude/tests/configuracion.md) |
-| Puntos del grupo con Inventario Compartido (fase 5) | [grupo](claude/mod/grupo.md) | [grupo](claude/tests/grupo.md) |
+| Puntos del grupo con Soul Link (fase 5) | [grupo](claude/mod/grupo.md) | [grupo](claude/tests/grupo.md) |
 | Daño a distancia: flechas y tridente (0.8.0) | [estadisticas](claude/mod/estadisticas.md#daño-a-distancia-un-mixin-no-un-atributo) | [estadisticas](claude/tests/estadisticas.md) |
 | Pantalla propia del cliente, opcional (0.9.0) | [pantalla](claude/mod/pantalla.md) | [pantalla](claude/tests/pantalla.md) |
+| Bajar puntos con devolución (0.10.0): comando, click derecho del menú y **-1** de la pantalla | [estadisticas](claude/mod/estadisticas.md#bajar-mejorasbajar) | [estadisticas](claude/tests/estadisticas.md) |
+| Regeneración, robo de vida, salto, caída segura y respiración (0.10.0) | [estadisticas](claude/mod/estadisticas.md#regeneración-y-robo-de-vida-sin-atributo) | [estadisticas](claude/tests/estadisticas.md) |
 
 ## Reglas de workflow
 

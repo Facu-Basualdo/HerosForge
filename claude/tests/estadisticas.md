@@ -20,16 +20,20 @@ Todo está en `EstadisticasRPGGameTest`. Cada test crea su propio jugador y lo s
 | `guardarYCargarConservaPuntosYVida` | Guardar y cargar: puntos, `MAX_HEALTH` 50 y vida 33 |
 | `unaEstadisticaDesconocidaNoBorraLasDemas` | El codec ignora un id que no existe y lee los demás |
 | `reiniciarDejaTodoEnCero` | Puntos vacíos, sin modificadores, vida recortada a 20 en el momento |
-| `comandos` | `subir` compra y cobra, `/stats` funciona, `dar` sin op no hace nada, una estadística desconocida no cobra |
+| `comandos` | `subir` compra y cobra, `/stats` funciona, `bajar` baja y devuelve la mitad (y sin puntos no devuelve nada), `dar` sin op no hace nada, una estadística desconocida no cobra |
+| `bajarDevuelveLaMitad` | Bajar 1 devuelve la mitad del costo y baja `MAX_HEALTH` · pedir 5 con 2 baja 2 y devuelve por 2 · la vida queda en el máximo nuevo · el texto de `Mejoras.mensaje(Devolucion)` · sin puntos no baja ni devuelve |
+| `estadisticasNuevasAlMaximo` | Salto `JUMP_STRENGTH` × 1,2 · caída segura 13 · respiración 3 · cómo se describen la regeneración (por minuto) y el robo de vida |
+| `regeneracionCuraCadaSegundo` | Con 100 puntos, `Curacion.regenerar` cura 0,3 y sin puntos nada · con la vida llena no pasa del máximo. Se llama a mano en el mismo tick: el tick del servidor también cura cada segundo y movería la cuenta |
+| `roboDeVidaCuraAlPegar` | Un golpe de 8 a un gólem (`playerAttack`) cura 0,8 con 100 puntos · un golpe `generic` a otro gólem no lo cura. Con un gólem y no un mob chico: `AFTER_DAMAGE` no corre si el golpe mata |
 | `estadisticasDeLaFase3AlMaximo` | Velocidad de ataque 5,2 con la mano vacía · minado 2 · alcance 6,5 a bloques y 5 a entidades · empuje 0,5 · `getLuck()` 3 |
 | `losAtributosQueUsaElClienteSeSincronizan` | Los atributos que calcula el cliente son `isClientSyncable()` (lista a mano: hay que sumar ahí cualquier estadística nueva que use el cliente) |
-| `cadaEstadisticaTieneConfigYSlot` | Toda `Estadistica` está en `Configuracion.POR_DEFECTO` y tiene un slot propio debajo de la fila de arriba del menú (9–26) |
+| `cadaEstadisticaTieneConfigYSlot` | Toda `Estadistica` está en `Configuracion.POR_DEFECTO` y tiene un slot propio en su fila: las de combate en 9–17, el resto en 18–26 |
 | `danioADistanciaMultiplicaFlechasYTridentes` | Con 100 puntos, una flecha y un tridente lanzado pegan el doble que sin puntos; una flecha sin dueño pega como la de 0 puntos. Prueba el mixin de verdad: sin `ProyectilMixin` falla con 3 contra 6 |
 | `multiplicadorADistanciaSegunLosPuntos` | `multiplicadorADistancia`: 1 sin dueño o sin puntos, 1,5 con 50, 2 con el tope · no pone modificador en `ATTACK_DAMAGE` · con los puntos del grupo vale para otro jugador |
 
 Los valores con decimales (porcentajes, alcance, y la vida, que con 0,6 por punto casi nunca es entera) se comparan con `assertCerca`, no con `assertValueEqual`: `0,1 × 1,2` no da exactamente `0,12` en `double`. **La tolerancia es 1e-4 y no 1e-9 porque la vida actual es `float`:** `20,6f` pasado a `double` es 20,600000381…
 
-**Los números de los tests salen de `POR_DEFECTO`:** si se cambia un `porPunto` o un tope, hay que rehacer las cuentas acá (los topes de 100 obligan a `dar(…, 100)` para llegar al máximo). El costo no: los tests usan `COSTO = POR_DEFECTO.experienciaPorPunto()`.
+**Los números de los tests salen de `POR_DEFECTO`:** si se cambia un `porPunto` o un tope, hay que rehacer las cuentas acá (los topes de 100 obligan a `dar(…, 100)` para llegar al máximo). El costo y la devolución no: los tests usan `COSTO = POR_DEFECTO.experienciaPorPunto()` y `DEVOLUCION = POR_DEFECTO.devolucionPorPunto()`.
 
 ## assertValueEqual va al revés de lo que parece
 

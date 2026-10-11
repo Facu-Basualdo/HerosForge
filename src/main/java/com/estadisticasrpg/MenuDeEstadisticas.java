@@ -24,13 +24,14 @@ import net.minecraft.world.item.component.TooltipDisplay;
 
 /**
  * Un cofre de 3 filas armado en el servidor: el cliente vanilla lo ve como {@code GENERIC_9x3}, así que no
- * hace falta el mod del lado del cliente. Los ítems son de muestra: un click compra, nunca se mueven.
+ * hace falta el mod del lado del cliente. Los ítems son de muestra: un click compra o baja, nunca se mueven.
  */
 public class MenuDeEstadisticas extends AbstractContainerMenu {
 	private static final int FILAS = 3;
 	private static final int TAMANIO = FILAS * 9;
 	private static final int SLOT_INFO = 4;
 	private static final int CON_SHIFT = 5;
+	private static final int CLICK_DERECHO = 1;
 	private static final Component TITULO = Component.literal("Estadísticas");
 
 	private final ServerPlayer jugador;
@@ -56,17 +57,21 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 	}
 
 	/**
-	 * El slot del menú donde está una estadística: centradas en la fila del medio, o con más de 9, repartidas
-	 * en las dos de abajo (la primera mitad arriba, en el orden de {@link Estadistica}).
+	 * El slot del menú donde está una estadística: las de combate centradas en la fila del medio y las demás en
+	 * la de abajo, en el orden de {@link Estadistica}. Entran hasta 9 por fila.
 	 */
 	public static int slotDe(Estadistica estadistica) {
-		int cantidad = Estadistica.values().length;
-		int indice = estadistica.ordinal();
-		if (cantidad <= 9) {
-			return 9 + enLaFila(indice, cantidad);
+		int cantidad = 0;
+		int indice = 0;
+		for (Estadistica otra : Estadistica.values()) {
+			if (otra.combate() == estadistica.combate()) {
+				if (otra == estadistica) {
+					indice = cantidad;
+				}
+				cantidad++;
+			}
 		}
-		int arriba = (cantidad + 1) / 2;
-		return indice < arriba ? 9 + enLaFila(indice, arriba) : 18 + enLaFila(indice - arriba, cantidad - arriba);
+		return (estadistica.combate() ? 9 : 18) + enLaFila(indice, cantidad);
 	}
 
 	/** La columna dentro de una fila de 9 con {@code cantidad} centradas. */
@@ -95,8 +100,13 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 		}
 		Estadistica estadistica = estadisticaEn(slotId);
 		if (estadistica != null && (entrada == ContainerInput.PICKUP || entrada == ContainerInput.QUICK_MOVE)) {
-			Mejoras.Compra compra = Mejoras.comprar(jugador, estadistica, entrada == ContainerInput.QUICK_MOVE ? CON_SHIFT : 1);
-			jugador.sendSystemMessage(Mejoras.mensaje(compra), true);
+			int cantidad = entrada == ContainerInput.QUICK_MOVE ? CON_SHIFT : 1;
+			// Con shift, vanilla también manda el botón: 1 es el derecho
+			if (boton == CLICK_DERECHO) {
+				jugador.sendSystemMessage(Mejoras.mensaje(Mejoras.bajar(jugador, estadistica, cantidad)), true);
+			} else {
+				jugador.sendSystemMessage(Mejoras.mensaje(Mejoras.comprar(jugador, estadistica, cantidad)), true);
+			}
 			redibujar();
 		}
 		// El cliente vanilla ya movió el ítem en pantalla antes de mandar el click: sin reenviar todo,
@@ -160,6 +170,8 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 		}
 		lore.add(texto("Click: comprar 1 punto", ChatFormatting.DARK_GRAY));
 		lore.add(texto("Shift + click: comprar " + CON_SHIFT, ChatFormatting.DARK_GRAY));
+		lore.add(texto("Click derecho: bajar 1 y te devuelve " + Mejoras.experiencia(config.devolucionPorPunto()), ChatFormatting.DARK_GRAY));
+		lore.add(texto("Shift + click derecho: bajar " + CON_SHIFT, ChatFormatting.DARK_GRAY));
 		return item(new ItemStack(Items.EXPERIENCE_BOTTLE), texto("Tenés " + Mejoras.experiencia(Mejoras.experiencia(jugador)), ChatFormatting.GREEN), lore);
 	}
 
@@ -169,6 +181,9 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 		lore.add(texto("Puntos: " + puntos + "/" + mejora.tope(), ChatFormatting.GRAY));
 		if (puntos > 0) {
 			lore.add(texto("Ahora: " + estadistica.describir(mejora.efecto(puntos)), ChatFormatting.GRAY));
+		}
+		if (puntos > 0) {
+			lore.add(texto("Click derecho: bajar 1 (devuelve " + Mejoras.experiencia(config.devolucionPorPunto()) + ")", ChatFormatting.DARK_GRAY));
 		}
 		if (puntos >= mejora.tope()) {
 			return item(new ItemStack(Items.STAINED_GLASS_PANE.gray()), texto(estadistica.nombre() + " · máximo", ChatFormatting.GRAY), lore);

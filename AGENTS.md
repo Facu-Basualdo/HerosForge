@@ -1,8 +1,8 @@
-# Estadísticas RPG — mod de Minecraft
+# Hero's Forge — mod de Minecraft
 
 Mod de Fabric para **Minecraft Java 26.3** para subir las estadísticas del jugador estilo RPG: se paga **1 nivel de experiencia** por **1 punto** de vida, daño, armadura, velocidad u otra estadística, con un tope por cada una. Los puntos son permanentes (sobreviven a la muerte) y se compran desde un menú tipo cofre (`/estadisticas`) o por comando. Java 25, Gradle 9.7 + Fabric Loom 1.18, Fabric Loader 0.19.5, Fabric API 0.162.0+26.3. Toda la lógica corre en el servidor: los jugadores no necesitan instalar nada.
 
-> **Estado:** fases 1 a 4 de [docs/plan.md](docs/plan.md) hechas: las 9 estadísticas, el menú de cofre y la config con `recargar`. Falta la prueba a mano en un servidor real y la fase 5 (opcional, con Inventario Compartido).
+> **Estado:** fases 1 a 4 de [docs/plan.md](docs/plan.md) hechas: las 9 estadísticas, el menú de cofre y la config con `recargar`. Falta la prueba a mano en un servidor real y la fase 5 (opcional, con Soul Link).
 
 ## Cómo obtener contexto
 

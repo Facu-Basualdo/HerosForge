@@ -32,7 +32,11 @@ public final class Mejoras {
 	public record Compra(Estadistica estadistica, int pedidos, int comprados, Resultado resultado) {
 	}
 
-	// Lo decide EstadisticasRPG al iniciar (si está Inventario Compartido); los tests lo fuerzan
+	/** {@code bajados} puede ser menos que lo pedido si no había tantos puntos; {@code experiencia} es lo que se devolvió. */
+	public record Devolucion(Estadistica estadistica, int pedidos, int bajados, int experiencia) {
+	}
+
+	// Lo decide EstadisticasRPG al iniciar (si está Soul Link); los tests lo fuerzan
 	private static volatile boolean delGrupo;
 
 	public static void usarPuntosDelGrupo(boolean usar) {
@@ -105,6 +109,28 @@ public final class Mejoras {
 		sumar(jugador, estadistica, comprados);
 		efectos(jugador, true);
 		return new Compra(estadistica, cantidad, comprados, resultado);
+	}
+
+	/**
+	 * Baja hasta {@code cantidad} puntos y devuelve {@link Configuracion#devolucionPorPunto} de experiencia por cada
+	 * uno. Con los puntos del grupo, la experiencia la recibe el que bajó: Soul Link la reparte.
+	 */
+	public static Devolucion bajar(ServerPlayer jugador, Estadistica estadistica, int cantidad) {
+		int actuales = puntos(jugador).de(estadistica);
+		int bajados = Math.min(Math.max(cantidad, 0), actuales);
+		if (bajados == 0) {
+			efectos(jugador, false);
+			return new Devolucion(estadistica, cantidad, 0, 0);
+		}
+		// En long: con un tope enorme en la config y una devolución alta, la cuenta no entra en un int
+		int experiencia = (int) Math.min((long) EstadisticasRPG.config().devolucionPorPunto() * bajados, Integer.MAX_VALUE);
+		guardar(jugador, puntos(jugador).con(estadistica, actuales - bajados));
+		if (experiencia > 0) {
+			jugador.giveExperiencePoints(experiencia);
+		}
+		ServerLevel level = jugador.level();
+		level.playSound(null, jugador.getX(), jugador.getY(), jugador.getZ(), SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, 0.6f, 0.8f);
+		return new Devolucion(estadistica, cantidad, bajados, experiencia);
 	}
 
 	/** Da puntos sin cobrar, hasta el tope. Devuelve cuántos dio. */
@@ -201,6 +227,19 @@ public final class Mejoras {
 		return Component.literal(texto);
 	}
 
+	public static Component mensaje(Devolucion devolucion) {
+		Estadistica estadistica = devolucion.estadistica();
+		if (devolucion.bajados() == 0) {
+			return Component.literal(estadistica.nombre() + " no tiene puntos para bajar");
+		}
+		String texto = estadistica.nombre() + " −" + devolucion.bajados() + (devolucion.bajados() == 1 ? " punto" : " puntos")
+				+ ": te devolvió " + experiencia(devolucion.experiencia());
+		if (devolucion.bajados() < devolucion.pedidos()) {
+			texto += ". No tenía los " + devolucion.pedidos();
+		}
+		return Component.literal(texto);
+	}
+
 	static String experiencia(int cantidad) {
 		return cantidad + " de experiencia";
 	}
@@ -227,7 +266,7 @@ public final class Mejoras {
 
 	/**
 	 * Con los puntos compartidos, a todos los conectados: los que entren después los toman en {@link #alEntrar}.
-	 * Sólo se cura al que compró: Inventario Compartido reparte esa curación al resto, como cualquier otra.
+	 * Sólo se cura al que compró: Soul Link reparte esa curación al resto, como cualquier otra.
 	 */
 	private static void guardar(ServerPlayer jugador, PuntosDelJugador puntos) {
 		if (delGrupo) {

@@ -1,8 +1,8 @@
-# Plan — Mod "Estadísticas RPG" (subir estadísticas pagando niveles de experiencia)
+# Plan — Mod "Hero's Forge" (subir estadísticas pagando niveles de experiencia)
 
 ## Contexto
 
-Querés un mod de Fabric, aparte de Inventario Compartido y Mobs Poderosos, para mejorar las estadísticas del jugador **estilo RPG**: pagás **1 nivel de experiencia** y subís **1 punto** de una estadística (vida, daño, armadura, velocidad…). Los puntos son permanentes y cada estadística tiene un tope.
+Querés un mod de Fabric, aparte de Soul Link y Bloodmoon & Bosses, para mejorar las estadísticas del jugador **estilo RPG**: pagás **1 nivel de experiencia** y subís **1 punto** de una estadística (vida, daño, armadura, velocidad…). Los puntos son permanentes y cada estadística tiene un tope.
 
 Decisiones tomadas por defecto (se pueden cambiar antes de la fase 1; todas quedan en `Configuracion`):
 
@@ -10,7 +10,7 @@ Decisiones tomadas por defecto (se pueden cambiar antes de la fase 1; todas qued
 - **Interfaz** = un **menú tipo cofre armado en el servidor** (`/estadisticas`): un ítem por estadística, click = comprar un punto. Además, comandos para todo. **No hace falta el mod en el cliente**, igual que en los otros dos mods.
 - **Al morir** = los puntos se conservan (es progresión, no un buff).
 - **Creativo** = paga igual. Si fuera gratis, alcanzaría con pasar a creativo, comprar todo y volver a supervivencia. Para probar está `/estadisticas dar` (op).
-- **Repo** = `C:\ReposGit\ModsMinecraft\EstadisticasRPG`, con la misma base que Mobs Poderosos.
+- **Repo** = `C:\ReposGit\ModsMinecraft\EstadisticasRPG`, con la misma base que Bloodmoon & Bosses.
 
 ## Paso 0 — Repo (hecho)
 
@@ -122,10 +122,10 @@ Permisos con `Commands.hasPermission(Commands.LEVEL_GAMEMASTERS)` (en 26.3 no ex
 - **Menú:** `AbstractContainerMenu.clicked(int, int, ContainerInput, Player)` (el enum ya no se llama `ClickType`); `sendAllDataToRemote()`, `canTakeItemForPickAll(ItemStack, Slot)` y `canDragTo(Slot)` son públicos; `Slot.mayPickup(Player)` y `Slot.mayPlace(ItemStack)` existen.
 - **Sincronización con el cliente:** `MOVEMENT_SPEED`, `ATTACK_SPEED`, `BLOCK_BREAK_SPEED`, `BLOCK_INTERACTION_RANGE` y `ENTITY_INTERACTION_RANGE` son `isClientSyncable()` (lo verifica el gametest `losAtributosQueUsaElClienteSeSincronizan`).
 
-**Junto con Inventario Compartido** (los dos son tuyos, así que es probable que se instalen juntos):
+**Junto con Soul Link** (los dos son tuyos, así que es probable que se instalen juntos):
 - La **experiencia es compartida**: cualquiera que compra gasta los niveles del grupo. Funciona, pero conviene decirlo en el README.
-- La **vida es compartida por deltas** y cada uno tendría una `MAX_HEALTH` distinta: el que tiene menos máximo corta la vida del grupo. **Resuelto en la fase 5:** con los dos mods, los puntos son del grupo (`PuntosDelGrupo`, un `SavedData` del mundo), así que todos tienen la misma vida máxima. Inventario Compartido es un único grupo para todo el servidor (no hay equipos), y eso es lo que replica `PuntosDelGrupo`.
-- **No verificado con los dos mods cargados a la vez:** los gametests fuerzan el modo grupo sin Inventario Compartido. Falta probar a mano que la experiencia gastada se reparta y que la curación del corazón nuevo le llegue a todos.
+- La **vida es compartida por deltas** y cada uno tendría una `MAX_HEALTH` distinta: el que tiene menos máximo corta la vida del grupo. **Resuelto en la fase 5:** con los dos mods, los puntos son del grupo (`PuntosDelGrupo`, un `SavedData` del mundo), así que todos tienen la misma vida máxima. Soul Link es un único grupo para todo el servidor (no hay equipos), y eso es lo que replica `PuntosDelGrupo`.
+- **Probado a mano con los dos mods cargados (y Bloodmoon & Bosses), en la 0.9.1:** la experiencia gastada se reparte y la curación del corazón nuevo le llega a todos. Los gametests siguen forzando el modo grupo sin Soul Link.
 
 ## Fases (cada una termina con `gradlew runGameTest` en verde, la versión subida y `/docs`)
 
@@ -133,12 +133,13 @@ Permisos con `Commands.hasPermission(Commands.LEVEL_GAMEMASTERS)` (en 26.3 no ex
 2. **Menú** (0.2.0) — **hecha**: `MenuDeEstadisticas` y `/estadisticas` sin argumentos lo abre.
 3. **Más estadísticas** (0.3.0) — **hecha**: velocidad de ataque, minado, alcance, empuje y suerte.
 4. **Config y pulido** (0.4.0) — **hecha**: `config/estadisticasrpg.json`, `recargar`, sonidos y partículas al comprar, README completo.
-5. **Opcional — con Inventario Compartido** (0.5.0) — **hecha** (`PuntosDelGrupo`, un `SavedData` del mundo; los individuales se suman una vez por jugador con el máximo por estadística): puntos del grupo si los dos mods están cargados (`FabricLoader.isModLoaded("inventariocompartido")`).
+5. **Opcional — con Soul Link** (0.5.0) — **hecha** (`PuntosDelGrupo`, un `SavedData` del mundo; los individuales se suman una vez por jugador con el máximo por estadística): puntos del grupo si los dos mods están cargados (`FabricLoader.isModLoaded("inventariocompartido")`).
 6. **Daño a distancia** (0.8.0) — **hecha**: estadística `danio_distancia` (+1 % por punto, tope 100) sin atributo; el primer mixin del mod (`ProyectilMixin`) multiplica el daño de flechas y tridentes lanzados por jugadores. El menú pasa a dos filas (5 y 5).
+7. **Bajar puntos y 5 estadísticas nuevas** (0.10.0) — **hecha**: `Mejoras.bajar` devuelve `devolucionAlBajar` (0,5) del costo por punto, desde `/estadisticas bajar`, el click derecho del menú y el botón **-1** de la pantalla (canal `bajar`, y el estado pasa a `estado_v2`). Regeneración y robo de vida sin atributo (`Curacion`), salto (`JUMP_STRENGTH`), caída segura (`SAFE_FALL_DISTANCE`) y respiración (`OXYGEN_BONUS`). El menú reparte por combate / resto y la pantalla pasa a dos columnas cuando no entran.
 
 ## Verificación
 
-**GameTests** (`src/gametest`). No hay estado global, así que pueden ser varios tests independientes, cada uno con su jugador. El jugador sale de un `joinSurvivalPlayer` como el de Inventario Compartido: **no** `makeMockServerPlayerInLevel`, que fuerza creativo.
+**GameTests** (`src/gametest`). No hay estado global, así que pueden ser varios tests independientes, cada uno con su jugador. El jugador sale de un `joinSurvivalPlayer` como el de Soul Link: **no** `makeMockServerPlayerInLevel`, que fuerza creativo.
 
 - Comprar con 5 niveles: queda en 4, `vida = 1`, `MAX_HEALTH = 22`, la vida subió 2.
 - Comprar con 0 niveles: no cambia nada y devuelve `SIN_NIVELES`.

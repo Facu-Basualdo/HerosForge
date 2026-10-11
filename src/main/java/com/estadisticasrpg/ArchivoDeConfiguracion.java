@@ -60,6 +60,7 @@ public final class ArchivoDeConfiguracion {
 		List<String> avisos = new ArrayList<>();
 		Configuracion defecto = Configuracion.POR_DEFECTO;
 		int experiencia = entero(raiz, "experienciaPorPunto", defecto.experienciaPorPunto(), 0, "experienciaPorPunto", avisos);
+		double devolucion = fraccion(raiz, "devolucionAlBajar", defecto.devolucionAlBajar(), avisos);
 
 		JsonObject estadisticas = raiz.has("estadisticas") && raiz.get("estadisticas").isJsonObject()
 				? raiz.getAsJsonObject("estadisticas")
@@ -71,7 +72,7 @@ public final class ArchivoDeConfiguracion {
 		}
 
 		// Un archivo de antes de la 0.7.0 tiene costoPorPunto y puntosPorAumento (en niveles): al reescribirlo se van
-		boolean faltaAlgo = !raiz.has("experienciaPorPunto") || !raiz.has("estadisticas");
+		boolean faltaAlgo = !raiz.has("experienciaPorPunto") || !raiz.has("devolucionAlBajar") || !raiz.has("estadisticas");
 		Map<Estadistica, Configuracion.Mejora> mejoras = new EnumMap<>(Estadistica.class);
 		for (Estadistica estadistica : Estadistica.values()) {
 			Configuracion.Mejora porDefecto = defecto.de(estadistica);
@@ -88,7 +89,7 @@ public final class ArchivoDeConfiguracion {
 			mejoras.put(estadistica, new Configuracion.Mejora(porPunto, tope));
 		}
 
-		Configuracion config = new Configuracion(experiencia, mejoras);
+		Configuracion config = new Configuracion(experiencia, devolucion, mejoras);
 		// Se reescribe con lo leído, no con los valores por defecto, así no se pisa nada que el dueño haya cambiado.
 		// Con avisos no: se perdería el valor que escribió mal en vez de dejárselo para que lo corrija
 		if (faltaAlgo && avisos.isEmpty()) {
@@ -100,6 +101,7 @@ public final class ArchivoDeConfiguracion {
 	public static void escribir(Path archivo, Configuracion config) {
 		JsonObject raiz = new JsonObject();
 		raiz.addProperty("experienciaPorPunto", config.experienciaPorPunto());
+		raiz.addProperty("devolucionAlBajar", config.devolucionAlBajar());
 		JsonObject estadisticas = new JsonObject();
 		for (Estadistica estadistica : Estadistica.values()) {
 			Configuracion.Mejora mejora = config.de(estadistica);
@@ -145,6 +147,23 @@ public final class ArchivoDeConfiguracion {
 		// Un porPunto negativo restaría al comprar: el jugador pagaría para empeorar
 		if (!Double.isFinite(leido) || leido <= 0) {
 			avisos.add(donde + " tiene que ser mayor que 0 (dice " + valor + "): se usa " + porDefecto);
+			return porDefecto;
+		}
+		return leido;
+	}
+
+	/** De 0 a 1: más de 1 devolvería más de lo que costó, y bajar y subir de nuevo fabricaría experiencia. */
+	private static double fraccion(JsonObject objeto, String campo, double porDefecto, List<String> avisos) {
+		JsonPrimitive valor = numero(objeto, campo);
+		if (valor == null) {
+			if (objeto.has(campo)) {
+				avisos.add(campo + " tiene que ser un número: se usa " + porDefecto);
+			}
+			return porDefecto;
+		}
+		double leido = valor.getAsDouble();
+		if (!Double.isFinite(leido) || leido < 0 || leido > 1) {
+			avisos.add(campo + " tiene que estar entre 0 y 1 (dice " + valor + "): se usa " + porDefecto);
 			return porDefecto;
 		}
 		return leido;

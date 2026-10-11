@@ -8,11 +8,12 @@ Síntomas que esta nota evita: el jugador reaparece con 10 corazones aunque comp
 
 **`PuntosDelJugador` es la fuente de verdad. Los `AttributeModifier` se derivan de ahí con `Mejoras.aplicar`, nunca al revés.** Vanilla también guarda los modificadores permanentes en el NBT, pero no se confía en ellos: se pierden al morir (ver [Minecraft 26.x sin ofuscar](../general/minecraft-26-sin-ofuscar.md)) y quedan viejos si cambia la config.
 
-**Los puntos se leen con `Mejoras.puntos(jugador)` y se escriben con `Mejoras.guardar`, nunca con el attachment directo:** sin Inventario Compartido van al attachment `EstadisticasRPG.PUNTOS` del jugador, pero con él van a `PuntosDelGrupo`, que es de todo el servidor (ver [Puntos del grupo](grupo.md)).
+**Los puntos se leen con `Mejoras.puntos(jugador)` y se escriben con `Mejoras.guardar`, nunca con el attachment directo:** sin Soul Link van al attachment `EstadisticasRPG.PUNTOS` del jugador, pero con él van a `PuntosDelGrupo`, que es de todo el servidor (ver [Puntos del grupo](grupo.md)).
 
 | Cuándo | Dónde | Qué hace |
 |---|---|---|
 | Comprar o dar puntos | `Mejoras.sumar` | `guardar` (que hace `aplicar`) (+ `heal` si es vida) |
+| Bajar puntos | `Mejoras.bajar` | `guardar` con menos puntos y devuelve experiencia (ver Bajar) |
 | Reiniciar | `Mejoras.reiniciar` | `guardar(vacio())` |
 | Entrar al servidor | `ServerPlayerEvents.JOIN` (al final de `PlayerList.placeNewPlayer`) → `Mejoras.alEntrar` | `aplicar`: ajusta los modificadores a la config actual (en modo grupo, antes suma los puntos individuales del que entra) |
 | Reaparecer o volver del End | `ServerPlayerEvents.COPY_FROM` (al final de `ServerPlayer.restoreFrom`) → `Mejoras.alReaparecer` | copia los puntos del viejo, `aplicar`, y si murió `setHealth(getMaxHealth())` |
@@ -53,20 +54,33 @@ Comprobado con el gametest `alReaparecerConservaPuntosYVida`: sin el registro de
 
 - Si el tope y la experiencia cortan en el mismo número, gana `TOPE` (`margen <= alcanzan`): es lo que el jugador no puede arreglar juntando más experiencia.
 - **Se descuenta con `ServerPlayer.giveExperiencePoints(-costo)`.** Con un número negativo, vanilla baja de nivel cada vez que la barra pasa de 0 (verificado con `javap`), y el override de `ServerPlayer` pone `lastSentExp = -1` para que el cliente redibuje la barra. Tocar `experienceLevel` o `experienceProgress` directo no le avisaría al cliente.
-- Con Inventario Compartido no hay nada aparte: ese mod reparte la diferencia de experiencia (en puntos) de cada jugador al final del tick.
+- Con Soul Link no hay nada aparte: ese mod reparte la diferencia de experiencia (en puntos) de cada jugador al final del tick.
 - **El modo creativo paga igual.** Si fuera gratis, alcanzaría con pasar a creativo, comprar todo y volver.
 - `Mejoras.dar` (comando `dar`) no cobra pero **respeta el tope**.
 - `Mejoras.mensaje(Compra)` arma el texto para el jugador; lo usan el comando y el menú (ver [Menú de estadísticas](menu.md)).
 - **Los efectos van dentro de `comprar`** (`Mejoras.efectos`): si compró, sonido de subir de nivel y partículas `HAPPY_VILLAGER`; si no, el "no" del aldeano. Desde el menú, la barra de acción queda opacada detrás del cofre, y el sonido es lo que avisa que no se compró. `dar` no tiene efectos. Se usa `level.playSound(null, …)`, que lo escuchan todos los que están cerca, incluido el que compra: con el jugador como primer argumento, vanilla se lo saltearía justo a él.
 
+## Bajar (`Mejoras.bajar`)
+
+**Bajar un punto devuelve `Configuracion.devolucionPorPunto()` de experiencia: `floor(experienciaPorPunto × devolucionAlBajar)`, 15 de 30 por defecto.** Se baja lo que hay (`min(cantidad, puntos)`), y la devolución es por los bajados, no por los pedidos.
+
+- **La devolución es menos que el costo a propósito.** Con 1 (o más) bajar y volver a subir sería gratis (o fabricaría experiencia): los puntos se moverían según la pelea. Por eso la config no acepta más de 1 (ver [Configuración](configuracion.md)).
+- Se devuelve con `giveExperiencePoints` positivo, el mismo camino que el cobro: el cliente redibuja la barra.
+- **Bajar vida no deja vida de más:** `guardar` → `aplicar`, que recorta la vida contra el máximo nuevo en el momento (ver Vida).
+- Con los puntos del grupo baja los de todos, y la experiencia la recibe el que bajó: Soul Link la reparte como cualquier otra.
+- `Devolucion(estadistica, pedidos, bajados, experiencia)` y `Mejoras.mensaje(Devolucion)` ("Vida −2 puntos: te devolvió 30 de experiencia"), como `Compra`. Con 0 bajados suena el "no" del aldeano; si bajó, el sonido de levantar un orbe.
+- La cuenta va en `long`: con un tope enorme y la devolución alta no entra en un `int`.
+
 ## Config y topes
 
 `Configuracion.POR_DEFECTO` tiene el costo (`experienciaPorPunto`) y una `Mejora(porPunto, tope)` por estadística. **Ningún número de balance va fuera de `Configuracion`.** El archivo `config/estadisticasrpg.json` pisa esos valores: cómo se lee, valida y recarga está en [Configuración](configuracion.md).
 
-**Los valores por defecto están balanceados contra los de Mobs Poderosos** (el mod hermano, con mobs de nivel 1 a 100 según la distancia al spawn): las 10 estadísticas topean en 100 puntos y cada uno cuesta 30 de experiencia, así que todo al máximo son 1000 puntos y 30.000 de experiencia. El objetivo es que, con el equipo y los puntos que se esperan en cada zona, un zombi se mate en 5 o 6 golpes en todo el mundo y lo que aguanta el jugador baje de a poco hacia el nivel 100 (tabla en el README). La tabla es sólo por distancia: Mobs Poderosos además suma hasta +20 niveles por los días del mundo y un 5 % de campeones con +10. **Si se cambia un número de acá, hay que mirar el otro mod**, y al revés. Lo que más desbalancea:
+**Los valores por defecto están balanceados contra los de Bloodmoon & Bosses** (el mod hermano, con mobs de nivel 1 a 100 según la distancia al spawn): las 15 estadísticas topean en 100 puntos y cada uno cuesta 30 de experiencia, así que todo al máximo son 1500 puntos y 45.000 de experiencia. El objetivo es que, con el equipo y los puntos que se esperan en cada zona, un zombi se mate en 5 o 6 golpes en todo el mundo y lo que aguanta el jugador baje de a poco hacia el nivel 100 (tabla en el README). La tabla es sólo por distancia: Bloodmoon & Bosses además suma hasta +20 niveles por los días del mundo y un 5 % de campeones con +10. **Si se cambia un número de acá, hay que mirar el otro mod**, y al revés. Lo que más desbalancea:
 
 - **La armadura.** Vanilla frena como máximo el 80 % del daño, y con netherita (20) ya se está cerca: +10 llevaba al tope y volvía al jugador casi inmortal. Por eso +8.
 - **El daño a distancia.** Las flechas no escalan con `Daño`, y un zombi de nivel 100 (180 de vida) pedía ~11 flechas de Poder V. Con +1 % por punto, al máximo son 5 o 6, como con la espada.
+- **La regeneración y el robo de vida** curan en plena pelea: al máximo, 0,3 de vida por segundo (9 corazones por minuto) y el 10 % del daño. Un zombi de nivel 100 pega 15: ninguna de las dos le gana a eso, pero sí acortan la espera entre peleas.
+- **El salto:** +20 % de fuerza salta 1,8 bloques. Con más de ~+25 % se pasa de 2 y se saltean las paredes de 2 bloques de cualquier base.
 - **Cobrar en niveles.** Con 1 nivel por punto se compraba todo de a un nivel, a 7 de experiencia cada uno, y se llegaba al máximo cerca del spawn, antes de que los mobs se pusieran difíciles.
 
 - **Si se baja un tope, los puntos de más se conservan pero no suman:** `Mejora.efecto` usa `min(puntos, tope)`. Si se vuelve a subir el tope, vuelven a contar sin que el jugador pague de nuevo.
@@ -82,7 +96,7 @@ El attachment va en el NBT del jugador (`playerdata/<uuid>.dat`), bajo los attac
 
 ## Comando
 
-`ComandoEstadisticas` registra `/estadisticas` (`ver`, `subir`, `dar`, `reiniciar`) y el alias `/stats`.
+`ComandoEstadisticas` registra `/estadisticas` (`ver`, `subir`, `bajar`, `dar`, `reiniciar`, `recargar`) y el alias `/stats`. `bajar` es para todos, como `subir`.
 
 - **El alias es un `redirect`, y un redirect no hereda el `executes` del nodo destino:** `/stats` solo tiene su propio `.executes(ver)`. Sin eso, `/stats` sin argumentos daría error de sintaxis.
 - Los permisos van con `Commands.hasPermission(Commands.LEVEL_GAMEMASTERS)`. Con `ver`, el permiso de op está en el argumento `jugador`, así cualquiera puede ver lo suyo.
@@ -103,8 +117,13 @@ El attachment va en el NBT del jugador (`playerdata/<uuid>.dat`), bajo los attac
 | Alcance (`alcance`) | `BLOCK_INTERACTION_RANGE` **y** `ENTITY_INTERACTION_RANGE` | `ADD_VALUE` | **cliente** (a qué apunta) y servidor (valida la distancia) |
 | Resistencia al empuje (`empuje`) | `KNOCKBACK_RESISTANCE` | `ADD_VALUE` | servidor (manda el empuje ya calculado) |
 | Suerte (`suerte`) | `LUCK` | `ADD_VALUE` | servidor |
+| Regeneración (`regeneracion`) | **ninguno**: `Curacion.regenerar` | cura `efecto` cada segundo | servidor |
+| Robo de vida (`robo_de_vida`) | **ninguno**: `Curacion.alPegar` | cura `daño × efecto` | servidor |
+| Salto (`salto`) | `JUMP_STRENGTH` | `ADD_MULTIPLIED_BASE` | **cliente** (predice el salto) |
+| Caída segura (`caida`) | `SAFE_FALL_DISTANCE` | `ADD_VALUE` | servidor (el daño de caída) |
+| Respiración (`respiracion`) | `OXYGEN_BONUS` | `ADD_VALUE` | servidor (el aire; el cliente recibe las burbujas) |
 
-- **Lo que calcula el cliente tiene que ser un atributo `isClientSyncable()`.** Si no, el servidor tendría los puntos pero el cliente vanilla minaría, caminaría o apuntaría como siempre. Los cinco de la tabla lo son en 26.3, y lo verifica el gametest `losAtributosQueUsaElClienteSeSincronizan`.
+- **Lo que calcula el cliente tiene que ser un atributo `isClientSyncable()`.** Si no, el servidor tendría los puntos pero el cliente vanilla minaría, caminaría o apuntaría como siempre. Los seis de la tabla lo son en 26.3 (también `JUMP_STRENGTH`), y lo verifica el gametest `losAtributosQueUsaElClienteSeSincronizan`.
 - **El alcance usa los dos rangos a la vez.** Con sólo el de bloques, el jugador llegaría a un bloque lejano pero no a un mob a la misma distancia. Como `Estadistica.atributos()` es una lista, `aplicar` pone el mismo modificador en los dos.
 - **La suerte se nota sobre todo al pescar.** `FishingHook` usa la suerte de Suerte marina más `Player.getLuck()`, que es el atributo `LUCK`: con +3 es como tener otra Suerte marina III. Las tablas de botín sólo la usan en las entradas con `quality`, y **no está verificado** que alguna tabla de cofres de vanilla las tenga. Por eso el README dice "al pescar" y no promete nada de los cofres.
 
@@ -121,16 +140,30 @@ El attachment va en el NBT del jugador (`playerdata/<uuid>.dat`), bajo los attac
 
 - **Se multiplica el daño final**, con velocidad, Poder y crítico ya sumados: el arco, la ballesta y el tridente escalan en la misma proporción. Los fuegos artificiales de la ballesta no pasan por acá.
 - **Sólo si el dueño es un `ServerPlayer`.** Esqueletos, dispensadores o una flecha cuyo dueño se desconectó (`getOwner()` `null`) pegan como en vanilla.
-- `multiplicadorADistancia` usa `Mejoras.puntos`: con Inventario Compartido toma los del grupo sin nada aparte.
+- `multiplicadorADistancia` usa `Mejoras.puntos`: con Soul Link toma los del grupo sin nada aparte.
 - `defaultRequire: 1` en `estadisticasrpg.mixins.json`: si un cambio de Minecraft mueve la llamada, el juego no arranca en vez de dejar la estadística sin efecto en silencio.
+
+## Regeneración y robo de vida: sin atributo
+
+Vanilla no tiene un atributo que cure: la regeneración natural depende del hambre, y nada cura al pegar. Las dos se construyen como el daño a distancia, sin atributos, y las aplica `Curacion` (registrada en `EstadisticasRPG.onInitialize`):
+
+| Estadística | Cuándo | Qué hace |
+|---|---|---|
+| Regeneración | `END_SERVER_TICK`, cada 20 ticks (`getTickCount() % 20`) | `heal(efecto)` a cada jugador vivo, no creativo ni espectador, con la vida no llena |
+| Robo de vida | `ServerLivingEntityEvents.AFTER_DAMAGE` | si `fuente.getEntity()` es un `ServerPlayer` vivo distinto del herido y el golpe no se bloqueó, `heal(danio × efecto)` |
+
+- **`porPunto` de la regeneración es vida por segundo en medios corazones**, como `MAX_HEALTH`, pero `describir` lo muestra **por minuto** (`× 30` corazones): 0,003 por segundo con `numero` (dos decimales) daría "+0 corazones".
+- **`getEntity()` y no `getDirectEntity()`:** con flechas y tridentes, el directo es el proyectil y el dueño es el jugador. Así el robo de vida vale también a distancia.
+- **`AFTER_DAMAGE` no corre si el golpe mató** (lo dice Fabric): el golpe final no cura. Por eso el test usa un gólem, que no muere de un golpe.
+- **Con los puntos del grupo, la regeneración cura a uno solo** (el primero de la lista que puede): Soul Link suma la curación de cada jugador a la vida compartida, y si curaran todos, el grupo se regeneraría una vez por jugador conectado. El robo de vida cura sólo al que pegó, y eso Soul Link lo reparte bien.
 
 ## Agregar una estadística
 
-1. Un valor en `Estadistica`: `id` (para siempre, ver Formato en disco), nombre, ítem del menú (`icono`), operación, atributo(s) y cómo se describe el efecto. Si no es un atributo, el constructor corto (sin operación ni atributos) y el efecto se lee de los puntos donde haga falta, como el daño a distancia.
+1. Un valor en `Estadistica`: `id` (para siempre, ver Formato en disco), nombre, si es de combate (la fila del menú y la columna de la pantalla), ítem del menú (`icono`), operación, atributo(s) y cómo se describe el efecto. Si el nombre no entra en media pantalla (más de ~85 px), un `nombreCorto`. Si no es un atributo, el constructor corto (sin operación ni atributos) y el efecto se lee de los puntos donde haga falta, como el daño a distancia.
 2. Su `Mejora` en `Configuracion.POR_DEFECTO`, o NPE (lo atrapa el gametest `cadaEstadisticaTieneConfigYSlot`).
 3. Si es vida, o algo que necesite un efecto inmediato al comprar, se agrega en `Mejoras.sumar`.
 4. Si el cliente usa el atributo, agregalo a `losAtributosQueUsaElClienteSeSincronizan` (ver la tabla de arriba).
-5. Una fila en la tabla del `README.md` y un gametest con el valor del atributo. El orden del enum es el del menú (ver [Menú de estadísticas](menu.md)): reordenarlo no rompe nada guardado, porque el codec es por id. Con 10, `Map.of` de `POR_DEFECTO` llegó a su máximo de pares: la undécima pide `Map.ofEntries`.
+5. Una fila en la tabla del `README.md` y un gametest con el valor del atributo. El orden del enum es el del menú (ver [Menú de estadísticas](menu.md)): reordenarlo no rompe nada guardado, porque el codec es por id. `POR_DEFECTO` usa `Map.ofEntries`: `Map.of` no pasa de 10 pares.
 
 Con `ADD_MULTIPLIED_BASE`, el porcentaje se aplica sobre la base **más todos los `ADD_VALUE`**, incluido el del arma (ver [docs/plan.md](../../docs/plan.md)).
 
@@ -139,6 +172,6 @@ Con `ADD_MULTIPLIED_BASE`, el porcentaje se aplica sobre la base **más todos lo
 - [Tests de estadísticas](../tests/estadisticas.md)
 - [Menú de estadísticas](menu.md)
 - [Configuración](configuracion.md)
-- [Puntos del grupo](grupo.md): con Inventario Compartido los puntos van a `data/estadisticasrpg/puntos_del_grupo.dat`, no al attachment
+- [Puntos del grupo](grupo.md): con Soul Link los puntos van a `data/estadisticasrpg/puntos_del_grupo.dat`, no al attachment, y la regeneración cura a uno solo
 - [Minecraft 26.x sin ofuscar](../general/minecraft-26-sin-ofuscar.md)
 - [Probar en el juego](../general/probar-en-el-juego.md)

@@ -13,15 +13,15 @@ Síntomas que esta nota evita: los gametests del servidor pasan y el juego crash
 
 **`runClientGameTest` abre una ventana de Minecraft** y tarda medio minuto: no está colgado de `build` ni de `check` (sólo `runGameTest` lo está). Corrélo a mano cuando toques `src/client`, `Paquetes` o `InterfazDelCliente`. Se activa con `enableClientGameTests = true` en `build.gradle`, y el entrypoint es `fabric-client-gametest` en `src/gametest/resources/fabric.mod.json`. El source set `gametest` ve las clases de `src/client`.
 
-**Los gametests del servidor no alcanzan para el cliente:** el crash de "Components not bound yet" (ver [Pantalla propia](../mod/pantalla.md)) pasaba al arrancar el cliente, y los 32 del servidor daban OK.
+**Los gametests del servidor no alcanzan para el cliente:** el crash de "Components not bound yet" (ver [Pantalla propia](../mod/pantalla.md)) pasaba al arrancar el cliente, y todos los del servidor daban OK.
 
 ## Los del servidor
 
 | Test | Qué verifica |
 |---|---|
-| `elEstadoParaLaPantallaTieneTodo` | Experiencia, costo, una fila por estadística en el orden del enum, puntos y tope, y los textos `ahora`/`proximo` armados en el servidor (`ahora` vacío con 0 puntos) |
-| `elEstadoViajaPorLaRedSinPerderNada` | `Estado` y `Comprar` codificados y decodificados con `Unpooled.buffer()` dan lo mismo y no sobran bytes |
-| `losPedidosDelClienteNoSeCreen` | Cantidad −5 o 0 y una estadística que no existe no compran ni cobran; `Integer.MAX_VALUE` compra lo que alcanza y cobra justo |
+| `elEstadoParaLaPantallaTieneTodo` | Experiencia, costo, devolución, una fila por estadística en el orden del enum, puntos y tope, y los textos `ahora`/`proximo` armados en el servidor (`ahora` vacío con 0 puntos) |
+| `elEstadoViajaPorLaRedSinPerderNada` | `Estado`, `Comprar` y `Bajar` codificados y decodificados con `Unpooled.buffer()` dan lo mismo y no sobran bytes |
+| `losPedidosDelClienteNoSeCreen` | Cantidad −5 o 0 y una estadística que no existe no compran ni cobran; `Integer.MAX_VALUE` compra lo que alcanza y cobra justo · lo mismo con `Bajar`: los pedidos truchos no bajan nada, y `Integer.MAX_VALUE` baja los que hay |
 | `sinElComplementoEstadisticasAbreElCofre` | Con `preferir(true)` pero sin los canales registrados, `/estadisticas` abre `MenuDeEstadisticas` |
 
 - **Los jugadores de prueba (`entrar()`) nunca tienen los canales:** su conexión es un `EmbeddedChannel` y no hubo fase de configuración, así que `canSend` da `false`. Por eso estos tests llaman a `estado`, `comprar` y `preferir` directo y no pueden ver los paquetes que se mandan. Lo que pasa con `canSend` en `true` lo cubre el client gametest.
@@ -31,9 +31,9 @@ Síntomas que esta nota evita: los gametests del servidor pasan y el juego crash
 Crea un mundo de singleplayer, pone supervivencia, da experiencia y puntos con comandos, y:
 
 1. Aprieta K → espera `PantallaDeEstadisticas` → captura `estadisticas-pantalla`.
-2. `clickScreenButton("+1")` (el primero es el de vida) → comprueba en el servidor (`computeOnServer`) que subió un punto y cobró 30 → captura.
+2. `clickScreenButton("+1")` (el primero es el de vida) → comprueba en el servidor (`computeOnServer`) que subió un punto y cobró 30 → captura → `clickScreenButton("-1")` (también el de vida) → bajó el punto y devolvió 15.
 3. K la cierra; E abre el inventario → captura `estadisticas-inventario` → `clickScreenButton("Estadísticas")` abre la pantalla → Esc vuelve al inventario.
-4. Con el inventario abierto, K la abre → captura `estadisticas-pantalla-chica` (la ventana es 852 × 480, o sea interfaz de 426 × 240) → **Listo** vuelve al inventario.
+4. Con el inventario abierto, K la abre → captura `estadisticas-pantalla-chica` (la ventana es 852 × 480, o sea interfaz de 426 × 240; la ventana del test ya arranca de ese tamaño, así que todas las capturas muestran las dos columnas) → **Listo** vuelve al inventario.
 
 Gotchas:
 
@@ -49,3 +49,5 @@ Gotchas:
 - [Pantalla propia del cliente](../mod/pantalla.md)
 - [Tests del menú](menu.md): el cofre, que sí se prueba entero desde el servidor
 - [Probar en el juego](../general/probar-en-el-juego.md): lo que falta probar a mano (un servidor dedicado con un cliente con y otro sin el mod)
+
+La prueba también captura nivel 989 (millones de XP) en la ventana chica y una ventana de 1280 × 800. Revisá `estadisticas-experiencia-alta` y `estadisticas-pantalla-amplia`: los textos de la cabecera deben quedar dentro de su mitad y los botones dentro del panel.

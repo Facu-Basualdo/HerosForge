@@ -39,15 +39,20 @@ public final class InterfazDelCliente {
 		Paquetes.registrar();
 		// Fabric corre estos receptores en el hilo del servidor: se puede comprar directo
 		ServerPlayNetworking.registerGlobalReceiver(Paquetes.Comprar.TIPO, (pedido, contexto) -> comprar(contexto.player(), pedido));
+		ServerPlayNetworking.registerGlobalReceiver(Paquetes.Bajar.TIPO, (pedido, contexto) -> bajar(contexto.player(), pedido));
 		ServerPlayNetworking.registerGlobalReceiver(Paquetes.Preferencia.TIPO, (preferencia, contexto) -> preferir(contexto.player(), preferencia.pantalla()));
 		ServerPlayNetworking.registerGlobalReceiver(Paquetes.AbrirCofre.TIPO, (pedido, contexto) -> MenuDeEstadisticas.abrir(contexto.player()));
 		ServerTickEvents.END_SERVER_TICK.register(InterfazDelCliente::sincronizarATodos);
 		ServerPlayConnectionEvents.DISCONNECT.register((conexion, servidor) -> olvidar(conexion.getPlayer().getUUID()));
 	}
 
-	/** {@code /estadisticas}: la pantalla si el cliente la tiene y la prefiere, si no el cofre. */
+	/**
+	 * {@code /estadisticas}: la pantalla si el cliente la tiene y la prefiere, si no el cofre. Se pregunta por el
+	 * canal del estado y no por el de abrir: un cliente de una versión anterior registra el de abrir, pero no el
+	 * estado nuevo, y la pantalla se quedaría esperando al servidor.
+	 */
 	public static void abrir(ServerPlayer jugador) {
-		if (PREFIEREN_PANTALLA.contains(jugador.getUUID()) && ServerPlayNetworking.canSend(jugador, Paquetes.AbrirPantalla.TIPO)) {
+		if (PREFIEREN_PANTALLA.contains(jugador.getUUID()) && ServerPlayNetworking.canSend(jugador, Paquetes.Estado.TIPO)) {
 			sincronizar(jugador, true);
 			ServerPlayNetworking.send(jugador, new Paquetes.AbrirPantalla());
 		} else {
@@ -84,6 +89,20 @@ public final class InterfazDelCliente {
 		return Optional.of(compra);
 	}
 
+	/** Como {@link #comprar}: un id que no existe o una cantidad menor que 1 no se intentan. */
+	public static Optional<Mejoras.Devolucion> bajar(ServerPlayer jugador, Paquetes.Bajar pedido) {
+		Optional<Estadistica> estadistica = Estadistica.porId(pedido.id());
+		if (estadistica.isEmpty() || pedido.cantidad() < 1) {
+			return Optional.empty();
+		}
+		Mejoras.Devolucion devolucion = Mejoras.bajar(jugador, estadistica.get(), pedido.cantidad());
+		if (ServerPlayNetworking.canSend(jugador, Paquetes.Resultado.TIPO)) {
+			ServerPlayNetworking.send(jugador, new Paquetes.Resultado(Mejoras.mensaje(devolucion).getString(), devolucion.bajados() > 0));
+		}
+		sincronizar(jugador, false);
+		return Optional.of(devolucion);
+	}
+
 	/** Lo que se le manda al cliente, con los textos ya armados. */
 	public static Paquetes.Estado estado(ServerPlayer jugador) {
 		Configuracion config = EstadisticasRPG.config();
@@ -95,7 +114,7 @@ public final class InterfazDelCliente {
 			filas.add(new Paquetes.Fila(estadistica.id(), estadistica.nombre(), actuales, mejora.tope(),
 					actuales > 0 ? estadistica.describir(mejora.efecto(actuales)) : "", estadistica.describir(mejora.porPunto())));
 		}
-		return new Paquetes.Estado(Mejoras.experiencia(jugador), jugador.experienceLevel, config.experienciaPorPunto(), Mejoras.puntosDelGrupo(), filas);
+		return new Paquetes.Estado(Mejoras.experiencia(jugador), jugador.experienceLevel, config.experienciaPorPunto(), config.devolucionPorPunto(), Mejoras.puntosDelGrupo(), filas);
 	}
 
 	/**

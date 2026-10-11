@@ -71,9 +71,12 @@ public class EstadisticasRPGCliente implements ClientModInitializer {
 		return estado;
 	}
 
-	/** Si el servidor tiene el mod: un servidor vanilla, o con una versión sin la pantalla, no registra los canales. */
+	/**
+	 * Si el servidor tiene esta versión del mod: un servidor vanilla no registra los canales, y uno de una versión
+	 * anterior no tiene el de bajar ni manda el estado que lee esta pantalla, que se quedaría esperándolo.
+	 */
 	public static boolean servidorConElMod() {
-		return ClientPlayNetworking.canSend(Paquetes.Comprar.TIPO);
+		return ClientPlayNetworking.canSend(Paquetes.Bajar.TIPO);
 	}
 
 	/** @param desdeElInventario si Esc tiene que volver al inventario */
@@ -82,7 +85,7 @@ public class EstadisticasRPGCliente implements ClientModInitializer {
 			return;
 		}
 		if (!servidorConElMod()) {
-			cliente.player.sendOverlayMessage(Component.literal("Este servidor no tiene Hero's Forge (o tiene una versión sin la pantalla)"));
+			cliente.player.sendOverlayMessage(Component.literal("Este servidor no tiene Hero's Forge (o tiene una versión más vieja que la tuya)"));
 			return;
 		}
 		if (config.usarPantalla()) {
