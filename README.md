@@ -97,6 +97,8 @@ Los valores por defecto están pensados para jugar junto con Mobs Poderosos, el 
 
 Sin puntos, en la zona de nivel 100 hacen falta 19 golpes de netherita para matar un zombi y aguantás 3.
 
+La tabla es por la distancia. Mobs Poderosos además suma 1 nivel cada 5 días del mundo (hasta +20 a los 100 días) y hace aparecer campeones con +10 niveles (uno de cada 20): con el mundo más viejo, los puntos hacen más falta también cerca de la base.
+
 ## Con Inventario Compartido
 
 Si en el servidor también está Inventario Compartido (el mod que comparte inventario, vida y experiencia entre todos los jugadores), **los puntos también son de todos**: lo que compra uno lo tienen todos, al momento.
