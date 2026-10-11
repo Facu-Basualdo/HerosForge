@@ -55,15 +55,27 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 		jugador.openMenu(new SimpleMenuProvider((id, inventario, quien) -> new MenuDeEstadisticas(id, jugador), TITULO));
 	}
 
-	/** El slot del menú donde está una estadística: centradas en la fila del medio. */
+	/**
+	 * El slot del menú donde está una estadística: centradas en la fila del medio, o con más de 9, repartidas
+	 * en las dos de abajo (la primera mitad arriba, en el orden de {@link Estadistica}).
+	 */
 	public static int slotDe(Estadistica estadistica) {
 		int cantidad = Estadistica.values().length;
 		int indice = estadistica.ordinal();
+		if (cantidad <= 9) {
+			return 9 + enLaFila(indice, cantidad);
+		}
+		int arriba = (cantidad + 1) / 2;
+		return indice < arriba ? 9 + enLaFila(indice, arriba) : 18 + enLaFila(indice - arriba, cantidad - arriba);
+	}
+
+	/** La columna dentro de una fila de 9 con {@code cantidad} centradas. */
+	private static int enLaFila(int indice, int cantidad) {
 		// Con pocas, separadas por un hueco; con más de 5 no entran separadas en 9 slots
 		if (cantidad <= 5) {
-			return 9 + (9 - (2 * cantidad - 1)) / 2 + 2 * indice;
+			return (9 - (2 * cantidad - 1)) / 2 + 2 * indice;
 		}
-		return 9 + (9 - cantidad) / 2 + indice;
+		return (9 - cantidad) / 2 + indice;
 	}
 
 	private static @Nullable Estadistica estadisticaEn(int slot) {

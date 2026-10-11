@@ -7,7 +7,7 @@ import java.util.Map;
  */
 public record Configuracion(int experienciaPorPunto, Map<Estadistica, Mejora> mejoras) {
 	/*
-	 * Pensados junto con Mobs Poderosos, que llega hasta el nivel 100: todo al máximo son 900 puntos y 27.000 de
+	 * Pensados junto con Mobs Poderosos, que llega hasta el nivel 100: todo al máximo son 1000 puntos y 30.000 de
 	 * experiencia. Se cobra en puntos de experiencia y no en niveles: un nivel bajo vale 7 puntos y uno alto más
 	 * de 100, así que cobrando niveles al principio se subía un punto cada pocos mobs, y quien juntaba niveles
 	 * pagaba de más. Con 30 de experiencia, el primer punto pide unos 6 zombis y el precio no depende del nivel.
@@ -17,6 +17,8 @@ public record Configuracion(int experienciaPorPunto, Map<Estadistica, Mejora> me
 			Map.of(
 					Estadistica.VIDA, new Mejora(0.6, 100),
 					Estadistica.DANIO, new Mejora(0.25, 100),
+					// Un zombi de nivel 100 (180 de vida) pide ~11 flechas de Poder V: con +100 % baja a 5 o 6, como la espada
+					Estadistica.DANIO_DISTANCIA, new Mejora(0.01, 100),
 					// Vanilla corta la armadura en 30 y desde 20 ya frena el 80 %: con netherita (20) más de +8 te vuelve casi inmortal
 					Estadistica.ARMADURA, new Mejora(0.08, 100),
 					// El cliente agranda el campo de visión con la velocidad: más de +20 % ya marea

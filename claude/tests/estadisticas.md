@@ -23,7 +23,9 @@ Todo está en `EstadisticasRPGGameTest`. Cada test crea su propio jugador y lo s
 | `comandos` | `subir` compra y cobra, `/stats` funciona, `dar` sin op no hace nada, una estadística desconocida no cobra |
 | `estadisticasDeLaFase3AlMaximo` | Velocidad de ataque 5,2 con la mano vacía · minado 2 · alcance 6,5 a bloques y 5 a entidades · empuje 0,5 · `getLuck()` 3 |
 | `losAtributosQueUsaElClienteSeSincronizan` | Los atributos que calcula el cliente son `isClientSyncable()` (lista a mano: hay que sumar ahí cualquier estadística nueva que use el cliente) |
-| `cadaEstadisticaTieneConfigYSlot` | Toda `Estadistica` está en `Configuracion.POR_DEFECTO` y tiene un slot propio en la fila del medio del menú |
+| `cadaEstadisticaTieneConfigYSlot` | Toda `Estadistica` está en `Configuracion.POR_DEFECTO` y tiene un slot propio debajo de la fila de arriba del menú (9–26) |
+| `danioADistanciaMultiplicaFlechasYTridentes` | Con 100 puntos, una flecha y un tridente lanzado pegan el doble que sin puntos; una flecha sin dueño pega como la de 0 puntos. Prueba el mixin de verdad: sin `ProyectilMixin` falla con 3 contra 6 |
+| `multiplicadorADistanciaSegunLosPuntos` | `multiplicadorADistancia`: 1 sin dueño o sin puntos, 1,5 con 50, 2 con el tope · no pone modificador en `ATTACK_DAMAGE` · con los puntos del grupo vale para otro jugador |
 
 Los valores con decimales (porcentajes, alcance, y la vida, que con 0,6 por punto casi nunca es entera) se comparan con `assertCerca`, no con `assertValueEqual`: `0,1 × 1,2` no da exactamente `0,12` en `double`. **La tolerancia es 1e-4 y no 1e-9 porque la vida actual es `float`:** `20,6f` pasado a `double` es 20,600000381…
 
@@ -51,6 +53,7 @@ Si algo depende de un tick, o el mod lo hace en el momento (como `Mejoras.aplica
 | Volver del End | `respawn(jugador, true, CHANGED_DIMENSION)` |
 | Guardar y cargar | `TagValueOutput.createWithContext` + `saveWithoutId`, **sacar `"UUID"`** (si no, el jugador nuevo hereda el UUID del viejo y el `PlayerList` se confunde) y `entrar(helper, nombre, guardado)`, que hace `load` antes de `placeNewPlayer` como el login de vanilla |
 | Comandos | `getCommands().performPrefixedCommand(jugador.createCommandSourceStack(), "...")`. El jugador de prueba **no es op**: sirve para probar que `dar` y `reiniciar` lo rechazan |
+| Disparar un proyectil | `danioAlBlanco(helper, proyectil)`: un gólem de hierro con `spawnWithNoFreeWill` (sin armadura, cuya reducción no es lineal, y con 100 de vida), el proyectil a 2 bloques con `setCritArrow(false)` y `shoot` hacia él, y **`proyectil.tick()` a mano sin agregarlo al mundo**: así pega una sola vez y el resultado no depende de cuándo tickea el nivel. Devuelve la vida que perdió el blanco |
 | Leer el codec | `PuntosDelJugador.CODEC.parse(NbtOps.INSTANCE, tag).getOrThrow()` |
 
 `performPrefixedCommand` no tira excepciones: un comando que falla (sin permiso, argumento inválido) sólo le manda el error a la fuente. **Lo que se verifica es el estado después** (puntos, niveles), no que haya fallado.

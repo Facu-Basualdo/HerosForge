@@ -13,10 +13,15 @@ Síntomas que esta nota evita: el ítem de muestra queda "fantasma" en el cursor
 | Slot | Qué hay |
 |---|---|
 | 4 (arriba al medio) | Botella de experiencia: experiencia y nivel del jugador, costo, cómo se compra |
-| `slotDe(estadistica)` (fila del medio) | `Estadistica.icono()`, o vidrio gris (`Items.STAINED_GLASS_PANE.gray()`) si llegó al tope |
+| `slotDe(estadistica)` (filas 2 y 3) | `Estadistica.icono()`, o vidrio gris (`Items.STAINED_GLASS_PANE.gray()`) si llegó al tope |
 | El resto | Vidrio negro con el tooltip oculto |
 
-`slotDe` reparte según cuántas estadísticas hay: **con 5 o menos, separadas por un hueco; con más, seguidas y centradas**. En la fila del medio entran 9, que es lo que trae la fase 3. Si algún día hay más de 9, hay que cambiar el reparto (por ejemplo, a dos filas).
+`slotDe` reparte según cuántas estadísticas hay, **en el orden del enum `Estadistica`**:
+
+- **Hasta 9, en la fila del medio.** Con 5 o menos, separadas por un hueco; con más, seguidas y centradas.
+- **Con más de 9, en las dos filas de abajo:** la primera mitad (`ceil(n/2)`) arriba y el resto abajo, cada fila con la misma regla. Con las 10 de hoy quedan 5 y 5 separadas: slots 9–17 de a dos (vida, daño, daño a distancia, armadura, velocidad de ataque: el combate) y 18–26 de a dos (velocidad, minado, alcance, empuje, suerte).
+
+La fila de arriba es de la botella de experiencia (slot 4). Con más de 18 no entran: haría falta un cofre más grande.
 
 ## Un click compra, nada se mueve
 

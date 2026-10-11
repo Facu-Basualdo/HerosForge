@@ -3,7 +3,7 @@
 	"id": "estadisticasrpg",
 	"version": "${version}",
 	"name": "Estadísticas RPG",
-	"description": "Subí tus estadísticas estilo RPG: cada nivel de experiencia que pagás es un punto más de vida, daño, armadura, velocidad u otra estadística.",
+	"description": "Subí tus estadísticas estilo RPG: pagás experiencia por puntos de vida, daño, armadura, velocidad u otra estadística. En el servidor alcanza; en el cliente suma una pantalla propia (tecla K o desde el inventario).",
 	"authors": [
 		"FacuBas"
 	],
@@ -13,10 +13,17 @@
 	"entrypoints": {
 		"main": [
 			"com.estadisticasrpg.EstadisticasRPG"
+		],
+		"client": [
+			"com.estadisticasrpg.cliente.EstadisticasRPGCliente"
 		]
 	},
 	"mixins": [
-		"estadisticasrpg.mixins.json"
+		"estadisticasrpg.mixins.json",
+		{
+			"config": "estadisticasrpg.client.mixins.json",
+			"environment": "client"
+		}
 	],
 	"depends": {
 		"fabricloader": ">=0.19.5",

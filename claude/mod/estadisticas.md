@@ -2,7 +2,7 @@
 
 [← Índice Mod](INDICE.md)
 
-Síntomas que esta nota evita: el jugador reaparece con 10 corazones aunque compró 20; el corazón nuevo aparece vacío y "no anduvo"; la barra de experiencia no baja hasta reconectar; después de una actualización del mod, un jugador pierde **todos** sus puntos.
+Síntomas que esta nota evita: el jugador reaparece con 10 corazones aunque compró 20; el corazón nuevo aparece vacío y "no anduvo"; la barra de experiencia no baja hasta reconectar; después de una actualización del mod, un jugador pierde **todos** sus puntos; con los mobs de nivel alto, el arco no sirve para nada aunque el jugador tenga el daño al máximo.
 
 ## La regla: los puntos mandan, los modificadores se recalculan
 
@@ -63,9 +63,10 @@ Comprobado con el gametest `alReaparecerConservaPuntosYVida`: sin el registro de
 
 `Configuracion.POR_DEFECTO` tiene el costo (`experienciaPorPunto`) y una `Mejora(porPunto, tope)` por estadística. **Ningún número de balance va fuera de `Configuracion`.** El archivo `config/estadisticasrpg.json` pisa esos valores: cómo se lee, valida y recarga está en [Configuración](configuracion.md).
 
-**Los valores por defecto están balanceados contra los de Mobs Poderosos** (el mod hermano, con mobs de nivel 1 a 100 según la distancia al spawn): las 9 estadísticas topean en 100 puntos y cada uno cuesta 30 de experiencia, así que todo al máximo son 900 puntos y 27.000 de experiencia. El objetivo es que, con el equipo y los puntos que se esperan en cada zona, un zombi se mate en 5 o 6 golpes en todo el mundo y lo que aguanta el jugador baje de a poco hacia el nivel 100 (tabla en el README). La tabla es sólo por distancia: Mobs Poderosos además suma hasta +20 niveles por los días del mundo y un 5 % de campeones con +10. **Si se cambia un número de acá, hay que mirar el otro mod**, y al revés. Lo que más desbalancea:
+**Los valores por defecto están balanceados contra los de Mobs Poderosos** (el mod hermano, con mobs de nivel 1 a 100 según la distancia al spawn): las 10 estadísticas topean en 100 puntos y cada uno cuesta 30 de experiencia, así que todo al máximo son 1000 puntos y 30.000 de experiencia. El objetivo es que, con el equipo y los puntos que se esperan en cada zona, un zombi se mate en 5 o 6 golpes en todo el mundo y lo que aguanta el jugador baje de a poco hacia el nivel 100 (tabla en el README). La tabla es sólo por distancia: Mobs Poderosos además suma hasta +20 niveles por los días del mundo y un 5 % de campeones con +10. **Si se cambia un número de acá, hay que mirar el otro mod**, y al revés. Lo que más desbalancea:
 
 - **La armadura.** Vanilla frena como máximo el 80 % del daño, y con netherita (20) ya se está cerca: +10 llevaba al tope y volvía al jugador casi inmortal. Por eso +8.
+- **El daño a distancia.** Las flechas no escalan con `Daño`, y un zombi de nivel 100 (180 de vida) pedía ~11 flechas de Poder V. Con +1 % por punto, al máximo son 5 o 6, como con la espada.
 - **Cobrar en niveles.** Con 1 nivel por punto se compraba todo de a un nivel, a 7 de experiencia cada uno, y se llegaba al máximo cerca del spawn, antes de que los mobs se pusieran difíciles.
 
 - **Si se baja un tope, los puntos de más se conservan pero no suman:** `Mejora.efecto` usa `min(puntos, tope)`. Si se vuelve a subir el tope, vuelven a contar sin que el jugador pague de nuevo.
@@ -94,6 +95,7 @@ El attachment va en el NBT del jugador (`playerdata/<uuid>.dat`), bajo los attac
 |---|---|---|---|
 | Vida (`vida`) | `MAX_HEALTH` | `ADD_VALUE` | servidor (el cliente recibe la vida) |
 | Daño (`danio`) | `ATTACK_DAMAGE` | `ADD_VALUE` | servidor |
+| Daño a distancia (`danio_distancia`) | **ninguno**: `ProyectilMixin` | multiplica el daño final | servidor |
 | Armadura (`armadura`) | `ARMOR` | `ADD_VALUE` | servidor (el cliente la dibuja: es sincronizable) |
 | Velocidad (`velocidad`) | `MOVEMENT_SPEED` | `ADD_MULTIPLIED_BASE` | **cliente** (predice el movimiento) |
 | Velocidad de ataque (`velocidad_ataque`) | `ATTACK_SPEED` | `ADD_MULTIPLIED_BASE` | **cliente** (la barra de recarga del golpe) y servidor |
@@ -106,13 +108,29 @@ El attachment va en el NBT del jugador (`playerdata/<uuid>.dat`), bajo los attac
 - **El alcance usa los dos rangos a la vez.** Con sólo el de bloques, el jugador llegaría a un bloque lejano pero no a un mob a la misma distancia. Como `Estadistica.atributos()` es una lista, `aplicar` pone el mismo modificador en los dos.
 - **La suerte se nota sobre todo al pescar.** `FishingHook` usa la suerte de Suerte marina más `Player.getLuck()`, que es el atributo `LUCK`: con +3 es como tener otra Suerte marina III. Las tablas de botín sólo la usan en las entradas con `quality`, y **no está verificado** que alguna tabla de cofres de vanilla las tenga. Por eso el README dice "al pescar" y no promete nada de los cofres.
 
+## Daño a distancia: un mixin, no un atributo
+
+**Las flechas y el tridente lanzado no usan `ATTACK_DAMAGE`**, y vanilla no tiene un atributo para el daño de proyectiles ni Fabric un evento que deje cambiar el daño. Por eso `DANIO_DISTANCIA` se construye **sin atributos** (`atributos()` vacía, `operacion()` `null`): `aplicar` no le pone nada, y los puntos se leen al pegar.
+
+`ProyectilMixin` es un `@ModifyArg` sobre el `float` de `Entity.hurtOrSimulate(DamageSource, float)` dentro de `onHitEntity`, y lo multiplica por `Mejoras.multiplicadorADistancia(getOwner())`:
+
+| Clase | Por qué |
+|---|---|
+| `AbstractArrow` | Flechas de arco y de ballesta (también las espectrales). `onHitEntity` hace `ceil(velocidad × modifyDamage(baseDamage))` + el crítico y llama **una sola vez** a `hurtOrSimulate` (verificado con `javap`) |
+| `ThrownTrident` | **Sobrescribe `onHitEntity` sin llamar al de `AbstractArrow`** (8 + encantamientos): sin su propio target, el tridente lanzado no escalaría |
+
+- **Se multiplica el daño final**, con velocidad, Poder y crítico ya sumados: el arco, la ballesta y el tridente escalan en la misma proporción. Los fuegos artificiales de la ballesta no pasan por acá.
+- **Sólo si el dueño es un `ServerPlayer`.** Esqueletos, dispensadores o una flecha cuyo dueño se desconectó (`getOwner()` `null`) pegan como en vanilla.
+- `multiplicadorADistancia` usa `Mejoras.puntos`: con Inventario Compartido toma los del grupo sin nada aparte.
+- `defaultRequire: 1` en `estadisticasrpg.mixins.json`: si un cambio de Minecraft mueve la llamada, el juego no arranca en vez de dejar la estadística sin efecto en silencio.
+
 ## Agregar una estadística
 
-1. Un valor en `Estadistica`: `id` (para siempre, ver Formato en disco), nombre, ítem del menú (`icono`), operación, atributo(s) y cómo se describe el efecto.
+1. Un valor en `Estadistica`: `id` (para siempre, ver Formato en disco), nombre, ítem del menú (`icono`), operación, atributo(s) y cómo se describe el efecto. Si no es un atributo, el constructor corto (sin operación ni atributos) y el efecto se lee de los puntos donde haga falta, como el daño a distancia.
 2. Su `Mejora` en `Configuracion.POR_DEFECTO`, o NPE (lo atrapa el gametest `cadaEstadisticaTieneConfigYSlot`).
 3. Si es vida, o algo que necesite un efecto inmediato al comprar, se agrega en `Mejoras.sumar`.
 4. Si el cliente usa el atributo, agregalo a `losAtributosQueUsaElClienteSeSincronizan` (ver la tabla de arriba).
-5. Una fila en la tabla del `README.md` y un gametest con el valor del atributo. El menú tiene lugar para 9 en la fila del medio: la décima pide cambiar `MenuDeEstadisticas.slotDe` (ver [Menú de estadísticas](menu.md)).
+5. Una fila en la tabla del `README.md` y un gametest con el valor del atributo. El orden del enum es el del menú (ver [Menú de estadísticas](menu.md)): reordenarlo no rompe nada guardado, porque el codec es por id. Con 10, `Map.of` de `POR_DEFECTO` llegó a su máximo de pares: la undécima pide `Map.ofEntries`.
 
 Con `ADD_MULTIPLIED_BASE`, el porcentaje se aplica sobre la base **más todos los `ADD_VALUE`**, incluido el del arma (ver [docs/plan.md](../../docs/plan.md)).
 

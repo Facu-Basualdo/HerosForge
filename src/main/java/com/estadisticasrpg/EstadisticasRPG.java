@@ -48,6 +48,7 @@ public class EstadisticasRPG implements ModInitializer {
 		ServerPlayerEvents.JOIN.register(Mejoras::alEntrar);
 		ServerPlayerEvents.COPY_FROM.register(Mejoras::alReaparecer);
 		CommandRegistrationCallback.EVENT.register((dispatcher, contexto, seleccion) -> ComandoEstadisticas.registrar(dispatcher));
+		InterfazDelCliente.registrar();
 	}
 
 	public static Configuracion config() {

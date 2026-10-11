@@ -134,6 +134,7 @@ Permisos con `Commands.hasPermission(Commands.LEVEL_GAMEMASTERS)` (en 26.3 no ex
 3. **Más estadísticas** (0.3.0) — **hecha**: velocidad de ataque, minado, alcance, empuje y suerte.
 4. **Config y pulido** (0.4.0) — **hecha**: `config/estadisticasrpg.json`, `recargar`, sonidos y partículas al comprar, README completo.
 5. **Opcional — con Inventario Compartido** (0.5.0) — **hecha** (`PuntosDelGrupo`, un `SavedData` del mundo; los individuales se suman una vez por jugador con el máximo por estadística): puntos del grupo si los dos mods están cargados (`FabricLoader.isModLoaded("inventariocompartido")`).
+6. **Daño a distancia** (0.8.0) — **hecha**: estadística `danio_distancia` (+1 % por punto, tope 100) sin atributo; el primer mixin del mod (`ProyectilMixin`) multiplica el daño de flechas y tridentes lanzados por jugadores. El menú pasa a dos filas (5 y 5).
 
 ## Verificación
 

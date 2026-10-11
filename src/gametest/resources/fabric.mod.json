@@ -7,6 +7,9 @@
 	"entrypoints": {
 		"fabric-gametest": [
 			"com.estadisticasrpg.test.EstadisticasRPGGameTest"
+		],
+		"fabric-client-gametest": [
+			"com.estadisticasrpg.test.PantallaClientGameTest"
 		]
 	},
 	"depends": {

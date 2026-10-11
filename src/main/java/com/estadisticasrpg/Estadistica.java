@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.DoubleFunction;
 
+import org.jspecify.annotations.Nullable;
+
 import net.minecraft.core.Holder;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.ai.attributes.Attribute;
@@ -15,9 +17,11 @@ import net.minecraft.world.item.Items;
 public enum Estadistica {
 	VIDA("vida", "Vida", Items.GOLDEN_APPLE, AttributeModifier.Operation.ADD_VALUE, List.of(Attributes.MAX_HEALTH), Estadistica::corazones),
 	DANIO("danio", "Daño", Items.IRON_SWORD, AttributeModifier.Operation.ADD_VALUE, List.of(Attributes.ATTACK_DAMAGE), valor -> conSigno(valor) + " de daño"),
+	// Sin atributo: vanilla no tiene uno para los proyectiles, así que lo aplica ProyectilMixin al pegar
+	DANIO_DISTANCIA("danio_distancia", "Daño a distancia", Items.BOW, valor -> conSigno(valor * 100) + " % de daño a distancia"),
 	ARMADURA("armadura", "Armadura", Items.IRON_CHESTPLATE, AttributeModifier.Operation.ADD_VALUE, List.of(Attributes.ARMOR), valor -> conSigno(valor) + " de armadura"),
-	VELOCIDAD("velocidad", "Velocidad", Items.SUGAR, AttributeModifier.Operation.ADD_MULTIPLIED_BASE, List.of(Attributes.MOVEMENT_SPEED), valor -> conSigno(valor * 100) + " % de velocidad"),
 	VELOCIDAD_ATAQUE("velocidad_ataque", "Velocidad de ataque", Items.FEATHER, AttributeModifier.Operation.ADD_MULTIPLIED_BASE, List.of(Attributes.ATTACK_SPEED), valor -> conSigno(valor * 100) + " % de velocidad de ataque"),
+	VELOCIDAD("velocidad", "Velocidad", Items.SUGAR, AttributeModifier.Operation.ADD_MULTIPLIED_BASE, List.of(Attributes.MOVEMENT_SPEED), valor -> conSigno(valor * 100) + " % de velocidad"),
 	MINADO("minado", "Minado", Items.IRON_PICKAXE, AttributeModifier.Operation.ADD_MULTIPLIED_BASE, List.of(Attributes.BLOCK_BREAK_SPEED), valor -> conSigno(valor * 100) + " % de velocidad de minado"),
 	// Los dos rangos juntos: con sólo el de bloques, llegarías a un bloque pero no al mob parado al lado
 	ALCANCE("alcance", "Alcance", Items.FISHING_ROD, AttributeModifier.Operation.ADD_VALUE, List.of(Attributes.BLOCK_INTERACTION_RANGE, Attributes.ENTITY_INTERACTION_RANGE), valor -> conSigno(valor) + (valor == 1 ? " bloque" : " bloques") + " de alcance"),
@@ -27,17 +31,21 @@ public enum Estadistica {
 	private final String id;
 	private final String nombre;
 	private final Item icono;
-	private final AttributeModifier.Operation operacion;
+	private final AttributeModifier.@Nullable Operation operacion;
 	private final List<Holder<Attribute>> atributos;
 	private final DoubleFunction<String> descripcion;
 
-	Estadistica(String id, String nombre, Item icono, AttributeModifier.Operation operacion, List<Holder<Attribute>> atributos, DoubleFunction<String> descripcion) {
+	Estadistica(String id, String nombre, Item icono, AttributeModifier.@Nullable Operation operacion, List<Holder<Attribute>> atributos, DoubleFunction<String> descripcion) {
 		this.id = id;
 		this.nombre = nombre;
 		this.icono = icono;
 		this.operacion = operacion;
 		this.atributos = atributos;
 		this.descripcion = descripcion;
+	}
+
+	Estadistica(String id, String nombre, Item icono, DoubleFunction<String> descripcion) {
+		this(id, nombre, icono, null, List.of(), descripcion);
 	}
 
 	public String id() {
@@ -53,10 +61,12 @@ public enum Estadistica {
 		return icono;
 	}
 
-	public AttributeModifier.Operation operacion() {
+	/** {@code null} si no tiene atributos. */
+	public AttributeModifier.@Nullable Operation operacion() {
 		return operacion;
 	}
 
+	/** Vacía si el efecto no es un atributo (daño a distancia): {@link Mejoras#aplicar} no le pone nada. */
 	public List<Holder<Attribute>> atributos() {
 		return atributos;
 	}

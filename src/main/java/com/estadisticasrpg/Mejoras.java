@@ -1,5 +1,7 @@
 package com.estadisticasrpg;
 
+import org.jspecify.annotations.Nullable;
+
 import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -8,6 +10,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -68,6 +71,17 @@ public final class Mejoras {
 			return nivel * (5 * nivel - 81) / 2 + 360;
 		}
 		return nivel * (9 * nivel - 325) / 2 + 2220;
+	}
+
+	/**
+	 * Por cuánto se multiplica el daño de una flecha o un tridente lanzado (lo usa {@code ProyectilMixin}). Sin
+	 * dueño, o si no es un jugador (esqueletos, dispensadores, un jugador desconectado), el de vanilla.
+	 */
+	public static double multiplicadorADistancia(@Nullable Entity duenio) {
+		if (!(duenio instanceof ServerPlayer jugador)) {
+			return 1;
+		}
+		return 1 + EstadisticasRPG.config().de(Estadistica.DANIO_DISTANCIA).efecto(puntos(jugador).de(Estadistica.DANIO_DISTANCIA));
 	}
 
 	/** Compra lo que entre según el tope y la experiencia: lo que se cobra es exactamente lo que se sube. */

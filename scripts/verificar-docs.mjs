@@ -12,7 +12,7 @@ const VAULT = join(RAIZ, 'claude');
 
 // Punteros: los CLAUDE.md por carpeta son entradas del harness, no nodos del
 // grafo. Se leen para validar sus enlaces, pero no cuentan como huerfanos.
-const PUNTEROS = ['src/main', 'src/gametest']
+const PUNTEROS = ['src/main', 'src/client', 'src/gametest']
   .map((a) => join(RAIZ, a, 'CLAUDE.md'))
   .filter(existsSync);
 

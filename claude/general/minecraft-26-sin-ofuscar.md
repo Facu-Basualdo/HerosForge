@@ -23,7 +23,15 @@
 | `.requires(src -> src.hasPermission(2))` | `.requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))` |
 | `Items.GRAY_STAINED_GLASS_PANE`, `Items.RED_WOOL`… | **Los ítems de color están agrupados en una `ColorCollection`:** `Items.STAINED_GLASS_PANE.gray()`, `.black()`, `.pick(DyeColor)` |
 | `AbstractContainerMenu.clicked(int, int, ClickType, Player)` | El enum se llama **`ContainerInput`**: `clicked(int, int, ContainerInput, Player)` |
+| `EntityType.IRON_GOLEM`, `EntityType.ZOMBIE`… | **Las constantes están en `EntityTypes`** (plural): `EntityTypes.IRON_GOLEM`. `EntityType` es sólo la clase |
+| `net.minecraft.world.entity.projectile.AbstractArrow`, `ThrownTrident` | En el subpaquete **`projectile.arrow`**: `projectile.arrow.AbstractArrow`, `.Arrow`, `.ThrownTrident`. `getOwner()` sigue en `Projectile` |
 | `GameTestHelper.assertValueEqual(esperado, actual, …)` | Al revés: **`assertValueEqual(actual, esperado, …)`**. El mensaje dice "Expected … to be `<esperado>`: was `<actual>`" |
+| `GuiGraphics`, `Screen.render(…)`, `renderWidget` | **`GuiGraphicsExtractor`**, `Screen.extractRenderState(…)`, `AbstractWidget.extractWidgetRenderState`, `AbstractButton.extractContents`. Dibuja con `fill`, `outline`, `text`, `centeredText`, `item`, `setComponentTooltipForNextFrame`. El fondo va aparte (`extractBackground`): `extractRenderState` de `Screen` sólo dibuja los widgets |
+| `Minecraft.setScreen(…)`, `minecraft.screen` | **En `Gui`:** `minecraft.gui.setScreen(…)` y `minecraft.gui.screen()` |
+| `GLFW.GLFW_KEY_K`, `InputConstants.Type.KEYSYM` | **Los códigos de tecla ya no son los de GLFW** (son scancodes: E = 8, K = 14): usá `InputConstants.KEY_K`. El tipo es `InputConstants.Type.KEYBOARD`. `KeyMapping` pide una `KeyMapping.Category` (`Category.register(Identifier)`, que se traduce como `key.category.<ns>.<path>`) |
+| `keyPressed(int, int, int)`, `mouseClicked(double, double, int)` | Con records: `keyPressed(KeyEvent)`, `mouseClicked(MouseButtonEvent, boolean)`, `Button.onPress(InputWithModifiers)` (que tiene `hasShiftDown()`) |
+| Colores de texto como `0xFFFFFF` | Con alfa: **`ARGB.opaque(0xFFFFFF)`** o `ARGB.color(alfa, rgb)`. Sin alfa el texto no se ve |
+| Un `static final ItemStack` en cualquier clase | Si la clase se carga antes de entrar a un mundo (por ejemplo desde un evento de pantallas), **revienta con "Components not bound yet"**: los componentes de los ítems se enlazan después |
 
 - La carga y el guardado usan `ValueInput` / `ValueOutput`, no `CompoundTag` directo.
 - Fabric: `ServerPlayerEvents.COPY_FROM` dispara en el `TAIL` de `restoreFrom` (después de todo lo de arriba) y `AttachmentRegistry.Builder.copyOnDeath()` existe.

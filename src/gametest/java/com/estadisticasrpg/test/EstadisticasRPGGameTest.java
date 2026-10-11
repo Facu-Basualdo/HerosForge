@@ -11,6 +11,8 @@ import java.util.Set;
 import java.util.UUID;
 
 import com.mojang.authlib.GameProfile;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
 import org.jspecify.annotations.Nullable;
 
@@ -18,8 +20,10 @@ import com.estadisticasrpg.ArchivoDeConfiguracion;
 import com.estadisticasrpg.Configuracion;
 import com.estadisticasrpg.Estadistica;
 import com.estadisticasrpg.EstadisticasRPG;
+import com.estadisticasrpg.InterfazDelCliente;
 import com.estadisticasrpg.MenuDeEstadisticas;
 import com.estadisticasrpg.Mejoras;
+import com.estadisticasrpg.Paquetes;
 import com.estadisticasrpg.PuntosDelGrupo;
 import com.estadisticasrpg.PuntosDelJugador;
 
@@ -27,6 +31,7 @@ import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.fabricmc.loader.api.FabricLoader;
 
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.Connection;
@@ -39,7 +44,12 @@ import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.players.PlayerList;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.animal.golem.IronGolem;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
+import net.minecraft.world.entity.projectile.arrow.Arrow;
+import net.minecraft.world.entity.projectile.arrow.ThrownTrident;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.item.ItemStack;
@@ -209,10 +219,72 @@ public class EstadisticasRPGGameTest {
 		for (Estadistica estadistica : Estadistica.values()) {
 			helper.assertTrue(EstadisticasRPG.config().de(estadistica) != null, estadistica + " está en Configuracion.POR_DEFECTO");
 			int slot = MenuDeEstadisticas.slotDe(estadistica);
-			helper.assertTrue(slot >= 9 && slot < 18, estadistica + " está en la fila del medio (slot " + slot + ")");
+			// La fila de arriba es de la botella de experiencia
+			helper.assertTrue(slot >= 9 && slot < 27, estadistica + " está debajo de la fila de arriba (slot " + slot + ")");
 			helper.assertTrue(slots.add(slot), estadistica + " no comparte slot con otra (slot " + slot + ")");
 		}
 		helper.succeed();
+	}
+
+	/** El mixin se aplica recién en runtime: esto dispara flechas y tridentes de verdad contra un blanco. */
+	@GameTest
+	public void danioADistanciaMultiplicaFlechasYTridentes(GameTestHelper helper) {
+		ServerPlayer sinPuntos = entrar(helper, "arquero-novato");
+		ServerPlayer conPuntos = entrar(helper, "arquero-experto");
+		Mejoras.dar(conPuntos, Estadistica.DANIO_DISTANCIA, 100);
+		ServerLevel level = helper.getLevel();
+
+		float flecha = danioAlBlanco(helper, new Arrow(level, sinPuntos, new ItemStack(Items.ARROW), new ItemStack(Items.BOW)));
+		helper.assertTrue(flecha > 0, "La flecha sin puntos pega (" + flecha + ")");
+		assertCerca(helper, danioAlBlanco(helper, new Arrow(level, conPuntos, new ItemStack(Items.ARROW), new ItemStack(Items.BOW))), flecha * 2, "Con 100 puntos, la flecha pega el doble");
+		assertCerca(helper, danioAlBlanco(helper, new Arrow(level, 0, 0, 0, new ItemStack(Items.ARROW), new ItemStack(Items.BOW))), flecha, "Sin dueño, el daño de vanilla");
+
+		float tridente = danioAlBlanco(helper, new ThrownTrident(level, sinPuntos, new ItemStack(Items.TRIDENT)));
+		helper.assertTrue(tridente > 0, "El tridente sin puntos pega (" + tridente + ")");
+		assertCerca(helper, danioAlBlanco(helper, new ThrownTrident(level, conPuntos, new ItemStack(Items.TRIDENT))), tridente * 2, "Con 100 puntos, el tridente pega el doble");
+
+		salir(helper, sinPuntos);
+		salir(helper, conPuntos);
+		helper.succeed();
+	}
+
+	@GameTest
+	public void multiplicadorADistanciaSegunLosPuntos(GameTestHelper helper) {
+		ServerPlayer jugador = entrar(helper, "punteria");
+		assertCerca(helper, Mejoras.multiplicadorADistancia(null), 1, "Sin dueño");
+		assertCerca(helper, Mejoras.multiplicadorADistancia(jugador), 1, "Sin puntos");
+		Mejoras.dar(jugador, Estadistica.DANIO_DISTANCIA, 50);
+		assertCerca(helper, Mejoras.multiplicadorADistancia(jugador), 1.5, "Con 50 puntos, +50 %");
+		Mejoras.dar(jugador, Estadistica.DANIO_DISTANCIA, 80);
+		assertCerca(helper, Mejoras.multiplicadorADistancia(jugador), 2, "El tope es 100: +100 %");
+		helper.assertTrue(!jugador.getAttribute(Attributes.ATTACK_DAMAGE).hasModifier(Estadistica.DANIO_DISTANCIA.idModificador()), "No toca el daño cuerpo a cuerpo");
+
+		ServerPlayer otro = entrar(helper, "punteria-grupo");
+		conPuntosDelGrupo(helper, () -> {
+			Mejoras.dar(jugador, Estadistica.DANIO_DISTANCIA, 20);
+			assertCerca(helper, Mejoras.multiplicadorADistancia(otro), 1.2, "Con los puntos del grupo, vale para todos");
+		});
+		salir(helper, jugador);
+		salir(helper, otro);
+		helper.succeed();
+	}
+
+	/**
+	 * Un gólem de hierro quieto (sin armadura, que no es lineal, y con vida de sobra) y el proyectil a 2 bloques,
+	 * tirado hacia él. El proyectil no se agrega al mundo: se tickea a mano, así cada medición es una sola.
+	 */
+	private static float danioAlBlanco(GameTestHelper helper, AbstractArrow proyectil) {
+		IronGolem blanco = helper.spawnWithNoFreeWill(EntityTypes.IRON_GOLEM, new BlockPos(2, 2, 2));
+		proyectil.setCritArrow(false);
+		proyectil.setPos(blanco.getX() - 2, blanco.getY() + 1.3, blanco.getZ());
+		proyectil.shoot(1, 0, 0, 1.5f, 0);
+		for (int tick = 0; tick < 5 && blanco.getHealth() == blanco.getMaxHealth(); tick++) {
+			proyectil.tick();
+		}
+		float danio = blanco.getMaxHealth() - blanco.getHealth();
+		blanco.discard();
+		proyectil.discard();
+		return danio;
 	}
 
 	@GameTest
@@ -546,6 +618,84 @@ public class EstadisticasRPGGameTest {
 			assertCerca(helper, reaparecido[0].getHealth(), 50.0, "Reaparece con la vida llena");
 		});
 		salir(helper, reaparecido[0]);
+		helper.succeed();
+	}
+
+	@GameTest
+	public void elEstadoParaLaPantallaTieneTodo(GameTestHelper helper) {
+		ServerPlayer jugador = entrar(helper, "pantalla-estado");
+		ponerExperiencia(jugador, COSTO * 4);
+		Mejoras.dar(jugador, Estadistica.VIDA, 10);
+
+		Paquetes.Estado estado = InterfazDelCliente.estado(jugador);
+		helper.assertValueEqual(estado.experiencia(), COSTO * 4, "Experiencia");
+		helper.assertValueEqual(estado.costo(), COSTO, "Costo por punto");
+		helper.assertFalse(estado.grupo(), "Sin Inventario Compartido los puntos son de cada uno");
+		helper.assertValueEqual(estado.filas().size(), Estadistica.values().length, "Una fila por estadística");
+		Paquetes.Fila vida = estado.filas().get(Estadistica.VIDA.ordinal());
+		helper.assertValueEqual(vida.id(), Estadistica.VIDA.id(), "Las filas van en el orden del enum");
+		helper.assertValueEqual(vida.puntos(), 10, "Puntos de vida");
+		helper.assertValueEqual(vida.tope(), Configuracion.POR_DEFECTO.de(Estadistica.VIDA).tope(), "Tope de vida");
+		helper.assertValueEqual(vida.ahora(), "+3 corazones", "Lo que dan los puntos, armado en el servidor");
+		helper.assertValueEqual(vida.proximo(), "+0,3 corazones", "Lo que suma el próximo punto");
+		helper.assertValueEqual(estado.filas().get(Estadistica.DANIO.ordinal()).ahora(), "", "Sin puntos, \"ahora\" va vacío");
+
+		salir(helper, jugador);
+		helper.succeed();
+	}
+
+	@GameTest
+	public void elEstadoViajaPorLaRedSinPerderNada(GameTestHelper helper) {
+		ServerPlayer jugador = entrar(helper, "pantalla-red");
+		ponerExperiencia(jugador, COSTO * 2 + 7);
+		Mejoras.dar(jugador, Estadistica.ALCANCE, 25);
+		Paquetes.Estado estado = InterfazDelCliente.estado(jugador);
+
+		ByteBuf buffer = Unpooled.buffer();
+		Paquetes.Estado.CODEC.encode(buffer, estado);
+		helper.assertValueEqual(Paquetes.Estado.CODEC.decode(buffer), estado, "El estado decodificado");
+		helper.assertValueEqual(buffer.readableBytes(), 0, "No sobran bytes");
+
+		ByteBuf pedido = Unpooled.buffer();
+		Paquetes.Comprar.CODEC.encode(pedido, new Paquetes.Comprar("vida", 5));
+		helper.assertValueEqual(Paquetes.Comprar.CODEC.decode(pedido), new Paquetes.Comprar("vida", 5), "El pedido de compra decodificado");
+
+		salir(helper, jugador);
+		helper.succeed();
+	}
+
+	@GameTest
+	public void losPedidosDelClienteNoSeCreen(GameTestHelper helper) {
+		ServerPlayer jugador = entrar(helper, "pantalla-tramposo");
+		ponerExperiencia(jugador, COSTO * 3);
+
+		// Con -5, Mejoras.comprar cobraría experiencia negativa: le regalaría 150 y le restaría puntos
+		for (Paquetes.Comprar trampa : List.of(new Paquetes.Comprar("vida", -5), new Paquetes.Comprar("vida", 0), new Paquetes.Comprar("volar", 1))) {
+			helper.assertTrue(InterfazDelCliente.comprar(jugador, trampa).isEmpty(), "No se intenta comprar con " + trampa);
+		}
+		helper.assertValueEqual(Mejoras.experiencia(jugador), COSTO * 3, "No cambia la experiencia");
+		helper.assertValueEqual(Mejoras.puntos(jugador), PuntosDelJugador.vacio(), "No cambian los puntos");
+
+		Mejoras.Compra compra = InterfazDelCliente.comprar(jugador, new Paquetes.Comprar("vida", Integer.MAX_VALUE)).orElseThrow();
+		helper.assertValueEqual(compra.comprados(), 3, "Pidiendo de más, compra lo que alcanza");
+		helper.assertValueEqual(compra.resultado(), Mejoras.Resultado.SIN_EXPERIENCIA, "Lo cortó la experiencia");
+		helper.assertValueEqual(Mejoras.experiencia(jugador), 0, "Cobra exactamente los 3");
+
+		salir(helper, jugador);
+		helper.succeed();
+	}
+
+	@GameTest
+	public void sinElComplementoEstadisticasAbreElCofre(GameTestHelper helper) {
+		ServerPlayer jugador = entrar(helper, "pantalla-vanilla");
+		// Aunque dijera que prefiere la pantalla: si no registró los canales, no tiene con qué mostrarla
+		InterfazDelCliente.preferir(jugador, true);
+
+		ejecutar(helper, jugador, "estadisticas");
+		helper.assertTrue(jugador.containerMenu instanceof MenuDeEstadisticas, "Abre el menú de cofre");
+
+		jugador.closeContainer();
+		salir(helper, jugador);
 		helper.succeed();
 	}
 

@@ -60,7 +60,7 @@ public final class ComandoEstadisticas {
 	}
 
 	private static int abrir(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
-		MenuDeEstadisticas.abrir(ctx.getSource().getPlayerOrException());
+		InterfazDelCliente.abrir(ctx.getSource().getPlayerOrException());
 		return 1;
 	}
 

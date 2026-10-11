@@ -2,7 +2,9 @@
 	"required": true,
 	"package": "com.estadisticasrpg.mixin",
 	"compatibilityLevel": "JAVA_25",
-	"mixins": [],
+	"mixins": [
+		"ProyectilMixin"
+	],
 	"injectors": {
 		"defaultRequire": 1
 	},

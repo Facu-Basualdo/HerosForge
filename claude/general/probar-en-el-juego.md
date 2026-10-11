@@ -33,6 +33,7 @@ Los gametests cubren la lógica, pero no muestran cómo se ve el menú en un cli
 - Que la vida nueva aparezca llena al comprar vida, y que al reaparecer tengas la vida máxima con los puntos.
 - En el menú: que el ítem no se pueda sacar ni quede "fantasma" en el cursor, y que el lore se actualice después de cada compra.
 - **Con un cliente vanilla sin el mod:** todo lo anterior tiene que verse igual, y los textos tienen que estar en castellano (no claves de traducción crudas). El mod no tiene que hacer falta del lado del cliente.
+- **Con el mod en el cliente (`runClient`):** la K y el botón del inventario abren la [pantalla propia](../mod/pantalla.md), `/estadisticas` también, y **Ver como cofre** abre el cofre. Probá a la vez un cliente con y otro sin el mod: el vanilla tiene que seguir con el cofre. Con `"usarPantalla": false` en `run/config/estadisticasrpg-cliente.json`, la K abre el cofre. La pantalla en singleplayer ya la prueba `runClientGameTest`; lo que no prueba es un servidor dedicado.
 
 ## Ver también
 

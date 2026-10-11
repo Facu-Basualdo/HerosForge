@@ -8,9 +8,14 @@ repositories {
 }
 
 loom {
+	// La pantalla propia (src/client) sólo existe en el cliente: separada, el servidor no puede tocar
+	// por error una clase de cliente, que en un servidor dedicado no existe
+	splitEnvironmentSourceSets()
+
 	mods {
 		"estadisticasrpg" {
 			sourceSet sourceSets.main
+			sourceSet sourceSets.client
 		}
 	}
 
@@ -59,22 +64,30 @@ java {
 	targetCompatibility = JavaVersion.VERSION_25
 }
 
-// Pruebas automáticas dentro del juego (src/gametest): gradlew runGameTest
+// Pruebas automáticas dentro del juego (src/gametest): gradlew runGameTest (servidor sin ventana) y
+// gradlew runClientGameTest (abre un cliente de verdad para probar la pantalla propia y saca capturas)
 fabricApi {
 	configureTests {
 		createSourceSet = true
 		modId = "estadisticasrpg-test"
 		enableGameTests = true
-		enableClientGameTests = false
+		enableClientGameTests = true
 		eula = true
 	}
 }
 
 // El servidor de prueba guarda su config en build/run/gameTest y no la pisa: si quedara la de una corrida vieja,
 // los tests correrían con los valores por defecto de antes y no con los de Configuracion.POR_DEFECTO
+// (lo mismo con el cliente de prueba, que además guarda ahí estadisticasrpg-cliente.json)
 def configDePrueba = layout.buildDirectory.dir("run/gameTest/config")
+def configDelClienteDePrueba = layout.buildDirectory.dir("run/clientGameTest/config")
 tasks.matching { it.name == "runGameTest" }.configureEach {
 	doFirst {
 		configDePrueba.get().asFile.deleteDir()
+	}
+}
+tasks.matching { it.name == "runClientGameTest" }.configureEach {
+	doFirst {
+		configDelClienteDePrueba.get().asFile.deleteDir()
 	}
 }
