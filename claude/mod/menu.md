@@ -12,7 +12,7 @@ Síntomas que esta nota evita: el ítem de muestra queda "fantasma" en el cursor
 
 | Slot | Qué hay |
 |---|---|
-| 4 (arriba al medio) | Botella de experiencia: niveles del jugador, costo, cómo se compra |
+| 4 (arriba al medio) | Botella de experiencia: experiencia y nivel del jugador, costo, cómo se compra |
 | `slotDe(estadistica)` (fila del medio) | `Estadistica.icono()`, o vidrio gris (`Items.STAINED_GLASS_PANE.gray()`) si llegó al tope |
 | El resto | Vidrio negro con el tooltip oculto |
 
@@ -40,7 +40,7 @@ Hay acciones que **arrancan en un slot del jugador**, pasan por `super.clicked` 
 
 ## Se redibuja solo
 
-`redibujar()` vuelve a armar los 27 slots desde la config, los puntos y los niveles. Se llama al abrir, después de cada compra y **desde `broadcastChanges()` cuando cambiaron los niveles, los puntos o la config** respecto de lo último que se dibujó. Así el menú se actualiza si el jugador junta experiencia con el menú abierto, si un op le da puntos o si se usa `recargar`. La config se compara por identidad (ver [Configuración](configuracion.md)).
+`redibujar()` vuelve a armar los 27 slots desde la config, los puntos y la experiencia. Se llama al abrir, después de cada compra y **desde `broadcastChanges()` cuando cambiaron la experiencia (`Mejoras.experiencia`, no el nivel: el costo es en puntos y un orbe ya puede alcanzar), los puntos o la config** respecto de lo último que se dibujó. Así el menú se actualiza si el jugador junta experiencia con el menú abierto, si un op le da puntos o si se usa `recargar`. La config se compara por identidad (ver [Configuración](configuracion.md)).
 
 `broadcastChanges` lo llama el tick del jugador, y sólo manda al cliente los slots que cambiaron. Armar ítems nuevos en cada `redibujar` es barato.
 

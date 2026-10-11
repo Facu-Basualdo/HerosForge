@@ -79,8 +79,8 @@ public final class ComandoEstadisticas {
 		Configuracion config = EstadisticasRPG.config();
 		PuntosDelJugador puntos = Mejoras.puntos(jugador);
 		StringBuilder texto = new StringBuilder("Estadísticas ").append(deQuien(jugador))
-				.append(" · el próximo punto cuesta ").append(Mejoras.niveles(Mejoras.costoDelProximo(jugador)))
-				.append(" · tenés ").append(Mejoras.niveles(jugador.experienceLevel));
+				.append(" · cada punto cuesta ").append(Mejoras.experiencia(config.experienciaPorPunto()))
+				.append(" · tenés ").append(Mejoras.experiencia(Mejoras.experiencia(jugador)));
 		for (Estadistica estadistica : Estadistica.values()) {
 			Configuracion.Mejora mejora = config.de(estadistica);
 			int actuales = puntos.de(estadistica);

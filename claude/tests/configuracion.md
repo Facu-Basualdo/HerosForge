@@ -7,10 +7,10 @@ Síntoma que esta nota evita: un test cambia la config global, falla a la mitad,
 | Test | Qué verifica |
 |---|---|
 | `configNuevaSeCreaConLosValoresPorDefecto` | Sin archivo: lo crea con `POR_DEFECTO`, y leerlo de nuevo da lo mismo, sin avisos |
-| `configRespetaLoCambiadoYAvisaLoInvalido` | Respeta lo válido (incluido `puntosPorAumento`) · `porPunto` negativo y `tope` que no es número vuelven al valor por defecto · ignora un id inexistente · 3 avisos · con avisos **no reescribe** el archivo |
-| `configSinAvisosAgregaLasQueFaltan` | Con sólo `costoPorPunto` y `vida` en el archivo: conserva lo escrito y agrega `puntosPorAumento` y todas las demás |
+| `configRespetaLoCambiadoYAvisaLoInvalido` | Respeta lo válido (incluido `experienciaPorPunto`) · `porPunto` negativo y `tope` que no es número vuelven al valor por defecto · ignora un id inexistente · 3 avisos · con avisos **no reescribe** el archivo |
+| `configSinAvisosAgregaLasQueFaltan` | Con un archivo de la 0.6.0 (`costoPorPunto` y `puntosPorAumento` en niveles, y sólo `vida`): conserva la vida, agrega `experienciaPorPunto` y todas las demás, y saca las claves viejas |
 | `configRotaNoSeUsa` | JSON cortado: `ok()` falso, 1 aviso, el archivo queda como estaba |
-| `cambiarLaConfigSeAplicaALosConectados` | `usar` reaplica a un jugador conectado · bajar el tope no borra puntos · `comprar` cobra el `costoPorPunto` nuevo (con `puntosPorAumento` 0, para que el número no dependa del escalón) |
+| `cambiarLaConfigSeAplicaALosConectados` | `usar` reaplica a un jugador conectado · bajar el tope no borra puntos · `comprar` cobra el `experienciaPorPunto` nuevo |
 | `comandos` (parte de consola) | `dar` y `recargar` desde `servidor.createCommandSourceStack()`, que es op |
 
 ## Archivos de prueba

@@ -19,7 +19,7 @@
 | `Attributes.GENERIC_MAX_HEALTH`, `PLAYER_BLOCK_BREAK_SPEED` | **Sin prefijo**: `MAX_HEALTH`, `ATTACK_DAMAGE`, `ARMOR`, `MOVEMENT_SPEED`, `ATTACK_SPEED`, `BLOCK_BREAK_SPEED`, `BLOCK_INTERACTION_RANGE`, `ENTITY_INTERACTION_RANGE`, `KNOCKBACK_RESISTANCE`, `LUCK`. Son `Holder<Attribute>` |
 | Un modificador identificado por `UUID` | Por `Identifier`: `addOrReplacePermanentModifier(modificador)` y `removeModifier(Identifier)` en `AttributeInstance` |
 | Que los modificadores permanentes sobrevivan a la muerte | **No sobreviven**: `ServerPlayer.restoreFrom` al morir hace sólo `assignBaseValues` y después `setHealth(getMaxHealth())` con el máximo sin modificadores. Al volver del End sí copia todo (`assignPermanentModifiers`) |
-| Que bajar niveles actualice la barra sola | Sólo con el override de `ServerPlayer.giveExperienceLevels`, que pone `lastSentExp = -1`: vanilla reenvía la barra cuando cambia `totalExperience`, y bajar niveles no lo cambia |
+| Que bajar la experiencia actualice la barra sola | Sólo con los overrides de `ServerPlayer` (`giveExperiencePoints`, `giveExperienceLevels`), que ponen `lastSentExp = -1`: vanilla reenvía la barra cuando cambia `totalExperience`, y bajar niveles no lo cambia. `giveExperiencePoints` acepta negativos y baja de nivel cuando la barra pasa de 0 |
 | `.requires(src -> src.hasPermission(2))` | `.requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))` |
 | `Items.GRAY_STAINED_GLASS_PANE`, `Items.RED_WOOL`… | **Los ítems de color están agrupados en una `ColorCollection`:** `Items.STAINED_GLASS_PANE.gray()`, `.black()`, `.pick(DyeColor)` |
 | `AbstractContainerMenu.clicked(int, int, ClickType, Player)` | El enum se llama **`ContainerInput`**: `clicked(int, int, ContainerInput, Player)` |
@@ -49,4 +49,4 @@ Para las clases de Fabric API (eventos, attachments, comandos, gametest), los ja
 
 - [Entorno Java y Gradle](entorno-java-gradle.md)
 - [Probar en el juego](probar-en-el-juego.md)
-- [Estadísticas (mod)](../mod/estadisticas.md): dónde se usa lo de `restoreFrom` y `giveExperienceLevels`
+- [Estadísticas (mod)](../mod/estadisticas.md): dónde se usa lo de `restoreFrom` y `giveExperiencePoints`

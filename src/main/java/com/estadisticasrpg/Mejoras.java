@@ -21,15 +21,12 @@ public final class Mejoras {
 		OK,
 		/** El tope no dejó comprar todo (o nada, si {@code comprados == 0}). */
 		TOPE,
-		/** Los niveles no alcanzaron para todo (o para nada). */
-		SIN_NIVELES
+		/** La experiencia no alcanzó para todo (o para nada). */
+		SIN_EXPERIENCIA
 	}
 
-	/**
-	 * {@code resultado} dice qué cortó la compra cuando {@code comprados} es menos de lo pedido.
-	 * {@code costoDelProximo} es el del punto siguiente, ya con lo comprado.
-	 */
-	public record Compra(Estadistica estadistica, int pedidos, int comprados, Resultado resultado, int costoDelProximo) {
+	/** {@code resultado} dice qué cortó la compra cuando {@code comprados} es menos de lo pedido. */
+	public record Compra(Estadistica estadistica, int pedidos, int comprados, Resultado resultado) {
 	}
 
 	// Lo decide EstadisticasRPG al iniciar (si está Inventario Compartido); los tests lo fuerzan
@@ -51,43 +48,49 @@ public final class Mejoras {
 		return jugador.getAttachedOrCreate(EstadisticasRPG.PUNTOS);
 	}
 
-	/** Lo que cuesta el próximo punto, según cuántos hay ya comprados en total. */
-	public static int costoDelProximo(ServerPlayer jugador) {
-		return EstadisticasRPG.config().costo(puntos(jugador).total());
+	/**
+	 * Los puntos de experiencia que tiene el jugador, contando los niveles enteros y la barra. No es
+	 * {@code totalExperience}: ése es el puntaje de la pantalla de muerte, y encantar no lo baja.
+	 */
+	public static int experiencia(ServerPlayer jugador) {
+		long total = puntosHastaNivel(jugador.experienceLevel) + Math.round(jugador.experienceProgress * jugador.getXpNeededForNextLevel());
+		// Con /xp se llega a niveles cuya experiencia no entra en un int
+		return (int) Math.min(total, Integer.MAX_VALUE);
 	}
 
-	/**
-	 * Compra lo que entre según el tope y los niveles: lo que se cobra es exactamente lo que se sube. Cada punto se
-	 * cobra con su propio costo, así que comprar 5 de una cuesta lo mismo que de a uno.
-	 */
+	/** La experiencia para llegar a un nivel desde 0: la suma de {@code Player.getXpNeededForNextLevel} de los anteriores. */
+	static long puntosHastaNivel(long nivel) {
+		if (nivel <= 16) {
+			return nivel * nivel + 6 * nivel;
+		}
+		// Las dos fórmulas dan siempre un entero: nivel × (5 × nivel − 81) y nivel × (9 × nivel − 325) son pares
+		if (nivel <= 31) {
+			return nivel * (5 * nivel - 81) / 2 + 360;
+		}
+		return nivel * (9 * nivel - 325) / 2 + 2220;
+	}
+
+	/** Compra lo que entre según el tope y la experiencia: lo que se cobra es exactamente lo que se sube. */
 	public static Compra comprar(ServerPlayer jugador, Estadistica estadistica, int cantidad) {
 		Configuracion config = EstadisticasRPG.config();
 		Configuracion.Mejora mejora = config.de(estadistica);
 		PuntosDelJugador puntos = puntos(jugador);
 
 		int margen = Math.max(0, mejora.tope() - puntos.de(estadistica));
-		int comprados = 0;
-		int costo = 0;
-		while (comprados < Math.min(cantidad, margen)) {
-			int siguiente = config.costo(puntos.total() + comprados);
-			if (costo + siguiente > jugador.experienceLevel) {
-				break;
-			}
-			costo += siguiente;
-			comprados++;
-		}
-		Resultado resultado = comprados == cantidad ? Resultado.OK : comprados == margen ? Resultado.TOPE : Resultado.SIN_NIVELES;
+		int alcanzan = config.experienciaPorPunto() <= 0 ? cantidad : experiencia(jugador) / config.experienciaPorPunto();
+		int comprados = Math.min(cantidad, Math.min(margen, alcanzan));
+		Resultado resultado = comprados == cantidad ? Resultado.OK : margen <= alcanzan ? Resultado.TOPE : Resultado.SIN_EXPERIENCIA;
 		if (comprados == 0) {
 			efectos(jugador, false);
-			return new Compra(estadistica, cantidad, 0, resultado, config.costo(puntos.total()));
+			return new Compra(estadistica, cantidad, 0, resultado);
 		}
 
-		// El override de ServerPlayer pone lastSentExp = -1: sin eso la barra del cliente no baja, porque
-		// vanilla sólo la reenvía cuando cambia totalExperience y bajar niveles no lo toca
-		jugador.giveExperienceLevels(-costo);
+		// Con puntos negativos vanilla baja de nivel cuando la barra pasa de 0. El override de ServerPlayer pone
+		// lastSentExp = -1: sin eso la barra del cliente no se actualizaría
+		jugador.giveExperiencePoints(-config.experienciaPorPunto() * comprados);
 		sumar(jugador, estadistica, comprados);
 		efectos(jugador, true);
-		return new Compra(estadistica, cantidad, comprados, resultado, config.costo(puntos.total() + comprados));
+		return new Compra(estadistica, cantidad, comprados, resultado);
 	}
 
 	/** Da puntos sin cobrar, hasta el tope. Devuelve cuántos dio. */
@@ -171,21 +174,21 @@ public final class Mejoras {
 		if (compra.comprados() == 0) {
 			return Component.literal(compra.resultado() == Resultado.TOPE
 					? estadistica.nombre() + " ya está en el máximo"
-					: "Te faltan niveles: el próximo punto cuesta " + niveles(compra.costoDelProximo()));
+					: "Te falta experiencia: cada punto cuesta " + experiencia(EstadisticasRPG.config().experienciaPorPunto()));
 		}
 		Configuracion.Mejora mejora = EstadisticasRPG.config().de(estadistica);
 		String texto = estadistica.nombre() + " " + estadistica.describir(mejora.porPunto() * compra.comprados())
 				+ " (" + compra.comprados() + (compra.comprados() == 1 ? " punto" : " puntos") + ")";
 		if (compra.resultado() == Resultado.TOPE) {
 			texto += ". Llegaste al máximo";
-		} else if (compra.resultado() == Resultado.SIN_NIVELES) {
+		} else if (compra.resultado() == Resultado.SIN_EXPERIENCIA) {
 			texto += ". No te alcanzó para los " + compra.pedidos();
 		}
 		return Component.literal(texto);
 	}
 
-	static String niveles(int cantidad) {
-		return cantidad + (cantidad == 1 ? " nivel" : " niveles");
+	static String experiencia(int cantidad) {
+		return cantidad + " de experiencia";
 	}
 
 	/** Con sonido para todos los que están cerca: comprar es un momento, como subir de nivel. */

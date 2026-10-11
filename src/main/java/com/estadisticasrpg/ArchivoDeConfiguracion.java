@@ -59,8 +59,7 @@ public final class ArchivoDeConfiguracion {
 
 		List<String> avisos = new ArrayList<>();
 		Configuracion defecto = Configuracion.POR_DEFECTO;
-		int costo = entero(raiz, "costoPorPunto", defecto.costoPorPunto(), 0, "costoPorPunto", avisos);
-		int aumento = entero(raiz, "puntosPorAumento", defecto.puntosPorAumento(), 0, "puntosPorAumento", avisos);
+		int experiencia = entero(raiz, "experienciaPorPunto", defecto.experienciaPorPunto(), 0, "experienciaPorPunto", avisos);
 
 		JsonObject estadisticas = raiz.has("estadisticas") && raiz.get("estadisticas").isJsonObject()
 				? raiz.getAsJsonObject("estadisticas")
@@ -71,7 +70,8 @@ public final class ArchivoDeConfiguracion {
 			}
 		}
 
-		boolean faltaAlgo = !raiz.has("costoPorPunto") || !raiz.has("puntosPorAumento") || !raiz.has("estadisticas");
+		// Un archivo de antes de la 0.7.0 tiene costoPorPunto y puntosPorAumento (en niveles): al reescribirlo se van
+		boolean faltaAlgo = !raiz.has("experienciaPorPunto") || !raiz.has("estadisticas");
 		Map<Estadistica, Configuracion.Mejora> mejoras = new EnumMap<>(Estadistica.class);
 		for (Estadistica estadistica : Estadistica.values()) {
 			Configuracion.Mejora porDefecto = defecto.de(estadistica);
@@ -88,7 +88,7 @@ public final class ArchivoDeConfiguracion {
 			mejoras.put(estadistica, new Configuracion.Mejora(porPunto, tope));
 		}
 
-		Configuracion config = new Configuracion(costo, aumento, mejoras);
+		Configuracion config = new Configuracion(experiencia, mejoras);
 		// Se reescribe con lo leído, no con los valores por defecto, así no se pisa nada que el dueño haya cambiado.
 		// Con avisos no: se perdería el valor que escribió mal en vez de dejárselo para que lo corrija
 		if (faltaAlgo && avisos.isEmpty()) {
@@ -99,8 +99,7 @@ public final class ArchivoDeConfiguracion {
 
 	public static void escribir(Path archivo, Configuracion config) {
 		JsonObject raiz = new JsonObject();
-		raiz.addProperty("costoPorPunto", config.costoPorPunto());
-		raiz.addProperty("puntosPorAumento", config.puntosPorAumento());
+		raiz.addProperty("experienciaPorPunto", config.experienciaPorPunto());
 		JsonObject estadisticas = new JsonObject();
 		for (Estadistica estadistica : Estadistica.values()) {
 			Configuracion.Mejora mejora = config.de(estadistica);

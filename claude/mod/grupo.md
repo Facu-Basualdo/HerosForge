@@ -44,7 +44,6 @@ Inventario Compartido es **un único grupo para todo el servidor**: no hay equip
 `Mejoras.alEntrar` (en `JOIN`) llama a `PuntosDelGrupo.sumarIndividuales(uuid, attachment)`:
 
 - **Por estadística, el máximo entre lo del grupo y lo del jugador, no la suma.** Sumar podría pasar el tope (60 + 80 de vida sobre un tope de 100) y regalaría puntos.
-- **El costo sale del total del grupo:** cuantos más puntos compraron entre todos, más caro el próximo, lo compre quien lo compre.
 - **Una sola vez por jugador** (`jugadores_sumados`). Si se suma cada vez, un `reiniciar` del grupo se desharía solo cuando alguien con puntos viejos reconecta.
 - Si eso cambió los puntos del grupo, `aplicarATodos`; si no, `aplicar` al que entró.
 

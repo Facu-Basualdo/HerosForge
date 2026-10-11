@@ -39,15 +39,6 @@ public record PuntosDelJugador(Map<Estadistica, Integer> puntos) {
 		return puntos.getOrDefault(estadistica, 0);
 	}
 
-	/** Los de todas las estadísticas juntas: de esto depende el costo del próximo punto. */
-	public int total() {
-		int total = 0;
-		for (int cantidad : puntos.values()) {
-			total += cantidad;
-		}
-		return total;
-	}
-
 	public PuntosDelJugador con(Estadistica estadistica, int cantidad) {
 		Map<Estadistica, Integer> nuevos = new EnumMap<>(Estadistica.class);
 		nuevos.putAll(puntos);

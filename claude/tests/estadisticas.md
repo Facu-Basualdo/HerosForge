@@ -10,11 +10,11 @@ Todo está en `EstadisticasRPGGameTest`. Cada test crea su propio jugador y lo s
 
 | Test | Qué verifica |
 |---|---|
-| `comprarVidaCobraUnNivelYLlenaLaVida` | Con 5 niveles: queda en 4, `MAX_HEALTH` 20,6, vida 20,6; `aplicar` dos veces no apila |
-| `sinNivelesNoCambiaNada` | `SIN_NIVELES`, 0 comprados, `MAX_HEALTH` sigue en 20 |
+| `comprarVidaCobraLaExperienciaYLlenaLaVida` | Con 3 costos + 10: quedan 2 costos + 10, `MAX_HEALTH` 20,6, vida 20,6; `aplicar` dos veces no apila |
+| `sinExperienciaNoCambiaNada` | Con un punto menos que el costo: `SIN_EXPERIENCIA`, no cobra, 0 comprados, `MAX_HEALTH` sigue en 20 |
 | `enElTopeNoCobra` | `TOPE` sin cobrar; `dar` tampoco pasa el tope |
-| `compraLoQueEntra` | Pide 5 con 3 de margen → compra 3 (`TOPE`); pide 5 con 2 niveles → compra 2 (`SIN_NIVELES`) |
-| `elCostoSubeConLosPuntosComprados` | Con `puntosPorAumento − 1` puntos repartidos en dos estadísticas: comprar 2 cobra 1 + 2 · el próximo cuesta 2 · con 1 nivel no compra · con 3 niveles y pidiendo 5 compra 1 |
+| `compraLoQueEntra` | Pide 5 con 3 de margen → compra 3 (`TOPE`); pide 5 con experiencia para 2 y 5 de sobra → compra 2 (`SIN_EXPERIENCIA`) y quedan los 5 |
+| `elCostoEsElMismoEnCualquierNivel` | `Mejoras.experiencia` da los totales de vanilla en los niveles 15, 16, 17, 30, 31 y 32 (donde cambian las fórmulas) · en el nivel 30, 5 puntos cuestan 5 costos y baja de nivel · con lo justo para uno queda en 0 |
 | `velocidadEsPorcentajeDeLaBase` | 100 puntos → `MOVEMENT_SPEED` = base × 1,2 |
 | `alReaparecerConservaPuntosYVida` | Morir: puntos, `MAX_HEALTH` 50 y vida 50 · volver del End: vida actual (30) |
 | `guardarYCargarConservaPuntosYVida` | Guardar y cargar: puntos, `MAX_HEALTH` 50 y vida 33 |
@@ -27,7 +27,7 @@ Todo está en `EstadisticasRPGGameTest`. Cada test crea su propio jugador y lo s
 
 Los valores con decimales (porcentajes, alcance, y la vida, que con 0,6 por punto casi nunca es entera) se comparan con `assertCerca`, no con `assertValueEqual`: `0,1 × 1,2` no da exactamente `0,12` en `double`. **La tolerancia es 1e-4 y no 1e-9 porque la vida actual es `float`:** `20,6f` pasado a `double` es 20,600000381…
 
-**Los números de los tests salen de `POR_DEFECTO`:** si se cambia un `porPunto` o un tope, hay que rehacer las cuentas acá (los topes de 100 obligan a `dar(…, 100)` para llegar al máximo). El test del costo lee `puntosPorAumento` de `POR_DEFECTO` para no depender del número.
+**Los números de los tests salen de `POR_DEFECTO`:** si se cambia un `porPunto` o un tope, hay que rehacer las cuentas acá (los topes de 100 obligan a `dar(…, 100)` para llegar al máximo). El costo no: los tests usan `COSTO = POR_DEFECTO.experienciaPorPunto()`.
 
 ## assertValueEqual va al revés de lo que parece
 
@@ -46,7 +46,7 @@ Si algo depende de un tick, o el mod lo hace en el momento (como `Mejoras.aplica
 | Escenario | Cómo |
 |---|---|
 | Jugador en supervivencia | `entrar(helper, nombre)`: `new ServerPlayer` + `PlayerList.placeNewPlayer` (dispara `JOIN`) + `setGameMode(SURVIVAL)`. **No `makeMockServerPlayerInLevel`**, que fuerza creativo |
-| Niveles | `setExperienceLevels(n)` |
+| Experiencia exacta | `ponerExperiencia(jugador, n)`: `setExperienceLevels(0)` + `setExperiencePoints(0)` + `giveExperiencePoints(n)`, como `/xp set` y `/xp add … points`. Se compara con `Mejoras.experiencia`, no con el nivel |
 | Morir y reaparecer | `PlayerList.respawn(jugador, false, Entity.RemovalReason.KILLED)`: el `false` es `restoreFrom(viejo, false)`, el camino de la muerte. Devuelve el jugador **nuevo** |
 | Volver del End | `respawn(jugador, true, CHANGED_DIMENSION)` |
 | Guardar y cargar | `TagValueOutput.createWithContext` + `saveWithoutId`, **sacar `"UUID"`** (si no, el jugador nuevo hereda el UUID del viejo y el `PlayerList` se confunde) y `entrar(helper, nombre, guardado)`, que hace `load` antes de `placeNewPlayer` como el login de vanilla |

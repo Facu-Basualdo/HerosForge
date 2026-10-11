@@ -20,7 +20,7 @@ Los gametests cubren la lógica, pero no muestran cómo se ve el menú en un cli
 
 | Comando | Para qué |
 |---|---|
-| `/xp add @s 30 levels` | Tener niveles para comprar |
+| `/xp add @s 300 points` | Tener experiencia para comprar (10 puntos con el costo por defecto) |
 | `/estadisticas` | Abrir el menú |
 | `/estadisticas dar <jugador> <estadistica> <cantidad>` | Saltear el costo (op) |
 | `/estadisticas recargar` | Probar cambios en `run/config/estadisticasrpg.json` sin reiniciar el servidor (op) |

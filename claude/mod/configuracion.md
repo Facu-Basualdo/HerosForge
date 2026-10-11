@@ -10,8 +10,7 @@ Síntomas que esta nota evita: después de actualizar el mod, un servidor sigue 
 
 ```json
 {
-  "costoPorPunto": 1,
-  "puntosPorAumento": 150,
+  "experienciaPorPunto": 30,
   "estadisticas": {
     "vida": { "porPunto": 0.6, "tope": 100 },
     ...
@@ -19,7 +18,7 @@ Síntomas que esta nota evita: después de actualizar el mod, un servidor sigue 
 }
 ```
 
-**`porPunto` va en las unidades del atributo de vanilla**, no en las que ve el jugador: la vida en medios corazones (`0.6` = 0,3 corazones) y las de `ADD_MULTIPLIED_BASE` como fracción (`0.002` = +0,2 %). `puntosPorAumento` es cada cuántos puntos comprados en total el siguiente cuesta un nivel más (0 = costo fijo; ver [Estadísticas](estadisticas.md#comprar-mejorascomprar)). Las claves de `estadisticas` son los `Estadistica.id()`: **por eso un id no se renombra nunca**, igual que en el attachment (ver [Estadísticas](estadisticas.md#formato-en-disco)).
+**`porPunto` va en las unidades del atributo de vanilla**, no en las que ve el jugador: la vida en medios corazones (`0.6` = 0,3 corazones) y las de `ADD_MULTIPLIED_BASE` como fracción (`0.002` = +0,2 %). `experienciaPorPunto` va en puntos de experiencia, no en niveles (ver [Estadísticas](estadisticas.md#comprar-mejorascomprar)). Las claves de `estadisticas` son los `Estadistica.id()`: **por eso un id no se renombra nunca**, igual que en el attachment (ver [Estadísticas](estadisticas.md#formato-en-disco)).
 
 `Configuracion.POR_DEFECTO` sigue siendo la fuente de los valores por defecto. El archivo sólo los pisa.
 
@@ -35,11 +34,12 @@ Síntomas que esta nota evita: después de actualizar el mod, un servidor sigue 
 | JSON roto, o no es un objeto | `config == null` + 1 aviso; **quien llama se queda con la config que tenía** | **No**: es el archivo del dueño, que lo arregle él |
 | Campo inválido (no es número, `porPunto <= 0`, entero negativo o con decimales) | Ese campo con el valor por defecto + aviso | No |
 | Id que no es una estadística | Se ignora + aviso | No |
-| Falta una estadística, `costoPorPunto`, `puntosPorAumento` o `estadisticas`, **sin avisos** | Lo que falta con el valor por defecto | **Sí, con lo leído** (no con los valores por defecto), así aparecen las estadísticas nuevas de una actualización |
+| Falta una estadística, `experienciaPorPunto` o `estadisticas`, **sin avisos** | Lo que falta con el valor por defecto | **Sí, con lo leído** (no con los valores por defecto), así aparecen las estadísticas nuevas de una actualización |
 
 - **Con avisos no se reescribe nunca,** aunque falte algo: si no, el valor mal escrito se reemplazaría por el de por defecto y el dueño perdería lo que quiso poner. Primero que corrija; en la próxima lectura sin avisos se completa.
-- **`porPunto` tiene que ser mayor que 0:** con uno negativo, el jugador pagaría niveles para empeorar.
-- `costoPorPunto` 0 es válido (gratis hasta el primer escalón; con `puntosPorAumento` 0 también, gratis siempre), y `tope` 0 también (la estadística no se puede comprar y en el menú aparece como vidrio gris).
+- **`porPunto` tiene que ser mayor que 0:** con uno negativo, el jugador pagaría experiencia para empeorar.
+- **Las claves de antes de la 0.7.0 (`costoPorPunto` y `puntosPorAumento`, en niveles) no se leen ni dan aviso:** el archivo no tiene `experienciaPorPunto`, así que se reescribe y se van solas. Con un aviso no se reescribiría nunca y quedarían para siempre.
+- `experienciaPorPunto` 0 es válido (gratis), y `tope` 0 también (la estadística no se puede comprar y en el menú aparece como vidrio gris).
 - Al arrancar, los avisos van al log con `[config]`; con `recargar`, al que ejecutó el comando, en amarillo.
 
 ## Aplicar: los conectados ya, los demás al entrar

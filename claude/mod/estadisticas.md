@@ -39,23 +39,21 @@ Comprobado con el gametest `alReaparecerConservaPuntosYVida`: sin el registro de
 
 ## Comprar (`Mejoras.comprar`)
 
-**Se compra lo que entra, de a un punto:** `comprar` recorre los puntos pedidos (hasta el margen del tope) sumando el costo de cada uno con `Configuracion.costo(total + comprados)`, y corta en el primero que ya no entra en `experienceLevel`. Lo que se cobra es exactamente lo que se sube.
+**Se cobra en puntos de experiencia, siempre los mismos** (`experienciaPorPunto`), no en niveles. Un nivel bajo vale 7 puntos y uno alto más de 100: cobrando niveles, al principio se subía un punto cada dos o tres mobs, y el que juntaba niveles pagaba de más.
 
-**El costo depende del total de puntos, de todas las estadísticas juntas** (`PuntosDelJugador.total()`): `costoPorPunto + total / puntosPorAumento` (con `puntosPorAumento` 0, fijo). Si dependiera de los puntos de cada estadística, repartir las compras saldría siempre barato. Consecuencias:
+**Se compra lo que entra:** `comprados = min(cantidad, tope − puntos, experiencia / experienciaPorPunto)`. Lo que se cobra es exactamente lo que se sube.
 
-- **Comprar 5 de una cuesta lo mismo que de a uno**, aunque en el medio se cruce un escalón: no se puede multiplicar por 5 el costo del primero.
-- Los puntos de `dar` y los que quedaron por encima de un tope bajado **también cuentan** para el precio: están guardados, y el total no mira la config.
-- Con los puntos del grupo, cuenta el total del grupo (`Mejoras.puntos` ya devuelve ésos).
-- `Compra.costoDelProximo` trae el costo del punto siguiente, ya con lo comprado: el mensaje de "te faltan niveles" lo usa, porque `Compra` no tiene al jugador. El menú y `ver` usan `Mejoras.costoDelProximo(jugador)`.
+**La experiencia del jugador es `Mejoras.experiencia(jugador)`, no `totalExperience`.** `totalExperience` es el puntaje de la pantalla de muerte: encantar no lo baja. `experiencia` suma la de los niveles enteros (`puntosHastaNivel`, la forma cerrada de sumar `Player.getXpNeededForNextLevel`, con las fórmulas que cambian en los niveles 16 y 31) más la barra (`experienceProgress × necesaria`, redondeado porque la barra es `float`). Es `long` por dentro: con `/xp` se llega a niveles cuya experiencia no entra en un `int`.
 
 | `Compra` | Significa |
 |---|---|
 | `comprados == pedidos`, `resultado == OK` | Compró todo |
-| `0 < comprados < pedidos` | Compró una parte; `resultado` dice qué la cortó (`TOPE` o `SIN_NIVELES`) |
+| `0 < comprados < pedidos` | Compró una parte; `resultado` dice qué la cortó (`TOPE` o `SIN_EXPERIENCIA`) |
 | `comprados == 0` | No compró nada ni cobró; `resultado` dice por qué |
 
-- Si el tope y los niveles cortan en el mismo número, gana `TOPE` (`comprados == margen`): es lo que el jugador no puede arreglar juntando más niveles.
-- **Los niveles se descuentan con `ServerPlayer.giveExperienceLevels`**, que pone `lastSentExp = -1`. Si se tocara `experienceLevel` directo, la barra del cliente no bajaría: vanilla sólo la reenvía cuando cambia `totalExperience`, y bajar niveles no lo cambia.
+- Si el tope y la experiencia cortan en el mismo número, gana `TOPE` (`margen <= alcanzan`): es lo que el jugador no puede arreglar juntando más experiencia.
+- **Se descuenta con `ServerPlayer.giveExperiencePoints(-costo)`.** Con un número negativo, vanilla baja de nivel cada vez que la barra pasa de 0 (verificado con `javap`), y el override de `ServerPlayer` pone `lastSentExp = -1` para que el cliente redibuje la barra. Tocar `experienceLevel` o `experienceProgress` directo no le avisaría al cliente.
+- Con Inventario Compartido no hay nada aparte: ese mod reparte la diferencia de experiencia (en puntos) de cada jugador al final del tick.
 - **El modo creativo paga igual.** Si fuera gratis, alcanzaría con pasar a creativo, comprar todo y volver.
 - `Mejoras.dar` (comando `dar`) no cobra pero **respeta el tope**.
 - `Mejoras.mensaje(Compra)` arma el texto para el jugador; lo usan el comando y el menú (ver [Menú de estadísticas](menu.md)).
@@ -63,12 +61,12 @@ Comprobado con el gametest `alReaparecerConservaPuntosYVida`: sin el registro de
 
 ## Config y topes
 
-`Configuracion.POR_DEFECTO` tiene el costo (`costoPorPunto`, `puntosPorAumento`) y una `Mejora(porPunto, tope)` por estadística. **Ningún número de balance va fuera de `Configuracion`.** El archivo `config/estadisticasrpg.json` pisa esos valores: cómo se lee, valida y recarga está en [Configuración](configuracion.md).
+`Configuracion.POR_DEFECTO` tiene el costo (`experienciaPorPunto`) y una `Mejora(porPunto, tope)` por estadística. **Ningún número de balance va fuera de `Configuracion`.** El archivo `config/estadisticasrpg.json` pisa esos valores: cómo se lee, valida y recarga está en [Configuración](configuracion.md).
 
-**Los valores por defecto están balanceados contra los de Mobs Poderosos** (el mod hermano, con mobs de nivel 1 a 100 según la distancia al spawn): las 9 estadísticas topean en 100 puntos y el costo sube 1 nivel cada 150, así que todo al máximo son 900 puntos y 3150 niveles (el último cuesta 6). El objetivo es que, con el equipo y los puntos que se esperan en cada zona, un zombi se mate en 5 o 6 golpes en todo el mundo y lo que aguanta el jugador baje de a poco hacia el nivel 100 (tabla en el README). La tabla es sólo por distancia: Mobs Poderosos además suma hasta +20 niveles por los días del mundo y un 5 % de campeones con +10. **Si se cambia un número de acá, hay que mirar el otro mod**, y al revés. Lo que más desbalancea:
+**Los valores por defecto están balanceados contra los de Mobs Poderosos** (el mod hermano, con mobs de nivel 1 a 100 según la distancia al spawn): las 9 estadísticas topean en 100 puntos y cada uno cuesta 30 de experiencia, así que todo al máximo son 900 puntos y 27.000 de experiencia. El objetivo es que, con el equipo y los puntos que se esperan en cada zona, un zombi se mate en 5 o 6 golpes en todo el mundo y lo que aguanta el jugador baje de a poco hacia el nivel 100 (tabla en el README). La tabla es sólo por distancia: Mobs Poderosos además suma hasta +20 niveles por los días del mundo y un 5 % de campeones con +10. **Si se cambia un número de acá, hay que mirar el otro mod**, y al revés. Lo que más desbalancea:
 
 - **La armadura.** Vanilla frena como máximo el 80 % del daño, y con netherita (20) ya se está cerca: +10 llevaba al tope y volvía al jugador casi inmortal. Por eso +8.
-- **El costo fijo.** Con 1 nivel por punto se compraba todo de a un nivel, a 7 de experiencia cada uno, y se llegaba al máximo cerca del spawn, antes de que los mobs se pusieran difíciles.
+- **Cobrar en niveles.** Con 1 nivel por punto se compraba todo de a un nivel, a 7 de experiencia cada uno, y se llegaba al máximo cerca del spawn, antes de que los mobs se pusieran difíciles.
 
 - **Si se baja un tope, los puntos de más se conservan pero no suman:** `Mejora.efecto` usa `min(puntos, tope)`. Si se vuelve a subir el tope, vuelven a contar sin que el jugador pague de nuevo.
 - `Configuracion.de(estadistica)` devuelve `null` si falta en el mapa, y entonces `aplicar` y `comprar` revientan con NPE. **Cada valor de `Estadistica` tiene que estar en `POR_DEFECTO`.**
