@@ -14,11 +14,12 @@ import net.fabricmc.loader.api.FabricLoader;
 
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
 
 public class EstadisticasRPG implements ModInitializer {
 	public static final String MOD_ID = "estadisticasrpg";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+	/** El id de mod de Inventario Compartido. No se depende de sus clases: alcanza con saber si está. */
+	public static final String INVENTARIO_COMPARTIDO = "inventariocompartido";
 
 	/** Viaja en el NBT del jugador ({@code playerdata/<uuid>.dat}) y sobrevive a la muerte. */
 	public static final AttachmentType<PuntosDelJugador> PUNTOS = AttachmentRegistry.create(id("puntos"),
@@ -36,8 +37,15 @@ public class EstadisticasRPG implements ModInitializer {
 			LOGGER.error("[config] Se usan los valores por defecto");
 		}
 
+		// Con Inventario Compartido la experiencia y la vida son de todos: con puntos individuales, el que tiene
+		// menos vida máxima le cortaría la vida al grupo, y cualquiera gastaría niveles de todos para sí mismo
+		if (FabricLoader.getInstance().isModLoaded(INVENTARIO_COMPARTIDO)) {
+			Mejoras.usarPuntosDelGrupo(true);
+			LOGGER.info("Inventario Compartido está cargado: los puntos son de todo el grupo");
+		}
+
 		// Los modificadores ya vienen en el NBT, pero se recalculan para que un cambio de config se aplique al reconectar
-		ServerPlayerEvents.JOIN.register(Mejoras::aplicar);
+		ServerPlayerEvents.JOIN.register(Mejoras::alEntrar);
 		ServerPlayerEvents.COPY_FROM.register(Mejoras::alReaparecer);
 		CommandRegistrationCallback.EVENT.register((dispatcher, contexto, seleccion) -> ComandoEstadisticas.registrar(dispatcher));
 	}
@@ -58,9 +66,7 @@ public class EstadisticasRPG implements ModInitializer {
 	/** Cambia la config y la aplica a los que están conectados: los demás la toman al entrar ({@code JOIN}). */
 	public static void usar(Configuracion nueva, MinecraftServer servidor) {
 		config = nueva;
-		for (ServerPlayer jugador : servidor.getPlayerList().getPlayers()) {
-			Mejoras.aplicar(jugador);
-		}
+		Mejoras.aplicarATodos(servidor);
 	}
 
 	public static Path archivoDeConfiguracion() {

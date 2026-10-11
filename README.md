@@ -2,7 +2,7 @@
 
 Mod de Fabric para **Minecraft Java 26.3** para mejorar a tu personaje estilo RPG. Pagás **1 nivel de experiencia** y subís **1 punto** de la estadística que quieras: más vida, más daño, más armadura, más velocidad… Los puntos son tuyos para siempre: no se pierden al morir.
 
-> **Estado:** las 9 estadísticas, el menú y la config están hechos. Falta probarlo a fondo en un servidor real y, opcionalmente, la integración con Inventario Compartido ([docs/plan.md](docs/plan.md)).
+> **Estado:** las 9 estadísticas, el menú, la config y los puntos compartidos con Inventario Compartido están hechos. Falta probarlo a fondo en un servidor real ([docs/plan.md](docs/plan.md)).
 
 ## En el juego
 
@@ -78,10 +78,14 @@ Al arrancar por primera vez, el servidor crea `config/estadisticasrpg.json` con 
 
 ## Con Inventario Compartido
 
-Se puede usar junto con Inventario Compartido (el mod que comparte inventario, vida y experiencia entre todos los jugadores), pero hay dos cosas para saber:
+Si en el servidor también está Inventario Compartido (el mod que comparte inventario, vida y experiencia entre todos los jugadores), **los puntos también son de todos**: lo que compra uno lo tienen todos, al momento.
 
-- **La experiencia es compartida:** lo que compra cualquiera sale de los niveles de todos.
-- **La vida es compartida, pero la vida máxima no:** cada uno tiene sus corazones extra, y el que tiene menos le corta la vida al grupo. Conviene que todos suban la vida parejo.
+- Se activa solo al detectar el mod; no hay que configurar nada. El menú lo avisa en la botella de experiencia.
+- **Los niveles salen de la experiencia compartida**, así que comprar gasta los niveles del grupo, como cualquier otro gasto.
+- Todos tienen la misma vida máxima, así que la vida compartida no se corta.
+- `ver`, `dar` y `reiniciar` hablan del grupo: `reiniciar` con cualquier jugador pone en 0 los puntos de todos.
+- **Los puntos que cada uno tenía antes se suman al grupo** la primera vez que entra: por estadística, el máximo entre lo del grupo y lo suyo (no la suma, para no pasar el tope). Pasa una sola vez por jugador.
+- Los puntos individuales no se borran: si se saca Inventario Compartido, cada uno vuelve a tener los suyos.
 
 ## Requisitos
 
@@ -128,6 +132,7 @@ Las pruebas verifican que:
 - en el menú, un click compra 1 y shift + click compra 5, y ningún ítem de muestra se puede sacar (doble click, arrastrar, teclas numéricas, tirar) ni se puede meter nada;
 - las 9 estadísticas al máximo dan los valores de la tabla, y las que tiene que ver el cliente (velocidad, velocidad de ataque, minado y alcance) se le mandan al cliente vanilla;
 - toda estadística tiene sus números en la config y su lugar en el menú;
+- con Inventario Compartido, lo que compra uno lo tienen todos, los puntos individuales se suman al grupo una sola vez y se conservan al reaparecer (las pruebas fuerzan el modo: no cargan Inventario Compartido de verdad);
 - la config se crea con los valores por defecto, respeta lo que cambiaste, avisa de lo inválido sin pisarlo, completa lo que falta, no usa un JSON roto, y un cambio se aplica a los que están conectados.
 
 Para probar a mano, mirá [claude/general/probar-en-el-juego.md](claude/general/probar-en-el-juego.md).

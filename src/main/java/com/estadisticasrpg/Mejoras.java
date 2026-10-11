@@ -3,6 +3,7 @@ package com.estadisticasrpg;
 import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -28,7 +29,22 @@ public final class Mejoras {
 	public record Compra(Estadistica estadistica, int pedidos, int comprados, Resultado resultado) {
 	}
 
+	// Lo decide EstadisticasRPG al iniciar (si está Inventario Compartido); los tests lo fuerzan
+	private static volatile boolean delGrupo;
+
+	public static void usarPuntosDelGrupo(boolean usar) {
+		delGrupo = usar;
+	}
+
+	public static boolean puntosDelGrupo() {
+		return delGrupo;
+	}
+
+	/** Los del jugador, o los del grupo si están compartidos (ver {@link PuntosDelGrupo}). */
 	public static PuntosDelJugador puntos(ServerPlayer jugador) {
+		if (delGrupo) {
+			return PuntosDelGrupo.de(jugador.level().getServer()).puntos();
+		}
 		return jugador.getAttachedOrCreate(EstadisticasRPG.PUNTOS);
 	}
 
@@ -65,9 +81,29 @@ public final class Mejoras {
 		return dados;
 	}
 
-	/** Todo en 0, sin devolver niveles. */
+	/** Todo en 0, sin devolver niveles. Con los puntos compartidos, los de todo el grupo. */
 	public static void reiniciar(ServerPlayer jugador) {
-		jugador.setAttached(EstadisticasRPG.PUNTOS, PuntosDelJugador.vacio());
+		guardar(jugador, PuntosDelJugador.vacio());
+	}
+
+	public static void aplicarATodos(MinecraftServer servidor) {
+		for (ServerPlayer jugador : servidor.getPlayerList().getPlayers()) {
+			aplicar(jugador);
+		}
+	}
+
+	/**
+	 * Al entrar. Con los puntos compartidos, la primera vez de cada jugador se suman al grupo los que había
+	 * comprado por su cuenta: si eso sube algo, les cambia a todos.
+	 */
+	public static void alEntrar(ServerPlayer jugador) {
+		if (delGrupo) {
+			MinecraftServer servidor = jugador.level().getServer();
+			if (PuntosDelGrupo.de(servidor).sumarIndividuales(jugador.getUUID(), jugador.getAttachedOrCreate(EstadisticasRPG.PUNTOS))) {
+				aplicarATodos(servidor);
+				return;
+			}
+		}
 		aplicar(jugador);
 	}
 
@@ -102,7 +138,9 @@ public final class Mejoras {
 	 * Fabric copia el attachment respecto de este evento.
 	 */
 	public static void alReaparecer(ServerPlayer viejo, ServerPlayer nuevo, boolean vivo) {
-		nuevo.setAttached(EstadisticasRPG.PUNTOS, puntos(viejo));
+		if (!delGrupo) {
+			nuevo.setAttached(EstadisticasRPG.PUNTOS, puntos(viejo));
+		}
 		aplicar(nuevo);
 		if (!vivo) {
 			nuevo.setHealth(nuevo.getMaxHealth());
@@ -144,11 +182,25 @@ public final class Mejoras {
 	}
 
 	private static void sumar(ServerPlayer jugador, Estadistica estadistica, int cantidad) {
-		jugador.setAttached(EstadisticasRPG.PUNTOS, puntos(jugador).con(estadistica, puntos(jugador).de(estadistica) + cantidad));
-		aplicar(jugador);
+		guardar(jugador, puntos(jugador).con(estadistica, puntos(jugador).de(estadistica) + cantidad));
 		if (estadistica == Estadistica.VIDA) {
 			// Subir MAX_HEALTH no sube la vida actual: sin esto el corazón nuevo aparece vacío y parece que no anduvo
 			jugador.heal((float) (EstadisticasRPG.config().de(estadistica).porPunto() * cantidad));
+		}
+	}
+
+	/**
+	 * Con los puntos compartidos, a todos los conectados: los que entren después los toman en {@link #alEntrar}.
+	 * Sólo se cura al que compró: Inventario Compartido reparte esa curación al resto, como cualquier otra.
+	 */
+	private static void guardar(ServerPlayer jugador, PuntosDelJugador puntos) {
+		if (delGrupo) {
+			MinecraftServer servidor = jugador.level().getServer();
+			PuntosDelGrupo.de(servidor).cambiar(puntos);
+			aplicarATodos(servidor);
+		} else {
+			jugador.setAttached(EstadisticasRPG.PUNTOS, puntos);
+			aplicar(jugador);
 		}
 	}
 }

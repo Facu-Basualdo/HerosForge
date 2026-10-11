@@ -139,10 +139,15 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 	}
 
 	private ItemStack info(Configuracion config) {
-		return item(new ItemStack(Items.EXPERIENCE_BOTTLE), texto("Tenés " + Mejoras.niveles(jugador.experienceLevel), ChatFormatting.GREEN), List.of(
-				texto("Cada punto cuesta " + Mejoras.niveles(config.costoPorPunto()), ChatFormatting.GRAY),
-				texto("Click: comprar 1 punto", ChatFormatting.DARK_GRAY),
-				texto("Shift + click: comprar " + CON_SHIFT, ChatFormatting.DARK_GRAY)));
+		List<Component> lore = new ArrayList<>();
+		lore.add(texto("Cada punto cuesta " + Mejoras.niveles(config.costoPorPunto()), ChatFormatting.GRAY));
+		if (Mejoras.puntosDelGrupo()) {
+			lore.add(texto("Los puntos son de todo el grupo:", ChatFormatting.GOLD));
+			lore.add(texto("lo que compra uno lo tienen todos", ChatFormatting.GOLD));
+		}
+		lore.add(texto("Click: comprar 1 punto", ChatFormatting.DARK_GRAY));
+		lore.add(texto("Shift + click: comprar " + CON_SHIFT, ChatFormatting.DARK_GRAY));
+		return item(new ItemStack(Items.EXPERIENCE_BOTTLE), texto("Tenés " + Mejoras.niveles(jugador.experienceLevel), ChatFormatting.GREEN), lore);
 	}
 
 	private ItemStack icono(Estadistica estadistica, Configuracion config, int puntos) {

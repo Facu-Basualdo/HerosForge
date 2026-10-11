@@ -20,6 +20,7 @@ import com.estadisticasrpg.Estadistica;
 import com.estadisticasrpg.EstadisticasRPG;
 import com.estadisticasrpg.MenuDeEstadisticas;
 import com.estadisticasrpg.Mejoras;
+import com.estadisticasrpg.PuntosDelGrupo;
 import com.estadisticasrpg.PuntosDelJugador;
 
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
@@ -452,6 +453,83 @@ public class EstadisticasRPGGameTest {
 
 		salir(helper, jugador);
 		helper.succeed();
+	}
+
+	@GameTest
+	public void grupoLoQueCompraUnoLoTienenTodos(GameTestHelper helper) {
+		ServerPlayer a = entrar(helper, "grupo-a");
+		ServerPlayer b = entrar(helper, "grupo-b");
+		conPuntosDelGrupo(helper, () -> {
+			a.setExperienceLevels(5);
+			Mejoras.comprar(a, Estadistica.VIDA, 1);
+			helper.assertValueEqual(a.experienceLevel, 4, "Paga el que compra (Inventario Compartido después lo reparte)");
+			helper.assertValueEqual(Mejoras.puntos(b).de(Estadistica.VIDA), 1, "B ve el punto que compró A");
+			helper.assertValueEqual(b.getAttributeValue(Attributes.MAX_HEALTH), 22.0, "B tiene el corazón extra");
+			helper.assertValueEqual(a.getAttachedOrCreate(EstadisticasRPG.PUNTOS).de(Estadistica.VIDA), 0, "El attachment de A no se toca");
+
+			Mejoras.reiniciar(b);
+			helper.assertValueEqual(a.getAttributeValue(Attributes.MAX_HEALTH), 20.0, "Reiniciar desde B le saca los puntos a A también");
+		});
+		salir(helper, a);
+		salir(helper, b);
+		helper.succeed();
+	}
+
+	@GameTest
+	public void grupoSumaLosPuntosIndividualesUnaSolaVez(GameTestHelper helper) {
+		ServerPlayer p = entrar(helper, "individual-p");
+		ServerPlayer q = entrar(helper, "individual-q");
+		// Antes de compartir, cada uno compró los suyos
+		Mejoras.dar(p, Estadistica.VIDA, 3);
+		Mejoras.dar(p, Estadistica.DANIO, 2);
+		Mejoras.dar(q, Estadistica.VIDA, 5);
+		conPuntosDelGrupo(helper, () -> {
+			Mejoras.alEntrar(p);
+			helper.assertValueEqual(Mejoras.puntos(p).de(Estadistica.VIDA), 3, "Entra P: el grupo toma su vida");
+			Mejoras.alEntrar(q);
+			helper.assertValueEqual(Mejoras.puntos(p).de(Estadistica.VIDA), 5, "Entra Q: el máximo, no la suma (3 + 5 pasaría el tope)");
+			helper.assertValueEqual(Mejoras.puntos(p).de(Estadistica.DANIO), 2, "El daño de P sigue");
+			helper.assertValueEqual(p.getAttributeValue(Attributes.MAX_HEALTH), 30.0, "A P le llega la vida de Q");
+
+			Mejoras.reiniciar(p);
+			Mejoras.alEntrar(q);
+			helper.assertValueEqual(Mejoras.puntos(p).de(Estadistica.VIDA), 0, "Después de reiniciar, reconectar no devuelve los puntos viejos");
+			helper.assertValueEqual(q.getAttachedOrCreate(EstadisticasRPG.PUNTOS).de(Estadistica.VIDA), 5, "El attachment de Q queda intacto");
+		});
+		salir(helper, p);
+		salir(helper, q);
+		helper.succeed();
+	}
+
+	@GameTest
+	public void grupoAlReaparecerConservaLosPuntos(GameTestHelper helper) {
+		ServerPlayer jugador = entrar(helper, "grupo-renacido");
+		ServerPlayer[] reaparecido = new ServerPlayer[1];
+		conPuntosDelGrupo(helper, () -> {
+			Mejoras.dar(jugador, Estadistica.VIDA, 10);
+			reaparecido[0] = helper.getLevel().getServer().getPlayerList().respawn(jugador, false, Entity.RemovalReason.KILLED);
+			helper.assertValueEqual(reaparecido[0].getAttributeValue(Attributes.MAX_HEALTH), 40.0, "Los puntos del grupo siguen después de morir");
+			helper.assertValueEqual(reaparecido[0].getHealth(), 40.0f, "Reaparece con la vida llena");
+		});
+		salir(helper, reaparecido[0]);
+		helper.succeed();
+	}
+
+	/**
+	 * Fuerza los puntos compartidos (en los tests no está Inventario Compartido) y los deja como en un mundo
+	 * nuevo. Se restaura todo en el finally: el modo y los puntos del grupo son globales del servidor.
+	 */
+	private static void conPuntosDelGrupo(GameTestHelper helper, Runnable prueba) {
+		MinecraftServer servidor = helper.getLevel().getServer();
+		PuntosDelGrupo.de(servidor).olvidarTodo();
+		Mejoras.usarPuntosDelGrupo(true);
+		try {
+			prueba.run();
+		} finally {
+			Mejoras.usarPuntosDelGrupo(false);
+			PuntosDelGrupo.de(servidor).olvidarTodo();
+			Mejoras.aplicarATodos(servidor);
+		}
 	}
 
 	private static void assertCerca(GameTestHelper helper, double actual, double esperado, String mensaje) {

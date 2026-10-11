@@ -6,13 +6,15 @@ Síntomas que esta nota evita: el jugador reaparece con 10 corazones aunque comp
 
 ## La regla: los puntos mandan, los modificadores se recalculan
 
-**`PuntosDelJugador` (el attachment `EstadisticasRPG.PUNTOS`) es la fuente de verdad. Los `AttributeModifier` se derivan de ahí con `Mejoras.aplicar`, nunca al revés.** Vanilla también guarda los modificadores permanentes en el NBT, pero no se confía en ellos: se pierden al morir (ver [Minecraft 26.x sin ofuscar](../general/minecraft-26-sin-ofuscar.md)) y quedan viejos si cambia la config.
+**`PuntosDelJugador` es la fuente de verdad. Los `AttributeModifier` se derivan de ahí con `Mejoras.aplicar`, nunca al revés.** Vanilla también guarda los modificadores permanentes en el NBT, pero no se confía en ellos: se pierden al morir (ver [Minecraft 26.x sin ofuscar](../general/minecraft-26-sin-ofuscar.md)) y quedan viejos si cambia la config.
+
+**Los puntos se leen con `Mejoras.puntos(jugador)` y se escriben con `Mejoras.guardar`, nunca con el attachment directo:** sin Inventario Compartido van al attachment `EstadisticasRPG.PUNTOS` del jugador, pero con él van a `PuntosDelGrupo`, que es de todo el servidor (ver [Puntos del grupo](grupo.md)).
 
 | Cuándo | Dónde | Qué hace |
 |---|---|---|
-| Comprar o dar puntos | `Mejoras.sumar` | `setAttached` + `aplicar` (+ `heal` si es vida) |
-| Reiniciar | `Mejoras.reiniciar` | `setAttached(vacio())` + `aplicar` |
-| Entrar al servidor | `ServerPlayerEvents.JOIN` (al final de `PlayerList.placeNewPlayer`) | `aplicar`: ajusta los modificadores a la config actual |
+| Comprar o dar puntos | `Mejoras.sumar` | `guardar` (que hace `aplicar`) (+ `heal` si es vida) |
+| Reiniciar | `Mejoras.reiniciar` | `guardar(vacio())` |
+| Entrar al servidor | `ServerPlayerEvents.JOIN` (al final de `PlayerList.placeNewPlayer`) → `Mejoras.alEntrar` | `aplicar`: ajusta los modificadores a la config actual (en modo grupo, antes suma los puntos individuales del que entra) |
 | Reaparecer o volver del End | `ServerPlayerEvents.COPY_FROM` (al final de `ServerPlayer.restoreFrom`) → `Mejoras.alReaparecer` | copia los puntos del viejo, `aplicar`, y si murió `setHealth(getMaxHealth())` |
 
 `aplicar` es **idempotente**: un modificador por estadística con id fijo (`Estadistica.idModificador()` = `estadisticasrpg:<id>`), puesto con `addOrReplacePermanentModifier` y quitado con `removeModifier(Identifier)` cuando el efecto es 0. Llamarlo de más no apila.
@@ -21,7 +23,7 @@ Síntomas que esta nota evita: el jugador reaparece con 10 corazones aunque comp
 
 Al morir, `restoreFrom(viejo, false)` hace sólo `assignBaseValues` y después `setHealth(getMaxHealth())` **con el máximo sin los puntos**. Por eso `alReaparecer`:
 
-1. **Lee los puntos del jugador viejo** y los pone en el nuevo. El attachment tiene `copyOnDeath()`, pero así no se depende del orden en que Fabric lo copia respecto de `COPY_FROM`.
+1. **Lee los puntos del jugador viejo** y los pone en el nuevo. El attachment tiene `copyOnDeath()`, pero así no se depende del orden en que Fabric lo copia respecto de `COPY_FROM`. En modo grupo se saltea este paso: los puntos no están en el jugador.
 2. `aplicar`.
 3. **Si murió (`vivo == false`), `setHealth(getMaxHealth())` otra vez**, ahora con los puntos. Sin esto reaparece con 20 de vida sobre 40.
 
@@ -109,5 +111,6 @@ Con `ADD_MULTIPLIED_BASE`, el porcentaje se aplica sobre la base **más todos lo
 - [Tests de estadísticas](../tests/estadisticas.md)
 - [Menú de estadísticas](menu.md)
 - [Configuración](configuracion.md)
+- [Puntos del grupo](grupo.md): con Inventario Compartido los puntos van a `data/estadisticasrpg/puntos_del_grupo.dat`, no al attachment
 - [Minecraft 26.x sin ofuscar](../general/minecraft-26-sin-ofuscar.md)
 - [Probar en el juego](../general/probar-en-el-juego.md)

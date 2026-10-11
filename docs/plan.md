@@ -124,7 +124,8 @@ Permisos con `Commands.hasPermission(Commands.LEVEL_GAMEMASTERS)` (en 26.3 no ex
 
 **Junto con Inventario Compartido** (los dos son tuyos, así que es probable que se instalen juntos):
 - La **experiencia es compartida**: cualquiera que compra gasta los niveles del grupo. Funciona, pero conviene decirlo en el README.
-- La **vida es compartida por deltas** y cada uno tendría una `MAX_HEALTH` distinta: el que tiene menos máximo corta la vida del grupo. Hay que decidir si, con los dos mods, los puntos pasan a ser **del grupo** (guardados en un `SavedData` del mundo en vez del attachment). Queda para la fase 5; hasta entonces, documentarlo como incompatibilidad conocida.
+- La **vida es compartida por deltas** y cada uno tendría una `MAX_HEALTH` distinta: el que tiene menos máximo corta la vida del grupo. **Resuelto en la fase 5:** con los dos mods, los puntos son del grupo (`PuntosDelGrupo`, un `SavedData` del mundo), así que todos tienen la misma vida máxima. Inventario Compartido es un único grupo para todo el servidor (no hay equipos), y eso es lo que replica `PuntosDelGrupo`.
+- **No verificado con los dos mods cargados a la vez:** los gametests fuerzan el modo grupo sin Inventario Compartido. Falta probar a mano que la experiencia gastada se reparta y que la curación del corazón nuevo le llegue a todos.
 
 ## Fases (cada una termina con `gradlew runGameTest` en verde, la versión subida y `/docs`)
 
@@ -132,7 +133,7 @@ Permisos con `Commands.hasPermission(Commands.LEVEL_GAMEMASTERS)` (en 26.3 no ex
 2. **Menú** (0.2.0) — **hecha**: `MenuDeEstadisticas` y `/estadisticas` sin argumentos lo abre.
 3. **Más estadísticas** (0.3.0) — **hecha**: velocidad de ataque, minado, alcance, empuje y suerte.
 4. **Config y pulido** (0.4.0) — **hecha**: `config/estadisticasrpg.json`, `recargar`, sonidos y partículas al comprar, README completo.
-5. **Opcional — con Inventario Compartido** (0.5.0): puntos del grupo si los dos mods están cargados (`FabricLoader.isModLoaded("inventariocompartido")`).
+5. **Opcional — con Inventario Compartido** (0.5.0) — **hecha** (`PuntosDelGrupo`, un `SavedData` del mundo; los individuales se suman una vez por jugador con el máximo por estadística): puntos del grupo si los dos mods están cargados (`FabricLoader.isModLoaded("inventariocompartido")`).
 
 ## Verificación
 

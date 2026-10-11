@@ -78,7 +78,7 @@ public final class ComandoEstadisticas {
 	private static int ver(CommandContext<CommandSourceStack> ctx, ServerPlayer jugador) {
 		Configuracion config = EstadisticasRPG.config();
 		PuntosDelJugador puntos = Mejoras.puntos(jugador);
-		StringBuilder texto = new StringBuilder("Estadísticas de ").append(jugador.getName().getString())
+		StringBuilder texto = new StringBuilder("Estadísticas ").append(deQuien(jugador))
 				.append(" · cada punto cuesta ").append(Mejoras.niveles(config.costoPorPunto()))
 				.append(" · tenés ").append(Mejoras.niveles(jugador.experienceLevel));
 		for (Estadistica estadistica : Estadistica.values()) {
@@ -111,10 +111,10 @@ public final class ComandoEstadisticas {
 		Estadistica estadistica = leerEstadistica(ctx);
 		int dados = Mejoras.dar(jugador, estadistica, IntegerArgumentType.getInteger(ctx, "cantidad"));
 		if (dados == 0) {
-			ctx.getSource().sendFailure(Component.literal(estadistica.nombre() + " de " + jugador.getName().getString() + " ya está en el máximo"));
+			ctx.getSource().sendFailure(Component.literal(estadistica.nombre() + " " + deQuien(jugador) + " ya está en el máximo"));
 		} else {
 			ctx.getSource().sendSuccess(() -> Component.literal("Le diste " + dados + (dados == 1 ? " punto" : " puntos") + " de "
-					+ estadistica.nombre().toLowerCase() + " a " + jugador.getName().getString()), true);
+					+ estadistica.nombre().toLowerCase() + (Mejoras.puntosDelGrupo() ? " al grupo" : " a " + jugador.getName().getString())), true);
 		}
 		return dados;
 	}
@@ -122,7 +122,7 @@ public final class ComandoEstadisticas {
 	private static int reiniciar(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
 		ServerPlayer jugador = EntityArgument.getPlayer(ctx, "jugador");
 		Mejoras.reiniciar(jugador);
-		ctx.getSource().sendSuccess(() -> Component.literal("Las estadísticas de " + jugador.getName().getString() + " volvieron a 0"), true);
+		ctx.getSource().sendSuccess(() -> Component.literal("Las estadísticas " + deQuien(jugador) + " volvieron a 0"), true);
 		return 1;
 	}
 
@@ -136,6 +136,11 @@ public final class ComandoEstadisticas {
 		}
 		fuente.sendSuccess(() -> Component.literal("Config recargada" + (lectura.avisos().isEmpty() ? "" : " (con " + lectura.avisos().size() + " avisos)")), true);
 		return 1;
+	}
+
+	/** Con los puntos compartidos, cualquier jugador ve y cambia los del grupo. */
+	private static String deQuien(ServerPlayer jugador) {
+		return Mejoras.puntosDelGrupo() ? "del grupo" : "de " + jugador.getName().getString();
 	}
 
 	private static String ids() {
