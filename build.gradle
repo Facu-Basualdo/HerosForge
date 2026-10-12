@@ -76,6 +76,20 @@ fabricApi {
 	}
 }
 
+// Suite separada con el mod real: -PsoulLinkJar=<ruta al jar>. No se empaqueta dentro de Hero's Forge.
+def soulLinkJar = providers.gradleProperty('soulLinkJar')
+if (soulLinkJar.isPresent()) {
+	dependencies {
+		gametestRuntimeOnly files(soulLinkJar.get())
+	}
+	processGametestResources {
+		inputs.property('soulLinkJar', soulLinkJar.get())
+		filesMatching('fabric.mod.json') {
+			filter { line -> line.replace('com.estadisticasrpg.test.EstadisticasRPGGameTest', 'com.estadisticasrpg.test.SoulLinkGameTest') }
+		}
+	}
+}
+
 // El servidor de prueba guarda su config en build/run/gameTest y no la pisa: si quedara la de una corrida vieja,
 // los tests correrían con los valores por defecto de antes y no con los de Configuracion.POR_DEFECTO
 // (lo mismo con el cliente de prueba, que además guarda ahí estadisticasrpg-cliente.json)

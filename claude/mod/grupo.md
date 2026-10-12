@@ -6,7 +6,7 @@ Síntomas que esta nota evita: con Soul Link, el que compró 10 corazones queda 
 
 ## Cuándo se activa
 
-**Si `FabricLoader.isModLoaded("inventariocompartido")` (`EstadisticasRPG.INVENTARIO_COMPARTIDO`), en `onInitialize` se llama a `Mejoras.usarPuntosDelGrupo(true)`.** No hay opción en la config, y no se depende de las clases de Soul Link, sólo de su id de mod: así no hace falta compilar contra él ni tenerlo en el classpath.
+**Si `FabricLoader.isModLoaded("inventariocompartido")` (`EstadisticasRPG.INVENTARIO_COMPARTIDO`), en `onInitialize` se llama a `Mejoras.usarPuntosDelGrupo(true)`.** No hay opción en la config. `CompatibilidadSoulLink` resuelve por reflexión los métodos de Soul Link sólo cuando está cargado: no hay dependencia de compilación ni clases de Soul Link empaquetadas.
 
 El porqué: Soul Link comparte la experiencia (la reparte por diferencias en `SharedExperience.sync`) y la vida (en `SharedVitals.syncHealth`, recortada contra la vida máxima de **cada uno**). Con puntos individuales:
 
@@ -53,11 +53,19 @@ En modo grupo, el comando dice "del grupo" en vez de "de <jugador>" (`ComandoEst
 
 ## Probado a mano con los dos mods
 
-Los gametests fuerzan el modo con `usarPuntosDelGrupo(true)` sin Soul Link cargado (ver [Tests del grupo](../tests/grupo.md)). **Con los dos jars (y Bloodmoon & Bosses) en un servidor se probó a mano en la 0.9.1 (octubre de 2026) y anda:** la experiencia gastada le baja a todos y la curación del corazón nuevo se reparte. Lo de la 0.10.0 (bajar puntos, regeneración y robo de vida en modo grupo) todavía no se probó así.
+Los gametests fuerzan el modo con `usarPuntosDelGrupo(true)` sin Soul Link cargado (ver [Tests del grupo](../tests/grupo.md)). **Con los dos jars (y Bloodmoon & Bosses) en un servidor se probó a mano en la 0.9.1 (octubre de 2026) y anda:** la experiencia gastada le baja a todos y la curación del corazón nuevo se reparte. La suite de integración de 0.11.1 carga Soul Link 1.2.1 real y prueba las compras y devoluciones, recortes de vida, reinicio y recarga de topes.
 
 ## Lo que se cura
 
 Soul Link reparte la vida **sumando la diferencia** de cada jugador en el tick. Una curación hecha a un solo jugador le llega a todos una vez; la misma curación hecha a cada uno se suma una vez por jugador. Por eso **la regeneración (`Curacion.regenerar`) cura a uno solo en modo grupo** (el primero de la lista que está vivo y en supervivencia o aventura), y el robo de vida cura sólo al que pegó. La vida nueva al comprar vida también se le da sólo al que compró (`Mejoras.sumar`).
+
+## Transacciones y recortes de máximo
+
+**Comprar sincroniza experiencia antes de validar y después de cobrar** mediante `SharedExperience.sync`. Bajar hace lo mismo para la devolución. Sin la segunda sincronización, otra compra del mismo tick usaría la barra vieja de otro jugador. La primera incorpora experiencia pendiente de otros participantes.
+
+**Recortar vida compensa sólo ese recorte en `SharedInventoryState.syncedHealth()`**, conservando el delta real de daño o curación. Después de aplicar los atributos a todos se llama `SharedVitals.syncHealth`: limita la barra común una vez al máximo nuevo. Esto también cubre reiniciar y recargar. No reemplazar la referencia por la vida actual: borraría daños pendientes.
+
+El puente está verificado contra Soul Link 1.2.1. Usa reflexión cacheada, incluido el método package-private `syncedHealth`; si Soul Link cambia esas firmas hay que actualizar el puente y correr la integración. Una incompatibilidad falla explícitamente, no continúa con compras inseguras.
 
 ## Ver también
 

@@ -4,7 +4,7 @@ Mod de Fabric para **Minecraft Java 26.3** para mejorar a tu personaje estilo RP
 
 > Antes se llamaba **Estadísticas RPG**. Por dentro sigue con el id `estadisticasrpg` (el jar, `config/estadisticasrpg.json` y los puntos guardados), así que actualizar no le borra nada a nadie.
 
-> **Estado:** versión 0.11.0. Las 15 estadísticas, bajar puntos con devolución, el menú, la pantalla propia, la config y los puntos compartidos con Soul Link están hechos. Probado a mano en un servidor junto con Soul Link y Bloodmoon & Bosses ([docs/plan.md](docs/plan.md)).
+> **Estado:** versión 0.11.1. Las 15 estadísticas, bajar puntos con devolución, el menú, la pantalla propia, la config y los puntos compartidos con Soul Link están hechos. Probado a mano en un servidor junto con Soul Link y Bloodmoon & Bosses ([docs/plan.md](docs/plan.md)).
 
 ## En el juego
 
@@ -138,6 +138,8 @@ La tabla es por la distancia. Bloodmoon & Bosses además suma 1 nivel cada 5 dí
 Si en el servidor también está Soul Link (el mod que comparte inventario, vida y experiencia entre todos los jugadores), **los puntos también son de todos**: lo que compra uno lo tienen todos, al momento.
 
 - Se activa solo al detectar el mod; no hay que configurar nada. El menú lo avisa en la botella de experiencia.
+- **Las compras se sincronizan al momento:** si dos jugadores compran en el mismo tick, el segundo ya ve lo que gastó el primero.
+- **Bajar vida, reiniciar o recargar un tope menor recorta la barra compartida una sola vez**, sin sumar el recorte como daño por cada jugador.
 - **La experiencia es la compartida**, así que comprar gasta la del grupo, como cualquier otro gasto.
 - Todos tienen la misma vida máxima, así que la vida compartida no se corta.
 - **La regeneración cura una sola vez para todo el grupo**, no una vez por jugador. El robo de vida cura al que pega, y Soul Link se lo pasa a todos.
@@ -219,3 +221,11 @@ Para entender por qué el código está hecho así, empezá por [CLAUDE.md](CLAU
 ## Licencia
 
 [MIT](LICENSE): podés usarlo, modificarlo y redistribuirlo (también en modpacks) siempre que mantengas el aviso de copyright.
+
+Para probar la integración real con Soul Link 1.2.1 (cuatro jugadores, recortes de vida y compras en el mismo tick):
+
+```powershell
+.\gradlew.bat runGameTest "-PsoulLinkJar=../SoulLink/build/libs/soullink-1.2.1.jar"
+```
+
+El jar se usa sólo en la prueba; no se incluye en Hero's Forge.

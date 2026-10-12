@@ -90,6 +90,7 @@ public final class Mejoras {
 
 	/** Compra lo que entre según el tope y la experiencia: lo que se cobra es exactamente lo que se sube. */
 	public static Compra comprar(ServerPlayer jugador, Estadistica estadistica, int cantidad) {
+		CompatibilidadSoulLink.sincronizarExperiencia(jugador.level().getServer());
 		Configuracion config = EstadisticasRPG.config();
 		Configuracion.Mejora mejora = config.de(estadistica);
 		PuntosDelJugador puntos = puntos(jugador);
@@ -106,6 +107,7 @@ public final class Mejoras {
 		// Con puntos negativos vanilla baja de nivel cuando la barra pasa de 0. El override de ServerPlayer pone
 		// lastSentExp = -1: sin eso la barra del cliente no se actualizaría
 		jugador.giveExperiencePoints(-config.experienciaPorPunto() * comprados);
+		CompatibilidadSoulLink.sincronizarExperiencia(jugador.level().getServer());
 		sumar(jugador, estadistica, comprados);
 		efectos(jugador, true);
 		return new Compra(estadistica, cantidad, comprados, resultado);
@@ -116,6 +118,7 @@ public final class Mejoras {
 	 * uno. Con los puntos del grupo, la experiencia la recibe el que bajó: Soul Link la reparte.
 	 */
 	public static Devolucion bajar(ServerPlayer jugador, Estadistica estadistica, int cantidad) {
+		CompatibilidadSoulLink.sincronizarExperiencia(jugador.level().getServer());
 		int actuales = puntos(jugador).de(estadistica);
 		int bajados = Math.min(Math.max(cantidad, 0), actuales);
 		if (bajados == 0) {
@@ -127,6 +130,7 @@ public final class Mejoras {
 		guardar(jugador, puntos(jugador).con(estadistica, actuales - bajados));
 		if (experiencia > 0) {
 			jugador.giveExperiencePoints(experiencia);
+			CompatibilidadSoulLink.sincronizarExperiencia(jugador.level().getServer());
 		}
 		ServerLevel level = jugador.level();
 		level.playSound(null, jugador.getX(), jugador.getY(), jugador.getZ(), SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, 0.6f, 0.8f);
@@ -152,6 +156,7 @@ public final class Mejoras {
 		for (ServerPlayer jugador : servidor.getPlayerList().getPlayers()) {
 			aplicar(jugador);
 		}
+		CompatibilidadSoulLink.sincronizarVida(servidor);
 	}
 
 	/**
@@ -190,7 +195,7 @@ public final class Mejoras {
 		// Vanilla recién corta la vida contra el máximo nuevo en el próximo tick (refreshDirtyAttributes): sin esto,
 		// después de reiniciar el jugador queda con más vida que el máximo hasta que tickea
 		if (jugador.getHealth() > jugador.getMaxHealth()) {
-			jugador.setHealth(jugador.getMaxHealth());
+			CompatibilidadSoulLink.recortarVida(jugador);
 		}
 	}
 

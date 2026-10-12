@@ -26,6 +26,12 @@ Vale lo mismo que para la config (ver [Tests de configuración](configuracion.md
 
 **Los jugadores se crean antes de prender el modo** (`entrar()` dispara `JOIN`, que en modo grupo suma sus puntos individuales) y se sacan después de apagarlo. En `grupoSumaLosPuntosIndividualesUnaSolaVez`, los puntos individuales se dan con el modo apagado, y `alEntrar` se llama a mano para simular que reconectan.
 
+## Integración real
+
+`./gradlew runGameTest "-PsoulLinkJar=../SoulLink/build/libs/soullink-1.2.1.jar"` cambia el entrypoint de tests a `SoulLinkGameTest` y agrega ese jar únicamente al runtime de gametest. La suite normal sigue sin Soul Link.
+
+La prueba crea cuatro jugadores conectados y ejecuta, en un mismo tick, bajas de vida, daño y curación pendientes, reinicio, recarga de un tope menor, dos compras con saldo para una, devolución y compra con XP pendiente de otro jugador. Usa la sincronización del mod real, no una simulación. Restaurá configuración, jugadores y puntos en finally.
+
 ## Ver también
 
 - [Puntos del grupo](../mod/grupo.md)
