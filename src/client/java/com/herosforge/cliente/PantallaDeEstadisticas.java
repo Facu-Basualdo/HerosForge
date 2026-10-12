@@ -287,9 +287,12 @@ public class PantallaDeEstadisticas extends Screen {
 			graficos.centeredText(font, Component.literal("Esperando al servidor…"), width / 2, y0 + 35, GRIS);
 		} else {
 			int mitad = ancho / 2;
-			graficos.text(font, ajustar(resumen(dibujado), mitad - 20), x0 + 10, y0 + 32, VERDE);
-			String costo = dibujado.costo() == 0 ? "Mejoras gratis" : numero(dibujado.costo()) + " XP / punto";
-			graficos.text(font, ajustar(costo, mitad - 20), x0 + mitad + 8, y0 + 32, BLANCO);
+			String resumen = ajustar(resumen(dibujado), mitad - 20);
+			graficos.text(font, resumen, x0 + 10, y0 + 32, VERDE);
+			// Centrado en el panel, salvo que la experiencia llegue hasta ahí (millones de XP en 426 de ancho): ahí se corre
+			String costo = ajustar(dibujado.costo() == 0 ? "Mejoras gratis" : numero(dibujado.costo()) + " XP / punto", mitad - 20);
+			int xCosto = Math.max(x0 + mitad - font.width(costo) / 2, x0 + 10 + font.width(resumen) + 12);
+			graficos.text(font, costo, xCosto, y0 + 32, BLANCO);
 			graficos.fill(x0 + 8, y0 + 43, x0 + ancho - 8, y0 + 44, ARGB.opaque(0x394653));
 			for (Renglon renglon : renglones) extraerRenglon(graficos, renglon, mouseX, mouseY);
 		}
