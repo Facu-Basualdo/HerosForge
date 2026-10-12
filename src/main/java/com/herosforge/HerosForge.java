@@ -59,6 +59,8 @@ public class HerosForge implements ModInitializer {
 		CommandRegistrationCallback.EVENT.register((dispatcher, contexto, seleccion) -> ComandoEstadisticas.registrar(dispatcher));
 		InterfazDelCliente.registrar();
 		Curacion.registrar();
+		Combate.registrar();
+		Oficios.registrar();
 	}
 
 	public static Configuracion config() {

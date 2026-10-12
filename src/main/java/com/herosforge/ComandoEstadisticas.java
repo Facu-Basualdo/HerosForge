@@ -88,6 +88,9 @@ public final class ComandoEstadisticas {
 				.append(" y bajarlo devuelve ").append(config.devolucionPorPunto())
 				.append(" · tenés ").append(Mejoras.experiencia(Mejoras.experiencia(jugador)));
 		for (Estadistica estadistica : Estadistica.values()) {
+			if (estadistica.rama().estadisticas().getFirst() == estadistica) {
+				texto.append("\n— ").append(estadistica.rama().nombre()).append(" —");
+			}
 			Configuracion.Mejora mejora = config.de(estadistica);
 			int actuales = puntos.de(estadistica);
 			texto.append("\n").append(estadistica.nombre()).append(" (").append(estadistica.id()).append("): ")

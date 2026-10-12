@@ -28,6 +28,7 @@ import com.herosforge.MigracionDeId;
 import com.herosforge.Paquetes;
 import com.herosforge.PuntosDelGrupo;
 import com.herosforge.PuntosDelJugador;
+import com.herosforge.Rama;
 
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.fabricmc.loader.api.FabricLoader;
@@ -211,7 +212,9 @@ public class HerosForgeGameTest {
 	@GameTest
 	public void losAtributosQueUsaElClienteSeSincronizan(GameTestHelper helper) {
 		for (var atributo : List.of(Attributes.MOVEMENT_SPEED, Attributes.ATTACK_SPEED, Attributes.BLOCK_BREAK_SPEED,
-				Attributes.BLOCK_INTERACTION_RANGE, Attributes.ENTITY_INTERACTION_RANGE, Attributes.JUMP_STRENGTH)) {
+				Attributes.BLOCK_INTERACTION_RANGE, Attributes.ENTITY_INTERACTION_RANGE, Attributes.JUMP_STRENGTH,
+				Attributes.STEP_HEIGHT, Attributes.GRAVITY, Attributes.SNEAKING_SPEED, Attributes.WATER_MOVEMENT_EFFICIENCY,
+				Attributes.SUBMERGED_MINING_SPEED)) {
 			helper.assertTrue(atributo.value().isClientSyncable(), atributo.getRegisteredName() + " se manda al cliente");
 		}
 		helper.succeed();
@@ -219,14 +222,20 @@ public class HerosForgeGameTest {
 
 	@GameTest
 	public void cadaEstadisticaTieneConfigYSlot(GameTestHelper helper) {
-		Set<Integer> slots = new HashSet<>();
+		for (Rama rama : Rama.values()) {
+			// La fila de arriba es de la botella de experiencia y la de abajo de las pestañas: entran 9 por rama
+			helper.assertTrue(rama.estadisticas().size() <= 9, rama + " tiene a lo sumo 9 estadísticas");
+			Set<Integer> slots = new HashSet<>();
+			for (Estadistica estadistica : rama.estadisticas()) {
+				helper.assertTrue(HerosForge.config().de(estadistica) != null, estadistica + " está en Configuracion.POR_DEFECTO");
+				int slot = MenuDeEstadisticas.slotDe(estadistica);
+				helper.assertTrue(slot >= 9 && slot < 18, estadistica + " está en la fila del medio (slot " + slot + ")");
+				helper.assertTrue(slots.add(slot), estadistica + " no comparte slot con otra de su rama (slot " + slot + ")");
+			}
+		}
+		Set<String> ids = new HashSet<>();
 		for (Estadistica estadistica : Estadistica.values()) {
-			helper.assertTrue(HerosForge.config().de(estadistica) != null, estadistica + " está en Configuracion.POR_DEFECTO");
-			int slot = MenuDeEstadisticas.slotDe(estadistica);
-			// La fila de arriba es de la botella de experiencia
-			helper.assertTrue(estadistica.combate() ? slot >= 9 && slot < 18 : slot >= 18 && slot < 27,
-					estadistica + " está en su fila: combate en la del medio, el resto abajo (slot " + slot + ")");
-			helper.assertTrue(slots.add(slot), estadistica + " no comparte slot con otra (slot " + slot + ")");
+			helper.assertTrue(ids.add(estadistica.id()), estadistica + " tiene un id propio");
 		}
 		helper.succeed();
 	}
@@ -537,8 +546,15 @@ public class HerosForgeGameTest {
 
 		ejecutar(helper, jugador, "estadisticas");
 		helper.assertTrue(jugador.containerMenu instanceof MenuDeEstadisticas, "/estadisticas abre el menú");
-		AbstractContainerMenu menu = jugador.containerMenu;
+		MenuDeEstadisticas menu = (MenuDeEstadisticas) jugador.containerMenu;
 		int vida = MenuDeEstadisticas.slotDe(Estadistica.VIDA);
+
+		// Abre en la portada, con las ramas en la fila del medio: un click en una abre su página
+		helper.assertTrue(menu.abierta() == null, "Abre en la portada");
+		menu.clicked(MenuDeEstadisticas.slotDe(Rama.GUARDIAN), 0, ContainerInput.PICKUP, jugador);
+		helper.assertValueEqual(menu.abierta(), Rama.GUARDIAN, "Click en una rama abre su página");
+		helper.assertValueEqual(Mejoras.experiencia(jugador), COSTO * 10, "Cambiar de página no cobra");
+		helper.assertTrue(menu.getCarried().isEmpty(), "Cambiar de página no deja nada en el cursor");
 
 		menu.clicked(vida, 0, ContainerInput.PICKUP, jugador);
 		helper.assertValueEqual(Mejoras.puntos(jugador).de(Estadistica.VIDA), 1, "Un click compra 1");
@@ -572,6 +588,14 @@ public class HerosForgeGameTest {
 		menu.broadcastChanges();
 		helper.assertTrue(menu.getSlot(vida).getItem().is(Items.STAINED_GLASS_PANE.gray()), "En el máximo se ve vidrio gris");
 
+		// Las pestañas de abajo cambian de rama, y la flecha vuelve a la portada
+		menu.clicked(18 + 8, 0, ContainerInput.PICKUP, jugador);
+		helper.assertValueEqual(menu.abierta(), Rama.ARTESANO, "La última pestaña es la del artesano");
+		helper.assertTrue(menu.getSlot(MenuDeEstadisticas.slotDe(Estadistica.MINADO)).getItem().is(Items.IRON_PICKAXE), "Muestra las estadísticas de su rama");
+		menu.clicked(0, 0, ContainerInput.PICKUP, jugador);
+		helper.assertTrue(menu.abierta() == null, "La flecha vuelve a la portada");
+		helper.assertValueEqual(Mejoras.puntos(jugador).de(Estadistica.VIDA), 100, "Navegar no compra ni baja");
+
 		jugador.closeContainer();
 		salir(helper, jugador);
 		helper.succeed();
@@ -582,6 +606,7 @@ public class HerosForgeGameTest {
 		ServerPlayer jugador = entrar(helper, "tramposo");
 		MenuDeEstadisticas.abrir(jugador);
 		AbstractContainerMenu menu = jugador.containerMenu;
+		((MenuDeEstadisticas) menu).mostrar(Rama.GUARDIAN);
 		int vida = MenuDeEstadisticas.slotDe(Estadistica.VIDA);
 		int primeroDelJugador = 27;
 
@@ -790,6 +815,8 @@ public class HerosForgeGameTest {
 		helper.assertValueEqual(estado.filas().size(), Estadistica.values().length, "Una fila por estadística");
 		Paquetes.Fila vida = estado.filas().get(Estadistica.VIDA.ordinal());
 		helper.assertValueEqual(vida.id(), Estadistica.VIDA.id(), "Las filas van en el orden del enum");
+		helper.assertValueEqual(vida.rama(), Rama.GUARDIAN.id(), "Cada fila trae su rama");
+		helper.assertValueEqual(vida.nombreDeLaRama(), "Guardián", "Y el nombre de la rama, para un cliente que no la conozca");
 		helper.assertValueEqual(vida.puntos(), 10, "Puntos de vida");
 		helper.assertValueEqual(vida.tope(), Configuracion.POR_DEFECTO.de(Estadistica.VIDA).tope(), "Tope de vida");
 		helper.assertValueEqual(vida.ahora(), "+3 corazones", "Lo que dan los puntos, armado en el servidor");
@@ -885,13 +912,13 @@ public class HerosForgeGameTest {
 	}
 
 	/** Deja al jugador con exactamente esa experiencia, como {@code /xp set 0 levels} y {@code /xp add <n> points}. */
-	private static void ponerExperiencia(ServerPlayer jugador, int puntos) {
+	static void ponerExperiencia(ServerPlayer jugador, int puntos) {
 		jugador.setExperienceLevels(0);
 		jugador.setExperiencePoints(0);
 		jugador.giveExperiencePoints(puntos);
 	}
 
-	private static void assertCerca(GameTestHelper helper, double actual, double esperado, String mensaje) {
+	static void assertCerca(GameTestHelper helper, double actual, double esperado, String mensaje) {
 		// La vida es float: con 1e-9, 20,6f no daría igual a 20,6
 		helper.assertTrue(Math.abs(actual - esperado) < 1e-4, mensaje + ": esperaba " + esperado + ", dio " + actual);
 	}
@@ -901,12 +928,12 @@ public class HerosForgeGameTest {
 	}
 
 	/** Un jugador en supervivencia: makeMockServerPlayerInLevel fuerza creativo. */
-	private static ServerPlayer entrar(GameTestHelper helper, String nombre) {
+	static ServerPlayer entrar(GameTestHelper helper, String nombre) {
 		return entrar(helper, nombre, null);
 	}
 
 	/** Igual, pero cargándole antes un archivo guardado, como hace vanilla en el login. */
-	private static ServerPlayer entrar(GameTestHelper helper, String nombre, @Nullable CompoundTag guardado) {
+	static ServerPlayer entrar(GameTestHelper helper, String nombre, @Nullable CompoundTag guardado) {
 		ServerLevel level = helper.getLevel();
 		CommonListenerCookie cookie = CommonListenerCookie.createInitial(new GameProfile(UUID.randomUUID(), nombre), false);
 		ServerPlayer jugador = new ServerPlayer(level.getServer(), level, cookie.gameProfile(), cookie.clientInformation());
@@ -920,7 +947,7 @@ public class HerosForgeGameTest {
 		return jugador;
 	}
 
-	private static void salir(GameTestHelper helper, ServerPlayer jugador) {
+	static void salir(GameTestHelper helper, ServerPlayer jugador) {
 		helper.getLevel().getServer().getPlayerList().remove(jugador);
 	}
 }

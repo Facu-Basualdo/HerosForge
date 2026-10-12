@@ -19,7 +19,7 @@ Síntomas que esta nota evita: los gametests del servidor pasan y el juego crash
 
 | Test | Qué verifica |
 |---|---|
-| `elEstadoParaLaPantallaTieneTodo` | Experiencia, costo, devolución, una fila por estadística en el orden del enum, puntos y tope, y los textos `ahora`/`proximo` armados en el servidor (`ahora` vacío con 0 puntos) |
+| `elEstadoParaLaPantallaTieneTodo` | Experiencia, costo, devolución, una fila por estadística en el orden del enum con su rama (id y nombre), puntos y tope, y los textos `ahora`/`proximo` armados en el servidor (`ahora` vacío con 0 puntos) |
 | `elEstadoViajaPorLaRedSinPerderNada` | `Estado`, `Comprar` y `Bajar` codificados y decodificados con `Unpooled.buffer()` dan lo mismo y no sobran bytes |
 | `losPedidosDelClienteNoSeCreen` | Cantidad −5 o 0 y una estadística que no existe no compran ni cobran; `Integer.MAX_VALUE` compra lo que alcanza y cobra justo · lo mismo con `Bajar`: los pedidos truchos no bajan nada, y `Integer.MAX_VALUE` baja los que hay |
 | `sinElComplementoEstadisticasAbreElCofre` | Con `preferir(true)` pero sin los canales registrados, `/estadisticas` abre `MenuDeEstadisticas` |
@@ -30,13 +30,14 @@ Síntomas que esta nota evita: los gametests del servidor pasan y el juego crash
 
 Crea un mundo de singleplayer, pone supervivencia, da experiencia y puntos con comandos, y:
 
-1. Aprieta K → espera `PantallaDeEstadisticas` → captura `estadisticas-pantalla`.
-2. `clickScreenButton("+1")` (el primero es el de vida) → comprueba en el servidor (`computeOnServer`) que subió un punto y cobró 30 → captura → `clickScreenButton("-1")` (también el de vida) → bajó el punto y devolvió 15.
+1. Aprieta K → espera `PantallaDeEstadisticas` → captura `estadisticas-pantalla` (abre en la primera rama, la del guerrero).
+2. `clickScreenButton("Guardián")` → captura `estadisticas-guardian` → `clickScreenButton("+1")` (en esa pestaña, el primero es el de vida) → comprueba en el servidor (`computeOnServer`) que subió un punto y cobró 30 → captura → `clickScreenButton("-1")` (también el de vida) → bajó el punto y devolvió 15.
 3. K la cierra; E abre el inventario → captura `estadisticas-inventario` → `clickScreenButton("Estadísticas")` abre la pantalla → Esc vuelve al inventario.
-4. Con el inventario abierto, K la abre → captura `estadisticas-pantalla-chica` (la ventana es 852 × 480, o sea interfaz de 426 × 240; la ventana del test ya arranca de ese tamaño, así que todas las capturas muestran las dos columnas) → **Listo** vuelve al inventario.
+4. Con el inventario abierto, K la abre (sigue en la pestaña del guardián, la rama más larga) → captura `estadisticas-pantalla-chica` (la ventana es 852 × 480, o sea interfaz de 426 × 240; la ventana del test ya arranca de ese tamaño, así que todas las capturas muestran las dos columnas) → **Listo** vuelve al inventario.
 
 Gotchas:
 
+- **`clickScreenButton` hace click en el primero con ese texto**: con varias ramas, "+1" es el de la primera fila **de la pestaña abierta**. Elegí la pestaña antes.
 - **`clickScreenButton(texto)` sólo encuentra `Button` y `CycleButton`**, buscando por `getMessage().getString()` (lo traduce como clave, y un literal queda igual). Un `AbstractButton` propio no aparece aunque se vea: por eso `BotonDelInventario` extiende `Button`.
 - **Abierta desde el inventario, Esc y Listo vuelven al inventario**, no a `null`: el test espera `InventoryScreen`.
 - **Las teclas se aprietan con `InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_K)`.** En 26.3 los códigos ya no son los de GLFW (K es 14): usá siempre las constantes.

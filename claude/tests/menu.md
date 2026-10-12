@@ -8,7 +8,7 @@ Los tests son `menuCompraConClick` y `menuNoDejaSacarNiPonerItems`, en `HerosFor
 
 | Test | Qué verifica |
 |---|---|
-| `menuCompraConClick` | `/estadisticas` abre `MenuDeEstadisticas` · click compra 1 y cobra 1 · shift + click compra 5 · click derecho baja 1 y devuelve la mitad · shift + click derecho baja 5 · el cursor queda vacío y el ícono en su lugar · `SWAP`, `THROW` y `CLONE` no compran ni sacan nada · con el tope, el slot pasa a vidrio gris después de `broadcastChanges` |
+| `menuCompraConClick` | `/estadisticas` abre `MenuDeEstadisticas` en la portada · click en la rama del guardián abre su página sin cobrar · click compra 1 y cobra 1 · shift + click compra 5 · click derecho baja 1 y devuelve la mitad · shift + click derecho baja 5 · el cursor queda vacío y el ícono en su lugar · `SWAP`, `THROW` y `CLONE` no compran ni sacan nada · con el tope, el slot pasa a vidrio gris después de `broadcastChanges` · la última pestaña abre la del artesano y la flecha vuelve a la portada, sin comprar ni bajar |
 | `menuNoDejaSacarNiPonerItems` | Doble click con una copia del ícono no lo junta · arrastrar tierra por un slot del menú sólo la reparte en el inventario · shift + click desde el inventario no mueve nada |
 
 ## Simular clicks
@@ -36,6 +36,8 @@ Lo mismo vale para cualquier test de "no se puede sacar": **antes de darlo por b
 
 ## Detalles
 
+- **El menú abre en la portada**: para tocar una estadística, primero `clicked(MenuDeEstadisticas.slotDe(rama), 0, PICKUP, j)` o `mostrar(rama)`. Los slots de una estadística sólo valen en la página de su rama.
+- **`assertValueEqual` revienta con `null`** (llama a `equals` sobre el valor): `abierta() == null` va con `assertTrue`.
 - El menú se abre de verdad (`openMenu`), así que `sendAllDataToRemote` manda paquetes por la conexión falsa del jugador de prueba: no rompe nada.
 - `broadcastChanges` no corre solo, porque los jugadores de prueba no tickean (ver [Tests de estadísticas](estadisticas.md)). Para ver un redibujo que no viene de un click, llamalo a mano.
 - Cerrá el menú (`closeContainer`) antes de `salir`.

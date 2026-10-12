@@ -111,7 +111,7 @@ public final class InterfazDelCliente {
 		for (Estadistica estadistica : Estadistica.values()) {
 			Configuracion.Mejora mejora = config.de(estadistica);
 			int actuales = puntos.de(estadistica);
-			filas.add(new Paquetes.Fila(estadistica.id(), estadistica.nombre(), actuales, mejora.tope(),
+			filas.add(new Paquetes.Fila(estadistica.id(), estadistica.nombre(), estadistica.rama().id(), estadistica.rama().nombre(), actuales, mejora.tope(),
 					actuales > 0 ? estadistica.describir(mejora.efecto(actuales)) : "", estadistica.describir(mejora.porPunto())));
 		}
 		return new Paquetes.Estado(Mejoras.experiencia(jugador), jugador.experienceLevel, config.experienciaPorPunto(), config.devolucionPorPunto(), Mejoras.puntosDelGrupo(), filas);

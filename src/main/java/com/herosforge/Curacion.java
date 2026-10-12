@@ -36,7 +36,7 @@ public final class Curacion {
 			if (!jugador.isAlive() || jugador.isSpectator() || jugador.isCreative()) {
 				continue;
 			}
-			float cura = (float) efecto(jugador, Estadistica.REGENERACION);
+			float cura = (float) Mejoras.efecto(jugador, Estadistica.REGENERACION);
 			if (cura > 0 && jugador.getHealth() < jugador.getMaxHealth()) {
 				jugador.heal(cura);
 			}
@@ -51,13 +51,9 @@ public final class Curacion {
 		if (bloqueado || danio <= 0 || !(fuente.getEntity() instanceof ServerPlayer jugador) || jugador == herido || !jugador.isAlive()) {
 			return;
 		}
-		double robo = efecto(jugador, Estadistica.ROBO_DE_VIDA);
+		double robo = Mejoras.efecto(jugador, Estadistica.ROBO_DE_VIDA);
 		if (robo > 0) {
 			jugador.heal((float) (danio * robo));
 		}
-	}
-
-	private static double efecto(ServerPlayer jugador, Estadistica estadistica) {
-		return HerosForge.config().de(estadistica).efecto(Mejoras.puntos(jugador).de(estadistica));
 	}
 }

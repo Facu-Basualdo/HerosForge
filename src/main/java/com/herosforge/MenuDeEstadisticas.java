@@ -24,18 +24,27 @@ import net.minecraft.world.item.component.TooltipDisplay;
 
 /**
  * Un cofre de 3 filas armado en el servidor: el cliente vanilla lo ve como {@code GENERIC_9x3}, así que no
- * hace falta el mod del lado del cliente. Los ítems son de muestra: un click compra o baja, nunca se mueven.
+ * hace falta el mod del lado del cliente. Los ítems son de muestra: un click compra, baja o cambia de página,
+ * nunca se mueven.
+ *
+ * <p>Las 40 estadísticas no entran en un cofre: se abre en una portada con las 5 ramas, y cada rama es una
+ * página con sus estadísticas en la fila del medio y las 5 ramas abajo, como pestañas.
  */
 public class MenuDeEstadisticas extends AbstractContainerMenu {
 	private static final int FILAS = 3;
 	private static final int TAMANIO = FILAS * 9;
 	private static final int SLOT_INFO = 4;
+	private static final int SLOT_VOLVER = 0;
+	private static final int FILA_DEL_MEDIO = 9;
+	private static final int FILA_DE_ABAJO = 18;
 	private static final int CON_SHIFT = 5;
 	private static final int CLICK_DERECHO = 1;
 	private static final Component TITULO = Component.literal("Estadísticas");
 
 	private final ServerPlayer jugador;
 	private final SimpleContainer muestra = new SimpleContainer(TAMANIO);
+	/** {@code null} es la portada. */
+	private @Nullable Rama abierta;
 	private int experienciaMostrada = -1;
 	private @Nullable PuntosDelJugador puntosMostrados;
 	private @Nullable Configuracion configMostrada;
@@ -56,22 +65,19 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 		jugador.openMenu(new SimpleMenuProvider((id, inventario, quien) -> new MenuDeEstadisticas(id, jugador), TITULO));
 	}
 
-	/**
-	 * El slot del menú donde está una estadística: las de combate centradas en la fila del medio y las demás en
-	 * la de abajo, en el orden de {@link Estadistica}. Entran hasta 9 por fila.
-	 */
+	/** El slot de una estadística en la página de su rama: centradas en la fila del medio, en el orden de {@link Estadistica}. */
 	public static int slotDe(Estadistica estadistica) {
-		int cantidad = 0;
-		int indice = 0;
-		for (Estadistica otra : Estadistica.values()) {
-			if (otra.combate() == estadistica.combate()) {
-				if (otra == estadistica) {
-					indice = cantidad;
-				}
-				cantidad++;
-			}
-		}
-		return (estadistica.combate() ? 9 : 18) + enLaFila(indice, cantidad);
+		List<Estadistica> deLaRama = estadistica.rama().estadisticas();
+		return FILA_DEL_MEDIO + enLaFila(deLaRama.indexOf(estadistica), deLaRama.size());
+	}
+
+	/** El slot de una rama en la portada (fila del medio). En las páginas, las pestañas van en la de abajo, en la misma columna. */
+	public static int slotDe(Rama rama) {
+		return FILA_DEL_MEDIO + enLaFila(rama.ordinal(), Rama.values().length);
+	}
+
+	private static int pestania(Rama rama) {
+		return FILA_DE_ABAJO + enLaFila(rama.ordinal(), Rama.values().length);
 	}
 
 	/** La columna dentro de una fila de 9 con {@code cantidad} centradas. */
@@ -83,13 +89,36 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 		return (9 - cantidad) / 2 + indice;
 	}
 
-	private static @Nullable Estadistica estadisticaEn(int slot) {
-		for (Estadistica estadistica : Estadistica.values()) {
+	private @Nullable Estadistica estadisticaEn(int slot) {
+		if (abierta == null) {
+			return null;
+		}
+		for (Estadistica estadistica : abierta.estadisticas()) {
 			if (slotDe(estadistica) == slot) {
 				return estadistica;
 			}
 		}
 		return null;
+	}
+
+	/** La rama a la que lleva un slot: las de la portada o las pestañas de una página. */
+	private @Nullable Rama ramaEn(int slot) {
+		for (Rama rama : Rama.values()) {
+			if (abierta == null ? slotDe(rama) == slot : pestania(rama) == slot) {
+				return rama;
+			}
+		}
+		return null;
+	}
+
+	/** {@code null} para volver a la portada. */
+	public void mostrar(@Nullable Rama rama) {
+		abierta = rama;
+		redibujar();
+	}
+
+	public @Nullable Rama abierta() {
+		return abierta;
 	}
 
 	@Override
@@ -98,8 +127,14 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 			super.clicked(slotId, boton, entrada, quien);
 			return;
 		}
+		boolean click = entrada == ContainerInput.PICKUP || entrada == ContainerInput.QUICK_MOVE;
 		Estadistica estadistica = estadisticaEn(slotId);
-		if (estadistica != null && (entrada == ContainerInput.PICKUP || entrada == ContainerInput.QUICK_MOVE)) {
+		Rama rama = ramaEn(slotId);
+		if (click && rama != null) {
+			mostrar(rama);
+		} else if (click && abierta != null && slotId == SLOT_VOLVER) {
+			mostrar(null);
+		} else if (estadistica != null && click) {
 			int cantidad = entrada == ContainerInput.QUICK_MOVE ? CON_SHIFT : 1;
 			// Con shift, vanilla también manda el botón: 1 es el derecho
 			if (boton == CLICK_DERECHO) {
@@ -152,12 +187,42 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 			muestra.setItem(slot, relleno());
 		}
 		muestra.setItem(SLOT_INFO, info(config));
-		for (Estadistica estadistica : Estadistica.values()) {
-			muestra.setItem(slotDe(estadistica), icono(estadistica, config, puntos.de(estadistica)));
+		if (abierta == null) {
+			for (Rama rama : Rama.values()) {
+				muestra.setItem(slotDe(rama), rama(rama, config, puntos, false));
+			}
+		} else {
+			muestra.setItem(SLOT_VOLVER, item(new ItemStack(Items.ARROW), texto("← Todas las ramas", ChatFormatting.YELLOW), List.of()));
+			for (Estadistica estadistica : abierta.estadisticas()) {
+				muestra.setItem(slotDe(estadistica), icono(estadistica, config, puntos.de(estadistica)));
+			}
+			for (Rama rama : Rama.values()) {
+				muestra.setItem(pestania(rama), rama(rama, config, puntos, rama == abierta));
+			}
 		}
 		experienciaMostrada = Mejoras.experiencia(jugador);
 		puntosMostrados = puntos;
 		configMostrada = config;
+	}
+
+	/** En la portada y como pestaña. La que está abierta brilla, como un ítem encantado. */
+	private static ItemStack rama(Rama rama, Configuracion config, PuntosDelJugador puntos, boolean abierta) {
+		List<Component> lore = new ArrayList<>();
+		lore.add(texto(rama.resumen(), ChatFormatting.GRAY));
+		int total = 0;
+		for (Estadistica estadistica : rama.estadisticas()) {
+			int actuales = puntos.de(estadistica);
+			total += actuales;
+			lore.add(texto(" " + estadistica.nombre() + ": " + actuales + "/" + config.de(estadistica).tope(), actuales > 0 ? ChatFormatting.WHITE : ChatFormatting.DARK_GRAY));
+		}
+		lore.add(1, texto(total + (total == 1 ? " punto" : " puntos") + " en la rama", ChatFormatting.GOLD));
+		lore.add(texto(abierta ? "Es la página abierta" : "Click: ver la rama", ChatFormatting.DARK_GRAY));
+		ItemStack icono = item(new ItemStack(rama.icono()), texto(rama.nombre(), abierta ? ChatFormatting.GOLD : ChatFormatting.YELLOW), lore);
+		icono.set(DataComponents.TOOLTIP_DISPLAY, new TooltipDisplay(false, new LinkedHashSet<>(List.of(DataComponents.ATTRIBUTE_MODIFIERS))));
+		if (abierta) {
+			icono.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+		}
+		return icono;
 	}
 
 	private ItemStack info(Configuracion config) {
@@ -167,6 +232,10 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 		if (Mejoras.puntosDelGrupo()) {
 			lore.add(texto("Los puntos son de todo el grupo:", ChatFormatting.GOLD));
 			lore.add(texto("lo que compra uno lo tienen todos", ChatFormatting.GOLD));
+		}
+		if (abierta == null) {
+			lore.add(texto("Elegí una rama para ver sus estadísticas", ChatFormatting.DARK_GRAY));
+			return item(new ItemStack(Items.EXPERIENCE_BOTTLE), texto("Tenés " + Mejoras.experiencia(Mejoras.experiencia(jugador)), ChatFormatting.GREEN), lore);
 		}
 		lore.add(texto("Click: comprar 1 punto", ChatFormatting.DARK_GRAY));
 		lore.add(texto("Shift + click: comprar " + CON_SHIFT, ChatFormatting.DARK_GRAY));

@@ -75,13 +75,14 @@ Comprobado con el gametest `alReaparecerConservaPuntosYVida`: sin el registro de
 
 `Configuracion.POR_DEFECTO` tiene el costo (`experienciaPorPunto`) y una `Mejora(porPunto, tope)` por estadística. **Ningún número de balance va fuera de `Configuracion`.** El archivo `config/herosforge.json` pisa esos valores: cómo se lee, valida y recarga está en [Configuración](configuracion.md).
 
-**Los valores por defecto están balanceados contra los de Bloodmoon & Bosses** (el mod hermano, con mobs de nivel 1 a 100 según la distancia al spawn): las 15 estadísticas topean en 100 puntos y cada uno cuesta 30 de experiencia, así que todo al máximo son 1500 puntos y 45.000 de experiencia. El objetivo es que, con el equipo y los puntos que se esperan en cada zona, un zombi se mate en 5 o 6 golpes en todo el mundo y lo que aguanta el jugador baje de a poco hacia el nivel 100 (tabla en el README). La tabla es sólo por distancia: Bloodmoon & Bosses además suma hasta +20 niveles por los días del mundo y un 5 % de campeones con +10. **Si se cambia un número de acá, hay que mirar el otro mod**, y al revés. Lo que más desbalancea:
+**Los valores por defecto están balanceados contra los de Bloodmoon & Bosses** (el mod hermano, con mobs de nivel 1 a 100 según la distancia al spawn): las 40 estadísticas topean en 100 puntos y cada uno cuesta 30 de experiencia, así que todo al máximo son 4000 puntos y 120.000 de experiencia: nadie llena todo y hay que elegir. El objetivo es que, con el equipo y los puntos que se esperan en cada zona, un zombi se mate en 5 o 6 golpes en todo el mundo y lo que aguanta el jugador baje de a poco hacia el nivel 100 (tabla en el README). La tabla es sólo por distancia: Bloodmoon & Bosses además suma hasta +20 niveles por los días del mundo y un 5 % de campeones con +10. **Si se cambia un número de acá, hay que mirar el otro mod**, y al revés. Lo que más desbalancea:
 
 - **La armadura.** Vanilla frena como máximo el 80 % del daño, y con netherita (20) ya se está cerca: +10 llevaba al tope y volvía al jugador casi inmortal. Por eso +8.
 - **El daño a distancia.** Las flechas no escalan con `Daño`, y un zombi de nivel 100 (180 de vida) pedía ~11 flechas de Poder V. Con +1 % por punto, al máximo son 5 o 6, como con la espada.
 - **La regeneración y el robo de vida** curan en plena pelea: al máximo, 0,3 de vida por segundo (9 corazones por minuto) y el 10 % del daño. Un zombi de nivel 100 pega 15: ninguna de las dos le gana a eso, pero sí acortan la espera entre peleas.
 - **El salto:** +20 % de fuerza salta 1,8 bloques. Con más de ~+25 % se pasa de 2 y se saltean las paredes de 2 bloques de cualquier base.
 - **Cobrar en niveles.** Con 1 nivel por punto se compraba todo de a un nivel, a 7 de experiencia cada uno, y se llegaba al máximo cerca del spawn, antes de que los mobs se pusieran difíciles.
+- **La esquiva** topea en 15 %: contra hordas, más que eso ya es invulnerabilidad. **La sabiduría** en +25 %: la experiencia es la moneda de los puntos, así que se retroalimenta. Las razones de las demás de la 0.13.0 están en los comentarios de `POR_DEFECTO` (ver [Ramas](ramas.md)).
 
 - **Si se baja un tope, los puntos de más se conservan pero no suman:** `Mejora.efecto` usa `min(puntos, tope)`. Si se vuelve a subir el tope, vuelven a contar sin que el jugador pague de nuevo.
 - `Configuracion.de(estadistica)` devuelve `null` si falta en el mapa, y entonces `aplicar` y `comprar` revientan con NPE. **Cada valor de `Estadistica` tiene que estar en `POR_DEFECTO`.**
@@ -123,7 +124,9 @@ El attachment va en el NBT del jugador (`playerdata/<uuid>.dat`), bajo los attac
 | Caída segura (`caida`) | `SAFE_FALL_DISTANCE` | `ADD_VALUE` | servidor (el daño de caída) |
 | Respiración (`respiracion`) | `OXYGEN_BONUS` | `ADD_VALUE` | servidor (el aire; el cliente recibe las burbujas) |
 
-- **Lo que calcula el cliente tiene que ser un atributo `isClientSyncable()`.** Si no, el servidor tendría los puntos pero el cliente vanilla minaría, caminaría o apuntaría como siempre. Los seis de la tabla lo son en 26.3 (también `JUMP_STRENGTH`), y lo verifica el gametest `losAtributosQueUsaElClienteSeSincronizan`.
+Las 25 de la 0.13.0 (dureza, escudo, paso, ligereza, crítico, imán…) tienen su propia tabla en [Ramas](ramas.md): 11 son atributos y 14 las aplican `Combate`, `Supervivencia` y `Oficios` con mixins.
+
+- **Lo que calcula el cliente tiene que ser un atributo `isClientSyncable()`.** Si no, el servidor tendría los puntos pero el cliente vanilla minaría, caminaría o apuntaría como siempre. Los de la tabla lo son en 26.3 (también `JUMP_STRENGTH`, y los de paso, nado, sigilo, ligereza y minado submarino), y lo verifica el gametest `losAtributosQueUsaElClienteSeSincronizan`.
 - **El alcance usa los dos rangos a la vez.** Con sólo el de bloques, el jugador llegaría a un bloque lejano pero no a un mob a la misma distancia. Como `Estadistica.atributos()` es una lista, `aplicar` pone el mismo modificador en los dos.
 - **La suerte se nota sobre todo al pescar.** `FishingHook` usa la suerte de Suerte marina más `Player.getLuck()`, que es el atributo `LUCK`: con +3 es como tener otra Suerte marina III. Las tablas de botín sólo la usan en las entradas con `quality`, y **no está verificado** que alguna tabla de cofres de vanilla las tenga. Por eso el README dice "al pescar" y no promete nada de los cofres.
 
@@ -159,7 +162,7 @@ Vanilla no tiene un atributo que cure: la regeneración natural depende del hamb
 
 ## Agregar una estadística
 
-1. Un valor en `Estadistica`: `id` (para siempre, ver Formato en disco), nombre, si es de combate (la fila del menú y la columna de la pantalla), ítem del menú (`icono`), operación, atributo(s) y cómo se describe el efecto. Si el nombre no entra en media pantalla (más de ~85 px), un `nombreCorto`. Si no es un atributo, el constructor corto (sin operación ni atributos) y el efecto se lee de los puntos donde haga falta, como el daño a distancia.
+1. Un valor en `Estadistica`, en el bloque de su rama: `id` (para siempre, ver Formato en disco), nombre, `Rama` (la página del menú y la pestaña de la pantalla; hasta 9 por rama), ítem del menú (`icono`), operación, atributo(s) y cómo se describe el efecto. Si el nombre no entra en media pantalla (más de ~85 px), un `nombreCorto`. Si no es un atributo, el constructor corto (sin operación ni atributos) y el efecto se lee con `Mejoras.efecto` o `Mejoras.fraccion` donde haga falta (ver [Ramas](ramas.md)). Si mejora al bajar el atributo, el constructor con `signo` −1.
 2. Su `Mejora` en `Configuracion.POR_DEFECTO`, o NPE (lo atrapa el gametest `cadaEstadisticaTieneConfigYSlot`).
 3. Si es vida, o algo que necesite un efecto inmediato al comprar, se agrega en `Mejoras.sumar`.
 4. Si el cliente usa el atributo, agregalo a `losAtributosQueUsaElClienteSeSincronizan` (ver la tabla de arriba).
@@ -170,6 +173,7 @@ Con `ADD_MULTIPLIED_BASE`, el porcentaje se aplica sobre la base **más todos lo
 ## Ver también
 
 - [Tests de estadísticas](../tests/estadisticas.md)
+- [Ramas y las estadísticas sin atributo](ramas.md): las 25 de la 0.13.0
 - [Menú de estadísticas](menu.md)
 - [Configuración](configuracion.md)
 - [Puntos del grupo](grupo.md): con Soul Link los puntos van a `data/herosforge/puntos_del_grupo.dat`, no al attachment, y la regeneración cura a uno solo

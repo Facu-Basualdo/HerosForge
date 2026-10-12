@@ -15,8 +15,8 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
  * vanilla no registra estos canales: el servidor nunca le manda nada y para él todo sigue siendo el cofre.
  */
 public final class Paquetes {
-	// Sobra para las 15 estadísticas: es sólo para que un paquete roto no reserve una lista enorme al leerlo
-	private static final int MAXIMO_DE_FILAS = 64;
+	// Sobra para las 40 estadísticas: es sólo para que un paquete roto no reserve una lista enorme al leerlo
+	private static final int MAXIMO_DE_FILAS = 128;
 
 	private Paquetes() {
 	}
@@ -35,15 +35,15 @@ public final class Paquetes {
 	 * Servidor → cliente: todo lo que muestra la pantalla. Los textos van armados en el servidor, como en el
 	 * cofre: así la pantalla dice lo mismo aunque el cliente tenga otra versión del mod u otra config.
 	 *
-	 * <p>El canal se llama {@code estado_v2} desde que trae {@code devolucion}: un cliente de antes (con el canal
-	 * {@code estado}) no lo registra, así que el servidor no se lo manda y le abre el cofre. Con el mismo nombre, ese
-	 * cliente leería un paquete con un campo de más y se desconectaría.
+	 * <p>El canal se llama {@code estado_v3} desde que cada fila trae su rama ({@code estado_v2} trajo
+	 * {@code devolucion}): un cliente de antes no lo registra, así que el servidor no se lo manda y le abre el cofre.
+	 * Con el mismo nombre, ese cliente leería un paquete con un campo de más y se desconectaría.
 	 *
 	 * @param experiencia puntos de experiencia del jugador (o del grupo), los mismos que usa {@link Mejoras#comprar}
 	 * @param devolucion la experiencia que se devuelve al bajar un punto
 	 */
 	public record Estado(int experiencia, int nivel, int costo, int devolucion, boolean grupo, List<Fila> filas) implements CustomPacketPayload {
-		public static final Type<Estado> TIPO = new Type<>(HerosForge.id("estado_v2"));
+		public static final Type<Estado> TIPO = new Type<>(HerosForge.id("estado_v3"));
 		public static final StreamCodec<ByteBuf, Estado> CODEC = StreamCodec.composite(
 				ByteBufCodecs.VAR_INT, Estado::experiencia,
 				ByteBufCodecs.VAR_INT, Estado::nivel,
@@ -63,11 +63,16 @@ public final class Paquetes {
 		}
 	}
 
-	/** Una estadística. {@code ahora} va vacío con 0 puntos; {@code proximo} es lo que suma un punto más. */
-	public record Fila(String id, String nombre, int puntos, int tope, String ahora, String proximo) {
+	/**
+	 * Una estadística. {@code ahora} va vacío con 0 puntos; {@code proximo} es lo que suma un punto más. La rama va
+	 * como id y su nombre aparte, para que un cliente más viejo muestre igual una rama que no conoce.
+	 */
+	public record Fila(String id, String nombre, String rama, String nombreDeLaRama, int puntos, int tope, String ahora, String proximo) {
 		public static final StreamCodec<ByteBuf, Fila> CODEC = StreamCodec.composite(
 				ByteBufCodecs.STRING_UTF8, Fila::id,
 				ByteBufCodecs.STRING_UTF8, Fila::nombre,
+				ByteBufCodecs.STRING_UTF8, Fila::rama,
+				ByteBufCodecs.STRING_UTF8, Fila::nombreDeLaRama,
 				ByteBufCodecs.VAR_INT, Fila::puntos,
 				ByteBufCodecs.VAR_INT, Fila::tope,
 				ByteBufCodecs.STRING_UTF8, Fila::ahora,
@@ -79,9 +84,17 @@ public final class Paquetes {
 		}
 	}
 
-	/** Cliente → servidor: bajar puntos desde la pantalla. Como {@link Comprar}, el servidor valida todo (ver {@link InterfazDelCliente#bajar}). */
+	/**
+	 * Cliente → servidor: bajar puntos desde la pantalla. Como {@link Comprar}, el servidor valida todo (ver
+	 * {@link InterfazDelCliente#bajar}).
+	 *
+	 * <p>Es el canal más nuevo, y el cliente pregunta por él para saber si el servidor tiene su versión: por eso
+	 * cambia de nombre junto con el estado ({@code bajar_v2} con {@code estado_v3}) aunque lo que lleva no cambió.
+	 * Un cliente anterior pregunta por {@code bajar}, no lo encuentra y avisa en vez de abrir una pantalla que
+	 * esperaría un estado que el servidor nunca le manda.
+	 */
 	public record Bajar(String id, int cantidad) implements CustomPacketPayload {
-		public static final Type<Bajar> TIPO = new Type<>(HerosForge.id("bajar"));
+		public static final Type<Bajar> TIPO = new Type<>(HerosForge.id("bajar_v2"));
 		public static final StreamCodec<ByteBuf, Bajar> CODEC = StreamCodec.composite(
 				ByteBufCodecs.STRING_UTF8, Bajar::id,
 				ByteBufCodecs.VAR_INT, Bajar::cantidad,

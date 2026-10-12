@@ -85,7 +85,17 @@ public final class Mejoras {
 		if (!(duenio instanceof ServerPlayer jugador)) {
 			return 1;
 		}
-		return 1 + HerosForge.config().de(Estadistica.DANIO_DISTANCIA).efecto(puntos(jugador).de(Estadistica.DANIO_DISTANCIA));
+		return 1 + efecto(jugador, Estadistica.DANIO_DISTANCIA);
+	}
+
+	/** Lo que dan los puntos del jugador (o del grupo) según la config: lo que leen las estadísticas sin atributo. */
+	public static double efecto(ServerPlayer jugador, Estadistica estadistica) {
+		return HerosForge.config().de(estadistica).efecto(puntos(jugador).de(estadistica));
+	}
+
+	/** Para las probabilidades y las reducciones: con un tope enorme en la config no pasan de 1 (100 %). */
+	public static double fraccion(ServerPlayer jugador, Estadistica estadistica) {
+		return Math.min(efecto(jugador, estadistica), 1);
 	}
 
 	/** Compra lo que entre según el tope y la experiencia: lo que se cobra es exactamente lo que se sube. */
@@ -188,7 +198,7 @@ public final class Mejoras {
 				if (efecto == 0) {
 					instancia.removeModifier(estadistica.idModificador());
 				} else {
-					instancia.addOrReplacePermanentModifier(new AttributeModifier(estadistica.idModificador(), efecto, estadistica.operacion()));
+					instancia.addOrReplacePermanentModifier(new AttributeModifier(estadistica.idModificador(), estadistica.valorDelModificador(efecto), estadistica.operacion()));
 				}
 			}
 		}
@@ -196,6 +206,10 @@ public final class Mejoras {
 		// después de reiniciar el jugador queda con más vida que el máximo hasta que tickea
 		if (jugador.getHealth() > jugador.getMaxHealth()) {
 			CompatibilidadSoulLink.recortarVida(jugador);
+		}
+		// Lo mismo con el escudo al bajar puntos: setAbsorptionAmount corta contra el máximo nuevo
+		if (jugador.getAbsorptionAmount() > jugador.getMaxAbsorption()) {
+			jugador.setAbsorptionAmount(jugador.getAbsorptionAmount());
 		}
 	}
 

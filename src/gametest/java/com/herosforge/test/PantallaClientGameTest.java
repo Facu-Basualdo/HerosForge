@@ -35,9 +35,13 @@ public class PantallaClientGameTest implements FabricClientGameTest {
 			contexto.getInput().pressKey(InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_K));
 			contexto.waitForScreen(PantallaDeEstadisticas.class);
 			contexto.waitTicks(2);
+			// Abre en la primera rama, la del guerrero
 			contexto.takeScreenshot("estadisticas-pantalla");
 
-			// El primer "+1" es el de la vida: las filas van en el orden del enum
+			// En la pestaña del guardián, el primer "+1" es el de la vida: las filas van en el orden del enum
+			contexto.clickScreenButton("Guardián");
+			contexto.waitTicks(2);
+			contexto.takeScreenshot("estadisticas-guardian");
 			contexto.clickScreenButton("+1");
 			mundo.getConnection().waitForServerboundPackets();
 			mundo.getConnection().waitForClientboundPackets();
@@ -87,7 +91,13 @@ public class PantallaClientGameTest implements FabricClientGameTest {
 			contexto.getInput().pressKey(InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_K));
 			contexto.waitForScreen(PantallaDeEstadisticas.class);
 			contexto.waitTicks(2);
+			// Sigue en la pestaña del guardián, la que tiene más filas (9)
 			contexto.takeScreenshot("estadisticas-pantalla-chica");
+			// Una rama más corta (7) tiene que dejar el panel del mismo tamaño que la de 9
+			contexto.clickScreenButton("Explorador");
+			contexto.waitTicks(2);
+			contexto.getInput().setCursorPos(0, 0);
+			contexto.takeScreenshot("estadisticas-pantalla-chica-explorador");
 			// El caso de la captura original: millones de XP no deben invadir la otra columna.
 			mundo.getServer().runCommand("xp set @a 989 levels");
 			mundo.getConnection().waitForClientboundPackets();

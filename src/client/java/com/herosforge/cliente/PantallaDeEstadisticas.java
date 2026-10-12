@@ -1,7 +1,9 @@
 package com.herosforge.cliente;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
 
@@ -23,7 +25,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 /**
- * La pantalla propia: una fila por estadística con sus puntos, lo que da y los botones para bajar y comprar. No
+ * La pantalla propia: una pestaña por rama y, de la rama elegida, una fila por estadística con sus puntos, lo
+ * que da y los botones para bajar y comprar. No
  * decide nada: muestra el último {@link Paquetes.Estado} que mandó el servidor y le pide las compras y las bajas,
  * que el servidor valida, cobra y devuelve igual que desde el cofre.
  */
@@ -33,7 +36,9 @@ public class PantallaDeEstadisticas extends Screen {
 	// Dos columnas estables: a escala chica el efecto pasa al tooltip para conservar botones legibles.
 	private static final int ANCHO = 620;
 	private static final int ANCHO_MAXIMO_DOS_COLUMNAS = 620;
-	private static final int ALTO_CABECERA = 66;
+	private static final int ALTO_CABECERA = 72;
+	private static final int Y_PESTANIAS = 46;
+	private static final int ALTO_PESTANIA = 18;
 	private static final int ALTO_FILA_MAXIMO = 30;
 	private static final int ALTO_FILA_MINIMO = 16;
 	private static final int ALTO_PIE = 38;
@@ -52,6 +57,9 @@ public class PantallaDeEstadisticas extends Screen {
 	private static final int ROJO = ARGB.opaque(0xFF5555);
 	private static final int DORADO = ARGB.opaque(0xD8B777);
 
+	/** La rama que se estaba mirando: al volver a abrir la pantalla, sigue en la misma. */
+	private static @Nullable String ramaElegida;
+
 	private final boolean volverAlInventario;
 	private final List<Renglon> renglones = new ArrayList<>();
 	private Paquetes.@Nullable Estado dibujado;
@@ -60,7 +68,6 @@ public class PantallaDeEstadisticas extends Screen {
 	private int y0;
 	private int alto;
 	private int altoFila = ALTO_FILA_MAXIMO;
-	private boolean dosColumnas;
 	private Paquetes.@Nullable Resultado mensaje;
 	private int ticksDelMensaje;
 
@@ -86,23 +93,36 @@ public class PantallaDeEstadisticas extends Screen {
 		renglones.clear();
 		dibujado = HerosForgeCliente.estado();
 		List<Paquetes.Fila> filas = dibujado == null ? List.of() : dibujado.filas();
-		int disponible = height - 4 - ALTO_CABECERA - ALTO_PIE;
-		dosColumnas = true;
-		List<Paquetes.Fila> izquierda = new ArrayList<>();
-		List<Paquetes.Fila> derecha = new ArrayList<>();
+		// Las ramas en el orden en que llegan: un servidor más nuevo puede mandar una que este cliente no conoce
+		Map<String, List<Paquetes.Fila>> porRama = new LinkedHashMap<>();
+		Map<String, String> nombres = new LinkedHashMap<>();
 		for (Paquetes.Fila fila : filas) {
-			// Una estadística que este cliente no conoce (servidor más nuevo) va con las que no son de combate
-			boolean combate = Estadistica.porId(fila.id()).map(Estadistica::combate).orElse(false);
-			(dosColumnas && !combate ? derecha : izquierda).add(fila);
+			porRama.computeIfAbsent(fila.rama(), rama -> new ArrayList<>()).add(fila);
+			nombres.putIfAbsent(fila.rama(), fila.nombreDeLaRama());
 		}
-		int porColumna = Math.max(Math.max(izquierda.size(), derecha.size()), 1);
+		if (!porRama.isEmpty() && (ramaElegida == null || !porRama.containsKey(ramaElegida))) {
+			ramaElegida = porRama.keySet().iterator().next();
+		}
+		List<Paquetes.Fila> deLaRama = ramaElegida == null ? List.of() : porRama.getOrDefault(ramaElegida, List.of());
+		// La primera mitad a la izquierda: con 9, quedan 5 y 4
+		int mitad = (deLaRama.size() + 1) / 2;
+		List<Paquetes.Fila> izquierda = deLaRama.subList(0, mitad);
+		List<Paquetes.Fila> derecha = deLaRama.subList(mitad, deLaRama.size());
+
+		int disponible = height - 4 - ALTO_CABECERA - ALTO_PIE;
+		// El alto sale de la rama más larga, no de la elegida: si no, el panel cambia de tamaño con cada pestaña
+		int porColumna = 1;
+		for (List<Paquetes.Fila> rama : porRama.values()) {
+			porColumna = Math.max(porColumna, (rama.size() + 1) / 2);
+		}
 		altoFila = Math.clamp(disponible / porColumna, ALTO_FILA_MINIMO, ALTO_FILA_MAXIMO);
 		alto = ALTO_CABECERA + porColumna * altoFila + ALTO_PIE;
-		// Con dos columnas se usa todo el ancho que haya: en 426 cada una tiene apenas lo justo
-		ancho = dosColumnas ? Math.min(width - 8, ANCHO_MAXIMO_DOS_COLUMNAS) : ANCHO;
+		// Se usa todo el ancho que haya: en 426 cada columna tiene apenas lo justo
+		ancho = Math.min(width - 8, ANCHO_MAXIMO_DOS_COLUMNAS);
 		x0 = (width - ancho) / 2;
 		y0 = Math.max(2, (height - alto) / 2);
 
+		agregarPestanias(nombres);
 		int anchoColumna = (ancho - 12) / 2;
 		agregarColumna(izquierda, x0 + 4, anchoColumna);
 		agregarColumna(derecha, x0 + 8 + anchoColumna, anchoColumna);
@@ -111,6 +131,31 @@ public class PantallaDeEstadisticas extends Screen {
 		int yBotones = y0 + alto - 24;
 		addRenderableWidget(new BotonForja(width / 2 - 104, yBotones, 100, 20, "Ver como cofre", HerosForgeCliente::abrirCofre, false));
 		addRenderableWidget(new BotonForja(width / 2 + 4, yBotones, 100, 20, "Listo", this::onClose, true));
+	}
+
+	/** Una pestaña por rama, a lo ancho del panel. La elegida se dibuja como botón principal. */
+	private void agregarPestanias(Map<String, String> nombres) {
+		int cantidad = nombres.size();
+		if (cantidad == 0) {
+			return;
+		}
+		int separacion = 3;
+		int anchoPestania = (ancho - 16 - (cantidad - 1) * separacion) / cantidad;
+		int x = x0 + 8;
+		for (Map.Entry<String, String> rama : nombres.entrySet()) {
+			String id = rama.getKey();
+			BotonForja pestania = new BotonForja(x, y0 + Y_PESTANIAS, anchoPestania, ALTO_PESTANIA, rama.getValue(), () -> elegir(id), id.equals(ramaElegida));
+			pestania.setTooltip(Tooltip.create(Component.literal("Ver " + rama.getValue())));
+			addRenderableWidget(pestania);
+			x += anchoPestania + separacion;
+		}
+	}
+
+	private void elegir(String rama) {
+		if (!rama.equals(ramaElegida)) {
+			ramaElegida = rama;
+			rebuildWidgets();
+		}
 	}
 
 	private void agregarColumna(List<Paquetes.Fila> filas, int x, int ancho) {
@@ -155,8 +200,13 @@ public class PantallaDeEstadisticas extends Screen {
 			int fondo = !active ? 0x1C252E : foco ? 0x485647 : principal ? 0x354438 : 0x293540;
 			g.fill(getX(), getY(), getRight(), getBottom(), ARGB.opaque(fondo));
 			g.outline(getX(), getY(), getWidth(), getHeight(), ARGB.opaque(borde));
-			g.centeredText(net.minecraft.client.Minecraft.getInstance().font, getMessage(), getX() + getWidth() / 2,
-					getY() + (getHeight() - 8) / 2, active ? BLANCO : GRIS_OSCURO);
+			// Recortado: en 426 de ancho, "Superviviente" no entra en su pestaña
+			var font = net.minecraft.client.Minecraft.getInstance().font;
+			String texto = getMessage().getString();
+			if (font.width(texto) > getWidth() - 4) {
+				texto = font.plainSubstrByWidth(texto, Math.max(0, getWidth() - 4 - font.width("…"))) + "…";
+			}
+			g.centeredText(font, Component.literal(texto), getX() + getWidth() / 2, getY() + (getHeight() - 8) / 2, active ? BLANCO : GRIS_OSCURO);
 		}
 	}
 
@@ -189,7 +239,7 @@ public class PantallaDeEstadisticas extends Screen {
 		}
 	}
 
-	/** Con dos columnas los renglones no van en el orden de las filas: se buscan por id. */
+	/** Los renglones son sólo los de la rama elegida: se buscan por id. */
 	private static Paquetes.Fila fila(Paquetes.Estado estado, String id) {
 		for (Paquetes.Fila fila : estado.filas()) {
 			if (fila.id().equals(id)) {
@@ -240,9 +290,7 @@ public class PantallaDeEstadisticas extends Screen {
 			graficos.text(font, ajustar(resumen(dibujado), mitad - 20), x0 + 10, y0 + 32, VERDE);
 			String costo = dibujado.costo() == 0 ? "Mejoras gratis" : numero(dibujado.costo()) + " XP / punto";
 			graficos.text(font, ajustar(costo, mitad - 20), x0 + mitad + 8, y0 + 32, BLANCO);
-			graficos.fill(x0 + 8, y0 + 48, x0 + ancho - 8, y0 + 49, ARGB.opaque(0x394653));
-			graficos.text(font, "COMBATE", x0 + 10, y0 + 54, DORADO);
-			graficos.text(font, "EXPLORACIÓN", x0 + mitad + 8, y0 + 54, DORADO);
+			graficos.fill(x0 + 8, y0 + 43, x0 + ancho - 8, y0 + 44, ARGB.opaque(0x394653));
 			for (Renglon renglon : renglones) extraerRenglon(graficos, renglon, mouseX, mouseY);
 		}
 

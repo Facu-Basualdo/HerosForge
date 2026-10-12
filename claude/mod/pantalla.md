@@ -15,7 +15,7 @@ Un complemento **opcional** del lado del cliente: una pantalla propia (`Pantalla
 | Servidor sí, cliente no | Como siempre: `/estadisticas` abre el cofre. El servidor no le manda nada |
 | Servidor sí, cliente sí | La pantalla propia. `/estadisticas` también la abre, salvo que el cliente tenga `usarPantalla: false` |
 | Servidor no (o una versión anterior a la del cliente), cliente sí | La K avisa en la barra de acción que el servidor no tiene el mod; el botón del inventario no aparece |
-| Servidor sí, cliente con una versión anterior (sin el canal `estado_v2`) | Como sin el mod: el cofre. Ver Versiones de los canales |
+| Servidor sí, cliente con una versión anterior (sin el canal `estado_v3`) | Como sin el mod: el cofre, y la K avisa que el servidor no tiene el mod. Ver Versiones de los canales |
 
 ## Los paquetes (`Paquetes`)
 
@@ -23,11 +23,11 @@ Registrados en `Paquetes.registrar()` desde `InterfazDelCliente.registrar()`, qu
 
 | Paquete | Sentido | Para qué |
 |---|---|---|
-| `Estado(experiencia, nivel, costo, devolucion, grupo, filas)` (canal `estado_v2`) | servidor → cliente | Todo lo que dibuja la pantalla. Una `Fila(id, nombre, puntos, tope, ahora, proximo)` por `Estadistica`, en el orden del enum |
+| `Estado(experiencia, nivel, costo, devolucion, grupo, filas)` (canal `estado_v3`) | servidor → cliente | Todo lo que dibuja la pantalla. Una `Fila(id, nombre, rama, nombreDeLaRama, puntos, tope, ahora, proximo)` por `Estadistica`, en el orden del enum |
 | `Resultado(texto, compro)` | servidor → cliente | El `Mejoras.mensaje` de una compra o una baja pedida desde la pantalla (`compro` = si salió: verde o rojo) |
 | `AbrirPantalla()` | servidor → cliente | `/estadisticas` de alguien que prefiere la pantalla |
 | `Comprar(id, cantidad)` | cliente → servidor | Botones **+1** y **+5** |
-| `Bajar(id, cantidad)` | cliente → servidor | Botón **-1** |
+| `Bajar(id, cantidad)` (canal `bajar_v2`) | cliente → servidor | Botón **-1**. Es también la pregunta del cliente por la versión del servidor |
 | `Preferencia(pantalla)` | cliente → servidor | Al entrar (`ClientPlayConnectionEvents.JOIN`): si `/estadisticas` le abre la pantalla o el cofre |
 | `AbrirCofre()` | cliente → servidor | **Ver como cofre**, y la tecla con `usarPantalla: false` |
 
@@ -37,12 +37,13 @@ Registrados en `Paquetes.registrar()` desde `InterfazDelCliente.registrar()`, qu
 
 ## Versiones de los canales
 
-**Un `StreamCodec` no tolera un campo de más ni de menos:** si el servidor manda un `Estado` con un campo que el cliente no conoce, el cliente lee mal el paquete y se desconecta. Por eso, cuando cambia lo que lleva un paquete, **cambia el nombre del canal** (`estado` → `estado_v2` en la 0.10.0, al agregar `devolucion`):
+**Un `StreamCodec` no tolera un campo de más ni de menos:** si el servidor manda un `Estado` con un campo que el cliente no conoce, el cliente lee mal el paquete y se desconecta. Por eso, cuando cambia lo que lleva un paquete, **cambia el nombre del canal** (`estado` → `estado_v2` en la 0.10.0, al agregar `devolucion`; `estado_v3` en la 0.13.0, al agregar la rama a cada fila):
 
 - **Servidor nuevo, cliente viejo:** el cliente registró `estado`, no `estado_v2`. `canSend(Estado.TIPO)` es `false`, no se le manda nada y `abrir` le abre el cofre. **`abrir` pregunta por el canal del estado, no por `AbrirPantalla`**: el cliente viejo también registra `abrir_pantalla`, y la pantalla se quedaría esperando un estado que nunca llega.
 - **Servidor viejo, cliente nuevo:** `servidorConElMod()` pregunta por `Bajar`, el canal más nuevo. El servidor viejo no lo tiene, así que la K avisa en vez de abrir una pantalla que nunca recibiría el estado.
+- **Por eso `Bajar` cambia de nombre junto con el estado** (`bajar` → `bajar_v2` en la 0.13.0) aunque lo que lleva sea igual: el cliente sólo puede preguntar por canales cliente → servidor. Si `bajar` hubiera quedado igual, un cliente 0.12 vería que el servidor 0.13 "tiene el mod", abriría la pantalla y se quedaría esperando un `estado_v2` que nunca llega.
 
-Al agregar otro campo a un paquete, subí el sufijo (`_v3`) y cambiá esas dos preguntas al canal nuevo.
+Al agregar otro campo a un paquete, subí el sufijo del estado (`_v4`) **y el de `Bajar`**, y cambiá esas dos preguntas al canal nuevo.
 
 ## Lo que hace el servidor (`InterfazDelCliente`)
 
@@ -57,7 +58,7 @@ Al agregar otro campo a un paquete, subí el sufijo (`_v3`) y cambiá esas dos p
 | Clase | Qué hace |
 |---|---|
 | `HerosForgeCliente` | Entrypoint `client`: los receptores (guarda el último `Estado`), la tecla, la preferencia al entrar, `abrir` y `servidorConElMod` (`canSend(Bajar)`) |
-| `PantallaDeEstadisticas` | La pantalla. Una fila por estadística con ícono, nombre, lo que da ahora, `puntos/tope`, una barra y **-1**/**+1**/**+5**; tooltip con el detalle y lo que devuelve bajar |
+| `PantallaDeEstadisticas` | La pantalla. Una pestaña por rama y, de la elegida, una fila por estadística con ícono, nombre, lo que da ahora, `puntos/tope`, una barra y **-1**/**+1**/**+5**; tooltip con el detalle y lo que devuelve bajar |
 | `BotonDelInventario` | Un `Button` con una botella de experiencia, a la derecha del del libro de recetas. También hace que la K funcione con el inventario abierto |
 | `ConfiguracionDelCliente` | `config/herosforge-cliente.json`: `usarPantalla` y `botonEnInventario`, los dos `true` por defecto. Un valor que no es booleano usa el de por defecto y avisa en el log |
 | `mixin/AccesoAPantallaDeContenedor` | Accessor de `leftPos` (protegido) |
@@ -69,7 +70,8 @@ Al agregar otro campo a un paquete, subí el sufijo (`_v3`) y cambiá esas dos p
 - **Es un `Button` (no un `AbstractButton`)** para que `clickScreenButton` de los client gametests y otros mods que buscan botones lo encuentren.
 - **`isPauseScreen()` es `false`:** en singleplayer, pausar frena el servidor integrado y las compras no se contestarían hasta cerrar.
 - **La pantalla no rearma los widgets con cada `Estado`:** si llegan las mismas estadísticas en el mismo orden, en `tick()` sólo cambia las filas y el `active` de los botones (rearmar le saca el foco a quien navega con el teclado, y la experiencia cambia con cada orbe). Con otras estadísticas, `rebuildWidgets()`.
-- **Dos columnas permanentes: combate y exploración**, hasta 620 de ancho y filas de 16–30 de alto según el espacio disponible. A 426 × 240 se muestran nombres cortos y puntos; con columnas de al menos 260 y filas de al menos 26 se agrega el efecto debajo y puntos/tope. El detalle completo sigue en el tooltip. La cabecera separa experiencia/nivel del costo y recorta cada texto a su espacio para evitar desbordes con millones de XP.
+- **Una pestaña por rama**, en el orden en que llegan las filas: las ramas salen del estado (`Fila.rama` y `nombreDeLaRama`), no del enum del cliente, así una rama que este cliente no conoce se ve igual. La elegida está en un campo **estático** (`ramaElegida`): al volver a abrir la pantalla sigue en la misma, y si ya no existe se va a la primera. Cambiar de pestaña hace `rebuildWidgets()`. `BotonForja` recorta el texto con "…": en 426 de ancho, "Superviviente" no entra en su pestaña.
+- **La rama elegida va en dos columnas** (la primera mitad a la izquierda: con 9, quedan 5 y 4), hasta 620 de ancho y filas de 16–30 de alto según el espacio disponible. **El alto del panel sale de la rama más larga, no de la elegida:** si no, el panel cambia de tamaño con cada pestaña (lo muestran las capturas `pantalla-chica` y `pantalla-chica-explorador`, que tienen que quedar iguales). A 426 × 240 se muestran nombres cortos y puntos; con columnas de al menos 260 y filas de al menos 26 se agrega el efecto debajo y puntos/tope. El detalle completo sigue en el tooltip. La cabecera separa experiencia/nivel del costo y recorta cada texto a su espacio para evitar desbordes con millones de XP.
 - **BotonForja extiende Button** y sobrescribe `extractContents` (la firma verificada con `javap`): conserva narración, foco de teclado y compatibilidad con `clickScreenButton`, pero dibuja colores propios y un borde claro al enfocarse. No sobrescribir `extractWidgetRenderState`: es final en esta versión.
 
 - Los botones mandan con el **id** de la estadística, no con la `Fila`: el renglón se reemplaza con cada estado nuevo y la lambda del botón no.
@@ -77,7 +79,7 @@ Al agregar otro campo a un paquete, subí el sufijo (`_v3`) y cambiá esas dos p
 
 ## Agregar una estadística
 
-No hace falta tocar nada de esto: `InterfazDelCliente.estado` recorre `Estadistica.values()` y la pantalla dibuja las filas que lleguen. Revisá que siga entrando en 240 de alto y que el nombre no se corte (las capturas del client gametest, que ya corren a 426 × 240): si se corta, un `nombreCorto`.
+No hace falta tocar nada de esto: `InterfazDelCliente.estado` recorre `Estadistica.values()` y la pantalla dibuja las filas que lleguen, en la pestaña de su rama. Revisá que siga entrando en 240 de alto y que el nombre no se corte (las capturas del client gametest, que ya corren a 426 × 240; la del guardián tiene la rama más larga): si se corta, un `nombreCorto`.
 
 ## Ver también
 

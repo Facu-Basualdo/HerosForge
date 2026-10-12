@@ -3,7 +3,15 @@
 	"package": "com.herosforge.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"mixins": [
-		"ProyectilMixin"
+		"AldeanoMixin",
+		"ComidaMixin",
+		"DanioMixin",
+		"DurabilidadMixin",
+		"HambreMixin",
+		"OrbeMixin",
+		"ProyectilMixin",
+		"TensarMixin",
+		"UsoMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
