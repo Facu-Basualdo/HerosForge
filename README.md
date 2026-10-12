@@ -1,5 +1,7 @@
 # Hero's Forge
 
+<p align="center"><img src="src/main/resources/assets/estadisticasrpg/icon.png" alt="Hero's Forge" width="256"></p>
+
 Mod de Fabric para **Minecraft Java 26.3** para mejorar a tu personaje estilo RPG. Pagás **experiencia** y subís **puntos** de la estadística que quieras, hasta 100 en cada una: más vida, más daño (también con arco y ballesta), más armadura, regeneración, robo de vida, más salto… Cada punto cuesta siempre lo mismo: **30 puntos de experiencia**, y si te arrepentís, bajarlo te devuelve la mitad. Los puntos son tuyos para siempre: no se pierden al morir.
 
 > Antes se llamaba **Estadísticas RPG**. Por dentro sigue con el id `estadisticasrpg` (el jar, `config/estadisticasrpg.json` y los puntos guardados), así que actualizar no le borra nada a nadie.
