@@ -3,10 +3,15 @@
 	"id": "herosforge",
 	"version": "${version}",
 	"name": "Hero's Forge",
-	"description": "Subí tus estadísticas estilo RPG: pagás experiencia por puntos de vida, daño, armadura, velocidad u otra estadística. En el servidor alcanza; en el cliente suma una pantalla propia (tecla K o desde el inventario).",
+	"description": "Level up RPG-style stats: spend experience on health, damage, armor, speed and more. Works server-side only; installed on the client it adds its own screen (K key or from the inventory).",
 	"authors": [
 		"FacuBas"
 	],
+	"contact": {
+		"homepage": "https://github.com/Facu-Basualdo/EstadisticasRPG",
+		"sources": "https://github.com/Facu-Basualdo/EstadisticasRPG",
+		"issues": "https://github.com/Facu-Basualdo/EstadisticasRPG/issues"
+	},
 	"license": "MIT",
 	"icon": "assets/herosforge/icon.png",
 	"environment": "*",
