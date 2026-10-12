@@ -118,6 +118,8 @@ Si también instalás el mod **en tu cliente**, tenés una pantalla propia, más
 | `/estadisticas reiniciar <jugador>` | Pone todo en 0 sin devolver la experiencia | op |
 | `/estadisticas recargar` | Vuelve a leer la config | op |
 
+Los subcomandos también existen en inglés: `view`, `buy`, `refund`, `give`, `reset` y `reload` (por ejemplo, `/stats buy vida 5`). Los menús, la pantalla y los mensajes salen en el idioma del juego de cada jugador (español o inglés).
+
 ## Configuración
 
 `config/herosforge.json` se crea en el primer arranque. Después de editarlo, `/estadisticas recargar` lo aplica sin reiniciar.
@@ -128,6 +130,7 @@ Si también instalás el mod **en tu cliente**, tenés una pantalla propia, más
 | `devolucionAlBajar` | Qué parte del costo devuelve bajar un punto, de 0 a 1 |
 | `estadisticas.<id>.porPunto` | Cuánto suma cada punto, en las unidades de Minecraft: la vida y el escudo en medios corazones (`0.6` = 0,3 corazones) y los porcentajes y probabilidades como fracción (`0.002` = 0,2 %). Lo que baja (hambre, precios, gravedad…) también va en positivo: `0.005` = −0,5 % |
 | `estadisticas.<id>.tope` | Máximo de puntos de esa estadística |
+| `idioma` | `en_us` o `es_ar`: el de la consola y el de los jugadores con un idioma que el mod no tiene. Cada jugador ve los textos en el idioma de su juego |
 
 Un valor inválido usa el de por defecto y lo avisa; un JSON roto se ignora y sigue la config anterior. Bajar un tope no le quita puntos a nadie: los de más dejan de sumar. Las probabilidades y las reducciones no pasan del 100 % aunque la config dé más.
 

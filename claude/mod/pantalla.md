@@ -87,3 +87,4 @@ No hace falta tocar nada de esto: `InterfazDelCliente.estado` recorre `Estadisti
 - [Menú de estadísticas](menu.md): el cofre, que sigue siendo la interfaz sin el mod en el cliente
 - [Estadísticas: puntos, compra y aplicación](estadisticas.md): `Mejoras.comprar`, `Mejoras.bajar` y `Mejoras.mensaje`, que usa la pantalla
 - [Minecraft 26.x sin ofuscar](../general/minecraft-26-sin-ofuscar.md): lo que cambió en las clases de pantallas y teclas
+- [Idioma](idioma.md): de dónde salen los textos y en qué idioma.

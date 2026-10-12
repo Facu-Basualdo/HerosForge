@@ -5,6 +5,7 @@ import org.jspecify.annotations.Nullable;
 import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -228,39 +229,46 @@ public final class Mejoras {
 		}
 	}
 
-	public static Component mensaje(Compra compra) {
+	public static Component mensaje(String idioma, Compra compra) {
 		Estadistica estadistica = compra.estadistica();
+		String nombre = estadistica.nombre(idioma);
 		if (compra.comprados() == 0) {
-			return Component.literal(compra.resultado() == Resultado.TOPE
-					? estadistica.nombre() + " ya está en el máximo"
-					: "Te falta experiencia: cada punto cuesta " + experiencia(HerosForge.config().experienciaPorPunto()));
+			return compra.resultado() == Resultado.TOPE
+					? Idioma.tr(idioma, "herosforge.compra.tope", nombre)
+					: Idioma.tr(idioma, "herosforge.compra.sin_experiencia", experiencia(idioma, HerosForge.config().experienciaPorPunto()));
 		}
 		Configuracion.Mejora mejora = HerosForge.config().de(estadistica);
-		String texto = estadistica.nombre() + " " + estadistica.describir(mejora.porPunto() * compra.comprados())
-				+ " (" + compra.comprados() + (compra.comprados() == 1 ? " punto" : " puntos") + ")";
+		MutableComponent texto = Idioma.tr(idioma, "herosforge.compra.hecha", nombre, estadistica.describir(idioma, mejora.porPunto() * compra.comprados()),
+				puntos(idioma, compra.comprados()));
 		if (compra.resultado() == Resultado.TOPE) {
-			texto += ". Llegaste al máximo";
+			texto.append(Idioma.tr(idioma, "herosforge.compra.llego_al_tope"));
 		} else if (compra.resultado() == Resultado.SIN_EXPERIENCIA) {
-			texto += ". No te alcanzó para los " + compra.pedidos();
+			texto.append(Idioma.tr(idioma, "herosforge.compra.no_alcanzo", compra.pedidos()));
 		}
-		return Component.literal(texto);
+		return texto;
 	}
 
-	public static Component mensaje(Devolucion devolucion) {
+	public static Component mensaje(String idioma, Devolucion devolucion) {
 		Estadistica estadistica = devolucion.estadistica();
 		if (devolucion.bajados() == 0) {
-			return Component.literal(estadistica.nombre() + " no tiene puntos para bajar");
+			return Idioma.tr(idioma, "herosforge.baja.sin_puntos", estadistica.nombre(idioma));
 		}
-		String texto = estadistica.nombre() + " −" + devolucion.bajados() + (devolucion.bajados() == 1 ? " punto" : " puntos")
-				+ ": te devolvió " + experiencia(devolucion.experiencia());
+		MutableComponent texto = Idioma.tr(idioma, "herosforge.baja.hecha", estadistica.nombre(idioma), puntos(idioma, devolucion.bajados()),
+				experiencia(idioma, devolucion.experiencia()));
 		if (devolucion.bajados() < devolucion.pedidos()) {
-			texto += ". No tenía los " + devolucion.pedidos();
+			texto.append(Idioma.tr(idioma, "herosforge.baja.no_tenia", devolucion.pedidos()));
 		}
-		return Component.literal(texto);
+		return texto;
 	}
 
-	static String experiencia(int cantidad) {
-		return cantidad + " de experiencia";
+	/** "30 de experiencia", "30 experience". */
+	static String experiencia(String idioma, int cantidad) {
+		return Idioma.tr(idioma, "herosforge.experiencia", cantidad).getString();
+	}
+
+	/** "1 punto", "5 puntos". */
+	static String puntos(String idioma, int cantidad) {
+		return cantidad == 1 ? Idioma.tr(idioma, "herosforge.puntos.uno").getString() : Idioma.tr(idioma, "herosforge.puntos.varios", cantidad).getString();
 	}
 
 	/** Con sonido para todos los que están cerca: comprar es un momento, como subir de nivel. */

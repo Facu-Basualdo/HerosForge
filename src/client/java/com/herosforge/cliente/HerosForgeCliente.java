@@ -85,7 +85,7 @@ public class HerosForgeCliente implements ClientModInitializer {
 			return;
 		}
 		if (!servidorConElMod()) {
-			cliente.player.sendOverlayMessage(Component.literal("Este servidor no tiene Hero's Forge (o tiene una versión más vieja que la tuya)"));
+			cliente.player.sendOverlayMessage(IdiomaDelCliente.tr("herosforge.cliente.sin_mod"));
 			return;
 		}
 		if (config.usarPantalla()) {

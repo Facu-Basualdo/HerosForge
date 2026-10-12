@@ -13,6 +13,7 @@ import com.herosforge.Combate;
 import com.herosforge.Configuracion;
 import com.herosforge.Estadistica;
 import com.herosforge.HerosForge;
+import com.herosforge.Idioma;
 import com.herosforge.Mejoras;
 import com.herosforge.Oficios;
 
@@ -71,12 +72,12 @@ public class RamasGameTest {
 			helper.assertTrue(jugador.getAttribute(caso.atributo()) != null, "El jugador tiene " + caso.atributo().getRegisteredName());
 			double base = jugador.getAttributeBaseValue(caso.atributo());
 			Mejoras.dar(jugador, caso.estadistica(), 100);
-			assertCerca(helper, jugador.getAttributeValue(caso.atributo()), base * caso.multiplica() + caso.suma(), caso.estadistica().nombre());
+			assertCerca(helper, jugador.getAttributeValue(caso.atributo()), base * caso.multiplica() + caso.suma(), caso.estadistica().id());
 		}
 
 		Mejoras.reiniciar(jugador);
 		for (Caso caso : casos) {
-			assertCerca(helper, jugador.getAttributeValue(caso.atributo()), jugador.getAttributeBaseValue(caso.atributo()), caso.estadistica().nombre() + " sin puntos");
+			assertCerca(helper, jugador.getAttributeValue(caso.atributo()), jugador.getAttributeBaseValue(caso.atributo()), caso.estadistica().id() + " sin puntos");
 		}
 		salir(helper, jugador);
 		helper.succeed();
@@ -84,10 +85,10 @@ public class RamasGameTest {
 
 	@GameTest
 	public void descripciones(GameTestHelper helper) {
-		helper.assertValueEqual(Estadistica.CRITICO.describir(0.2), "20 % de probabilidad de crítico (+50 % de daño)", "Crítico");
-		helper.assertValueEqual(Estadistica.METABOLISMO.describir(0.5), "−50 % de hambre", "Lo que mejora al bajar lleva un menos");
-		helper.assertValueEqual(Estadistica.ESCUDO.describir(8), "Escudo de 4 corazones que se recarga fuera de pelea", "El escudo en corazones");
-		helper.assertValueEqual(Estadistica.IMAN.describir(6), "Atraés ítems y experiencia a 6 bloques (agachado no)", "Imán");
+		helper.assertValueEqual(Estadistica.CRITICO.describir(Idioma.ESPANOL, 0.2), "20 % de probabilidad de crítico (+50 % de daño)", "Crítico");
+		helper.assertValueEqual(Estadistica.METABOLISMO.describir(Idioma.ESPANOL, 0.5), "−50 % de hambre", "Lo que mejora al bajar lleva un menos");
+		helper.assertValueEqual(Estadistica.ESCUDO.describir(Idioma.ESPANOL, 8), "Escudo de 4 corazones que se recarga fuera de pelea", "El escudo en corazones");
+		helper.assertValueEqual(Estadistica.IMAN.describir(Idioma.ESPANOL, 6), "Atraés ítems y experiencia a 6 bloques (agachado no)", "Imán");
 		helper.succeed();
 	}
 
@@ -447,7 +448,7 @@ public class RamasGameTest {
 		mejoras.putAll(cambios);
 		Configuracion defecto = Configuracion.POR_DEFECTO;
 		try {
-			HerosForge.usar(new Configuracion(defecto.experienciaPorPunto(), defecto.devolucionAlBajar(), mejoras), servidor);
+			HerosForge.usar(new Configuracion(defecto.experienciaPorPunto(), defecto.devolucionAlBajar(), mejoras, defecto.idioma()), servidor);
 			prueba.run();
 		} finally {
 			HerosForge.usar(defecto, servidor);

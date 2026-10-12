@@ -83,7 +83,7 @@ public final class InterfazDelCliente {
 		int cantidad = Math.min(pedido.cantidad(), HerosForge.config().de(estadistica.get()).tope());
 		Mejoras.Compra compra = Mejoras.comprar(jugador, estadistica.get(), Math.max(cantidad, 1));
 		if (ServerPlayNetworking.canSend(jugador, Paquetes.Resultado.TIPO)) {
-			ServerPlayNetworking.send(jugador, new Paquetes.Resultado(Mejoras.mensaje(compra).getString(), compra.comprados() > 0));
+			ServerPlayNetworking.send(jugador, new Paquetes.Resultado(Mejoras.mensaje(Idioma.de(jugador), compra).getString(), compra.comprados() > 0));
 		}
 		sincronizar(jugador, false);
 		return Optional.of(compra);
@@ -97,7 +97,7 @@ public final class InterfazDelCliente {
 		}
 		Mejoras.Devolucion devolucion = Mejoras.bajar(jugador, estadistica.get(), pedido.cantidad());
 		if (ServerPlayNetworking.canSend(jugador, Paquetes.Resultado.TIPO)) {
-			ServerPlayNetworking.send(jugador, new Paquetes.Resultado(Mejoras.mensaje(devolucion).getString(), devolucion.bajados() > 0));
+			ServerPlayNetworking.send(jugador, new Paquetes.Resultado(Mejoras.mensaje(Idioma.de(jugador), devolucion).getString(), devolucion.bajados() > 0));
 		}
 		sincronizar(jugador, false);
 		return Optional.of(devolucion);
@@ -107,12 +107,13 @@ public final class InterfazDelCliente {
 	public static Paquetes.Estado estado(ServerPlayer jugador) {
 		Configuracion config = HerosForge.config();
 		PuntosDelJugador puntos = Mejoras.puntos(jugador);
+		String idioma = Idioma.de(jugador);
 		List<Paquetes.Fila> filas = new ArrayList<>();
 		for (Estadistica estadistica : Estadistica.values()) {
 			Configuracion.Mejora mejora = config.de(estadistica);
 			int actuales = puntos.de(estadistica);
-			filas.add(new Paquetes.Fila(estadistica.id(), estadistica.nombre(), estadistica.rama().id(), estadistica.rama().nombre(), actuales, mejora.tope(),
-					actuales > 0 ? estadistica.describir(mejora.efecto(actuales)) : "", estadistica.describir(mejora.porPunto())));
+			filas.add(new Paquetes.Fila(estadistica.id(), estadistica.nombre(idioma), estadistica.rama().id(), estadistica.rama().nombre(idioma), actuales,
+					mejora.tope(), actuales > 0 ? estadistica.describir(idioma, mejora.efecto(actuales)) : "", estadistica.describir(idioma, mejora.porPunto())));
 		}
 		return new Paquetes.Estado(Mejoras.experiencia(jugador), jugador.experienceLevel, config.experienciaPorPunto(), config.devolucionPorPunto(), Mejoras.puntosDelGrupo(), filas);
 	}

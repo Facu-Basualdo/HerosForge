@@ -179,3 +179,4 @@ Con `ADD_MULTIPLIED_BASE`, el porcentaje se aplica sobre la base **más todos lo
 - [Puntos del grupo](grupo.md): con Soul Link los puntos van a `data/herosforge/puntos_del_grupo.dat`, no al attachment, y la regeneración cura a uno solo
 - [Minecraft 26.x sin ofuscar](../general/minecraft-26-sin-ofuscar.md)
 - [Probar en el juego](../general/probar-en-el-juego.md)
+- [Idioma](idioma.md): de dónde salen los textos y en qué idioma.

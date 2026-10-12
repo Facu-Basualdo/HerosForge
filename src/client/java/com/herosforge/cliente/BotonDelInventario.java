@@ -21,7 +21,6 @@ import net.minecraft.world.item.Items;
  * El creativo usa otra pantalla y no lo tiene: ahí queda la tecla.
  */
 final class BotonDelInventario extends Button {
-	private static final Component TEXTO = Component.literal("Estadísticas");
 	// Mismo tamaño y altura que el del libro de recetas (InventoryScreen.getRecipeBookButtonPosition: leftPos + 104),
 	// a su derecha: abajo de la grilla de crafteo hay lugar libre hasta el inventario
 	private static final int ANCHO = 20;
@@ -38,9 +37,9 @@ final class BotonDelInventario extends Button {
 	 * ítems en la grilla de crafteo y el del cursor quedaría en el aire.
 	 */
 	private BotonDelInventario(InventoryScreen inventario) {
-		super(0, 0, ANCHO, ALTO, TEXTO, boton -> abrirDesde(inventario), DEFAULT_NARRATION);
+		super(0, 0, ANCHO, ALTO, IdiomaDelCliente.tr("herosforge.titulo"), boton -> abrirDesde(inventario), DEFAULT_NARRATION);
 		this.inventario = inventario;
-		setTooltip(Tooltip.create(Component.literal("Estadísticas (").append(PantallaDeEstadisticas.teclaDeAbrir()).append(")")));
+		setTooltip(Tooltip.create(IdiomaDelCliente.tr("herosforge.boton.tooltip", PantallaDeEstadisticas.teclaDeAbrir())));
 		acomodar();
 	}
 

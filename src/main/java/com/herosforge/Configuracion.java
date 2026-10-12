@@ -5,8 +5,10 @@ import java.util.Map;
 /**
  * @param experienciaPorPunto puntos de experiencia (no niveles) que cuesta cada punto, siempre los mismos; 0 = gratis
  * @param devolucionAlBajar qué parte de {@code experienciaPorPunto} se devuelve al bajar un punto, de 0 a 1
+ * @param idioma el de la consola y el de los jugadores con un idioma que el mod no tiene; cada jugador ve los textos en
+ *        el de su cliente (ver {@link Idioma})
  */
-public record Configuracion(int experienciaPorPunto, double devolucionAlBajar, Map<Estadistica, Mejora> mejoras) {
+public record Configuracion(int experienciaPorPunto, double devolucionAlBajar, Map<Estadistica, Mejora> mejoras, String idioma) {
 	/** Cuánto pega un crítico de {@link Estadistica#CRITICO}: lo que se compra con puntos es la probabilidad. */
 	public static final double MULTIPLICADOR_CRITICO = 1.5;
 	/** Debajo de esta parte de su vida máxima, un enemigo recibe el daño extra de {@link Estadistica#EJECUCION}. */
@@ -102,7 +104,8 @@ public record Configuracion(int experienciaPorPunto, double devolucionAlBajar, M
 					// 30 %, lo mismo que Héroe de la aldea I
 					Map.entry(Estadistica.REGATEO, new Mejora(0.003, 100)),
 					// +25 % al máximo: la experiencia es la moneda de los puntos, así que más que eso se dispara sola
-					Map.entry(Estadistica.SABIDURIA, new Mejora(0.0025, 100))));
+					Map.entry(Estadistica.SABIDURIA, new Mejora(0.0025, 100))),
+			Idioma.INGLES);
 
 	public Configuracion {
 		mejoras = Map.copyOf(mejoras);

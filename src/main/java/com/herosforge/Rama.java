@@ -12,30 +12,26 @@ import net.minecraft.world.item.Items;
  * nada: cualquier estadística se puede comprar desde el principio.
  */
 public enum Rama {
-	GUERRERO("guerrero", "Guerrero", Items.NETHERITE_SWORD, "Daño cuerpo a cuerpo y a distancia"),
-	GUARDIAN("guardian", "Guardián", Items.TOTEM_OF_UNDYING, "Vida, armadura y aguantar golpes"),
-	SUPERVIVIENTE("superviviente", "Superviviente", Items.GOLDEN_CARROT, "Curarse, el hambre y los efectos"),
-	EXPLORADOR("explorador", "Explorador", Items.COMPASS, "Moverse por tierra, aire y agua"),
-	ARTESANO("artesano", "Artesano", Items.DIAMOND_PICKAXE, "Minar, juntar y comerciar");
+	GUERRERO("guerrero", Items.NETHERITE_SWORD),
+	GUARDIAN("guardian", Items.TOTEM_OF_UNDYING),
+	SUPERVIVIENTE("superviviente", Items.GOLDEN_CARROT),
+	EXPLORADOR("explorador", Items.COMPASS),
+	ARTESANO("artesano", Items.DIAMOND_PICKAXE);
 
 	private final String id;
-	private final String nombre;
 	private final Item icono;
-	private final String resumen;
 
-	Rama(String id, String nombre, Item icono, String resumen) {
+	Rama(String id, Item icono) {
 		this.id = id;
-		this.nombre = nombre;
 		this.icono = icono;
-		this.resumen = resumen;
 	}
 
 	public String id() {
 		return id;
 	}
 
-	public String nombre() {
-		return nombre;
+	public String nombre(String idioma) {
+		return Idioma.plantilla(idioma, "herosforge.rama." + id);
 	}
 
 	public Item icono() {
@@ -43,8 +39,8 @@ public enum Rama {
 	}
 
 	/** Una línea para el ícono de la rama en el cofre. */
-	public String resumen() {
-		return resumen;
+	public String resumen(String idioma) {
+		return Idioma.plantilla(idioma, "herosforge.rama." + id + ".resumen");
 	}
 
 	/** Las de esta rama, en el orden del enum. */

@@ -63,3 +63,4 @@ Como los puntos son la fuente de verdad, cambiar la config **nunca toca los punt
 - [Estadísticas: puntos, compra y aplicación](estadisticas.md)
 - [Menú de estadísticas](menu.md)
 - [Tests de configuración](../tests/configuracion.md)
+- [Idioma](idioma.md): de dónde salen los textos y en qué idioma.

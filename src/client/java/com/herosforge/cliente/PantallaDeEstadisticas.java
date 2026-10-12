@@ -31,7 +31,6 @@ import net.minecraft.world.item.Items;
  * que el servidor valida, cobra y devuelve igual que desde el cofre.
  */
 public class PantallaDeEstadisticas extends Screen {
-	private static final Component TITULO = Component.literal("Estadísticas");
 	private static final int CON_CINCO = 5;
 	// Dos columnas estables: a escala chica el efecto pasa al tooltip para conservar botones legibles.
 	private static final int ANCHO = 620;
@@ -80,7 +79,7 @@ public class PantallaDeEstadisticas extends Screen {
 
 	/** @param volverAlInventario si se abrió desde el inventario: Esc vuelve ahí en vez de cerrar todo */
 	public PantallaDeEstadisticas(boolean volverAlInventario) {
-		super(TITULO);
+		super(IdiomaDelCliente.tr("herosforge.titulo"));
 		this.volverAlInventario = volverAlInventario;
 	}
 
@@ -129,8 +128,8 @@ public class PantallaDeEstadisticas extends Screen {
 		actualizarBotones();
 
 		int yBotones = y0 + alto - 24;
-		addRenderableWidget(new BotonForja(width / 2 - 104, yBotones, 100, 20, "Ver como cofre", HerosForgeCliente::abrirCofre, false));
-		addRenderableWidget(new BotonForja(width / 2 + 4, yBotones, 100, 20, "Listo", this::onClose, true));
+		addRenderableWidget(new BotonForja(width / 2 - 104, yBotones, 100, 20, IdiomaDelCliente.texto("herosforge.pantalla.ver_cofre"), HerosForgeCliente::abrirCofre, false));
+		addRenderableWidget(new BotonForja(width / 2 + 4, yBotones, 100, 20, IdiomaDelCliente.texto("herosforge.pantalla.listo"), this::onClose, true));
 	}
 
 	/** Una pestaña por rama, a lo ancho del panel. La elegida se dibuja como botón principal. */
@@ -145,7 +144,7 @@ public class PantallaDeEstadisticas extends Screen {
 		for (Map.Entry<String, String> rama : nombres.entrySet()) {
 			String id = rama.getKey();
 			BotonForja pestania = new BotonForja(x, y0 + Y_PESTANIAS, anchoPestania, ALTO_PESTANIA, rama.getValue(), () -> elegir(id), id.equals(ramaElegida));
-			pestania.setTooltip(Tooltip.create(Component.literal("Ver " + rama.getValue())));
+			pestania.setTooltip(Tooltip.create(IdiomaDelCliente.tr("herosforge.pantalla.ver_rama", rama.getValue())));
 			addRenderableWidget(pestania);
 			x += anchoPestania + separacion;
 		}
@@ -163,11 +162,11 @@ public class PantallaDeEstadisticas extends Screen {
 		int xBotones = x + ancho - MARGEN - ANCHO_BOTONES;
 		for (Paquetes.Fila fila : filas) {
 			String id = fila.id();
-			Button menos = addRenderableWidget(boton("-1", "Bajar 1 punto: te devuelve parte de la experiencia",
+			Button menos = addRenderableWidget(boton("-1", IdiomaDelCliente.texto("herosforge.pantalla.bajar"),
 					() -> ClientPlayNetworking.send(new Paquetes.Bajar(id, 1)), xBotones, y + 1));
-			Button uno = addRenderableWidget(boton("+1", "Comprar 1 punto",
+			Button uno = addRenderableWidget(boton("+1", IdiomaDelCliente.texto("herosforge.pantalla.comprar_uno"),
 					() -> ClientPlayNetworking.send(new Paquetes.Comprar(id, 1)), xBotones + ANCHO_BOTON + 2, y + 1));
-			Button cinco = addRenderableWidget(boton("+" + CON_CINCO, "Comprar " + CON_CINCO + " puntos (o los que alcancen)",
+			Button cinco = addRenderableWidget(boton("+" + CON_CINCO, IdiomaDelCliente.texto("herosforge.pantalla.comprar_varios", CON_CINCO),
 					() -> ClientPlayNetworking.send(new Paquetes.Comprar(id, CON_CINCO)), xBotones + 2 * (ANCHO_BOTON + 2), y + 1));
 			renglones.add(new Renglon(fila, x, ancho, y, menos, uno, cinco));
 			y += altoFila;
@@ -281,16 +280,18 @@ public class PantallaDeEstadisticas extends Screen {
 		graficos.outline(x0, y0, ancho, alto, ARGB.opaque(0x8C7652));
 		graficos.fill(x0 + 1, y0 + 1, x0 + ancho - 1, y0 + 25, ARGB.opaque(0x24313C));
 		graficos.text(font, "HERO'S FORGE", x0 + 10, y0 + 9, DORADO);
-		String titulo = dibujado != null && dibujado.grupo() ? "Estadísticas del grupo" : "Estadísticas";
+		String titulo = IdiomaDelCliente.texto(dibujado != null && dibujado.grupo() ? "herosforge.pantalla.titulo_grupo" : "herosforge.titulo");
 		graficos.text(font, titulo, x0 + ancho - 10 - font.width(titulo), y0 + 9, BLANCO);
 		if (dibujado == null) {
-			graficos.centeredText(font, Component.literal("Esperando al servidor…"), width / 2, y0 + 35, GRIS);
+			graficos.centeredText(font, IdiomaDelCliente.tr("herosforge.pantalla.esperando"), width / 2, y0 + 35, GRIS);
 		} else {
 			int mitad = ancho / 2;
 			String resumen = ajustar(resumen(dibujado), mitad - 20);
 			graficos.text(font, resumen, x0 + 10, y0 + 32, VERDE);
 			// Centrado en el panel, salvo que la experiencia llegue hasta ahí (millones de XP en 426 de ancho): ahí se corre
-			String costo = ajustar(dibujado.costo() == 0 ? "Mejoras gratis" : numero(dibujado.costo()) + " XP / punto", mitad - 20);
+			String costo = ajustar(dibujado.costo() == 0
+					? IdiomaDelCliente.texto("herosforge.pantalla.gratis")
+					: IdiomaDelCliente.texto("herosforge.pantalla.costo", numero(dibujado.costo())), mitad - 20);
 			int xCosto = Math.max(x0 + mitad - font.width(costo) / 2, x0 + 10 + font.width(resumen) + 12);
 			graficos.text(font, costo, xCosto, y0 + 32, BLANCO);
 			graficos.fill(x0 + 8, y0 + 43, x0 + ancho - 8, y0 + 44, ARGB.opaque(0x394653));
@@ -317,12 +318,13 @@ public class PantallaDeEstadisticas extends Screen {
 		g.item(icono(fila), x + 4, y + (altoFila - 16) / 2 - 1);
 		String puntos = amplio ? fila.puntos() + "/" + fila.tope() : Integer.toString(fila.puntos());
 		int xPuntos = xBotones - 6 - font.width(puntos);
-		String nombre = Estadistica.porId(fila.id()).map(Estadistica::nombreCorto).orElse(fila.nombre());
+		String nombre = Estadistica.porId(fila.id()).map(estadistica -> estadistica.nombreCorto(IdiomaDelCliente.idioma())).orElse(fila.nombre());
 		int yTexto = amplio ? y + 4 : y + (altoFila - 8) / 2 - 1;
 		g.text(font, ajustar(nombre, xPuntos - x - X_NOMBRE - 5), x + X_NOMBRE, yTexto, BLANCO);
 		g.text(font, puntos, xPuntos, yTexto, fila.enElTope() ? DORADO : GRIS);
 		if (amplio) {
-			g.text(font, ajustar(fila.ahora().isEmpty() ? "Sin mejoras" : fila.ahora(), xBotones - x - X_NOMBRE - 6), x + X_NOMBRE, y + 15, GRIS);
+			g.text(font, ajustar(fila.ahora().isEmpty() ? IdiomaDelCliente.texto("herosforge.pantalla.sin_mejoras") : fila.ahora(), xBotones - x - X_NOMBRE - 6),
+					x + X_NOMBRE, y + 15, GRIS);
 		}
 		int largo = xBotones - x - X_NOMBRE - 6;
 		int lleno = fila.tope() <= 0 ? 0 : (int) ((long) largo * Math.min(fila.puntos(), fila.tope()) / fila.tope());
@@ -339,29 +341,32 @@ public class PantallaDeEstadisticas extends Screen {
 	private List<Component> detalle(Paquetes.Fila fila) {
 		List<Component> lineas = new ArrayList<>();
 		lineas.add(Component.literal(fila.nombre()).withStyle(ChatFormatting.WHITE));
-		lineas.add(Component.literal("Puntos: " + fila.puntos() + "/" + fila.tope()).withStyle(ChatFormatting.GRAY));
+		lineas.add(IdiomaDelCliente.tr("herosforge.menu.puntos", fila.puntos(), fila.tope()).withStyle(ChatFormatting.GRAY));
 		if (!fila.ahora().isEmpty()) {
-			lineas.add(Component.literal("Ahora: " + fila.ahora()).withStyle(ChatFormatting.GRAY));
+			lineas.add(IdiomaDelCliente.tr("herosforge.menu.ahora", fila.ahora()).withStyle(ChatFormatting.GRAY));
 		}
 		if (fila.enElTope()) {
-			lineas.add(Component.literal("Llegaste al máximo").withStyle(ChatFormatting.GOLD));
+			lineas.add(IdiomaDelCliente.tr("herosforge.pantalla.en_el_tope").withStyle(ChatFormatting.GOLD));
 		} else if (dibujado != null) {
-			lineas.add(Component.literal("Próximo punto: " + fila.proximo()).withStyle(ChatFormatting.AQUA));
-			lineas.add(Component.literal("Cuesta " + dibujado.costo() + " de experiencia")
+			lineas.add(IdiomaDelCliente.tr("herosforge.menu.proximo", fila.proximo()).withStyle(ChatFormatting.AQUA));
+			lineas.add(IdiomaDelCliente.tr("herosforge.menu.cuesta", IdiomaDelCliente.texto("herosforge.experiencia", dibujado.costo()))
 					.withStyle(dibujado.experiencia() >= dibujado.costo() ? ChatFormatting.GREEN : ChatFormatting.RED));
 		}
 		if (fila.puntos() > 0 && dibujado != null) {
-			lineas.add(Component.literal("Bajar 1 punto te devuelve " + dibujado.devolucion() + " de experiencia").withStyle(ChatFormatting.DARK_GRAY));
+			lineas.add(IdiomaDelCliente.tr("herosforge.pantalla.devuelve", IdiomaDelCliente.texto("herosforge.experiencia", dibujado.devolucion()))
+					.withStyle(ChatFormatting.DARK_GRAY));
 		}
 		return lineas;
 	}
 
+	/** Con separador de miles: 12.345 en español, 12,345 en inglés. */
 	private static String numero(int valor) {
-		return String.format(java.util.Locale.forLanguageTag("es-AR"), "%,d", valor);
+		boolean espanol = IdiomaDelCliente.idioma().startsWith("es");
+		return String.format(java.util.Locale.forLanguageTag(espanol ? "es-AR" : "en-US"), "%,d", valor);
 	}
 
 	private static String resumen(Paquetes.Estado estado) {
-		return numero(estado.experiencia()) + " XP · Nivel " + numero(estado.nivel());
+		return IdiomaDelCliente.texto("herosforge.pantalla.resumen", numero(estado.experiencia()), numero(estado.nivel()));
 	}
 
 	/** Una estadística de una versión más nueva del servidor no está en el enum de este cliente: se ve igual, con una barrera. */

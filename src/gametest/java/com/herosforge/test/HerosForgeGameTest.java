@@ -21,6 +21,7 @@ import com.herosforge.Configuracion;
 import com.herosforge.Curacion;
 import com.herosforge.Estadistica;
 import com.herosforge.HerosForge;
+import com.herosforge.Idioma;
 import com.herosforge.InterfazDelCliente;
 import com.herosforge.MenuDeEstadisticas;
 import com.herosforge.Mejoras;
@@ -65,6 +66,37 @@ import net.minecraft.world.level.storage.TagValueOutput;
 public class HerosForgeGameTest {
 	private static final int COSTO = Configuracion.POR_DEFECTO.experienciaPorPunto();
 	private static final int DEVOLUCION = Configuracion.POR_DEFECTO.devolucionPorPunto();
+
+	/** Sólo lee los archivos de idioma: no toca a ningún jugador. */
+	@GameTest
+	public void textosEnLosDosIdiomas(GameTestHelper helper) {
+		Set<String> ingles = Idioma.claves(Idioma.INGLES);
+		Set<String> espanol = Idioma.claves(Idioma.ESPANOL);
+		Set<String> soloIngles = new HashSet<>(ingles);
+		soloIngles.removeAll(espanol);
+		Set<String> soloEspanol = new HashSet<>(espanol);
+		soloEspanol.removeAll(ingles);
+		helper.assertTrue(soloIngles.isEmpty() && soloEspanol.isEmpty(),
+				"Los dos idiomas tienen las mismas claves (sólo en inglés: " + soloIngles + ", sólo en español: " + soloEspanol + ")");
+		for (Estadistica estadistica : Estadistica.values()) {
+			String clave = "herosforge.estadistica." + estadistica.id();
+			helper.assertTrue(ingles.contains(clave), "Falta el nombre de " + estadistica.id());
+			helper.assertTrue(ingles.contains(clave + ".efecto") || ingles.contains(clave + ".efecto.uno") && ingles.contains(clave + ".efecto.varios"),
+					"Falta el efecto de " + estadistica.id());
+			// Una plantilla que no está devolvería la clave: con un valor cualquiera, el texto no puede empezar con "herosforge."
+			helper.assertFalse(estadistica.describir(Idioma.INGLES, 1).startsWith("herosforge."), "Se lee el efecto de " + estadistica.id());
+		}
+		for (Rama rama : Rama.values()) {
+			helper.assertTrue(ingles.contains("herosforge.rama." + rama.id()) && ingles.contains("herosforge.rama." + rama.id() + ".resumen"),
+					"Falta el nombre o el resumen de la rama " + rama.id());
+		}
+		helper.assertValueEqual(Estadistica.VIDA.describir(Idioma.INGLES, 2), "+1 heart", "Singular");
+		helper.assertValueEqual(Estadistica.VIDA.describir(Idioma.ESPANOL, 3), "+1,5 corazones", "Plural y coma decimal");
+		helper.assertValueEqual(Estadistica.VIDA.describir(Idioma.INGLES, 3), "+1.5 hearts", "Punto decimal en inglés");
+		helper.assertValueEqual(Estadistica.DANIO_DISTANCIA.nombreCorto(Idioma.ESPANOL), "Daño a dist.", "El nombre corto");
+		helper.assertValueEqual(Estadistica.DANIO.nombreCorto(Idioma.INGLES), "Damage", "Sin nombre corto, el nombre");
+		helper.succeed();
+	}
 
 	@GameTest
 	public void modCargado(GameTestHelper helper) {
@@ -258,7 +290,8 @@ public class HerosForgeGameTest {
 		helper.assertValueEqual(Mejoras.experiencia(jugador), COSTO / 2 * 3, "Y devuelve sólo por esos 2");
 		helper.assertValueEqual(jugador.getAttributeValue(Attributes.MAX_HEALTH), 20.0, "Sin puntos, la vida de vanilla");
 		helper.assertTrue(jugador.getHealth() <= 20, "La vida no queda por encima del máximo nuevo");
-		helper.assertValueEqual(Mejoras.mensaje(resto).getString(), "Vida −2 puntos: te devolvió 30 de experiencia. No tenía los 5", "El mensaje");
+		helper.assertValueEqual(Mejoras.mensaje(Idioma.ESPANOL, resto).getString(), "Vida −2 puntos: te devolvió 30 de experiencia. No tenía los 5", "El mensaje");
+		helper.assertValueEqual(Mejoras.mensaje(Idioma.INGLES, resto).getString(), "Health −2 points: you got back 30 experience. It didn't have 5", "Y en inglés");
 
 		Mejoras.Devolucion nada = Mejoras.bajar(jugador, Estadistica.VIDA, 1);
 		helper.assertValueEqual(nada.bajados(), 0, "Sin puntos no baja nada");
@@ -277,8 +310,9 @@ public class HerosForgeGameTest {
 		assertCerca(helper, jugador.getAttributeValue(Attributes.JUMP_STRENGTH), 0.42 * 1.2, "Salto +20 %");
 		assertCerca(helper, jugador.getAttributeValue(Attributes.SAFE_FALL_DISTANCE), 13, "Caída segura: 3 + 10");
 		assertCerca(helper, jugador.getAttributeValue(Attributes.OXYGEN_BONUS), 3, "Respiración +3, como Respiración III");
-		helper.assertValueEqual(Estadistica.REGENERACION.describir(0.3), "+9 corazones por minuto", "La regeneración se lee por minuto");
-		helper.assertValueEqual(Estadistica.ROBO_DE_VIDA.describir(0.1), "+10 % del daño que hacés", "El robo de vida en porcentaje");
+		helper.assertValueEqual(Estadistica.REGENERACION.describir(Idioma.ESPANOL, 0.3), "+9 corazones por minuto", "La regeneración se lee por minuto");
+		helper.assertValueEqual(Estadistica.ROBO_DE_VIDA.describir(Idioma.ESPANOL, 0.1), "+10 % del daño que hacés", "El robo de vida en porcentaje");
+		helper.assertValueEqual(Estadistica.ROBO_DE_VIDA.describir(Idioma.INGLES, 0.1), "+10% of the damage you deal", "Y en inglés");
 
 		salir(helper, jugador);
 		helper.succeed();
@@ -723,7 +757,7 @@ public class HerosForgeGameTest {
 		Map<Estadistica, Configuracion.Mejora> mejoras = new EnumMap<>(Configuracion.POR_DEFECTO.mejoras());
 		mejoras.put(Estadistica.VIDA, new Configuracion.Mejora(4, 1));
 		try {
-			HerosForge.usar(new Configuracion(10, 0.25, mejoras), servidor);
+			HerosForge.usar(new Configuracion(10, 0.25, mejoras, Configuracion.POR_DEFECTO.idioma()), servidor);
 			helper.assertValueEqual(jugador.getAttributeValue(Attributes.MAX_HEALTH), 24.0, "Con el tope en 1, los 2 puntos valen como 1 de 4");
 			helper.assertValueEqual(Mejoras.puntos(jugador).de(Estadistica.VIDA), 2, "Bajar el tope no borra puntos");
 
@@ -816,11 +850,12 @@ public class HerosForgeGameTest {
 		Paquetes.Fila vida = estado.filas().get(Estadistica.VIDA.ordinal());
 		helper.assertValueEqual(vida.id(), Estadistica.VIDA.id(), "Las filas van en el orden del enum");
 		helper.assertValueEqual(vida.rama(), Rama.GUARDIAN.id(), "Cada fila trae su rama");
-		helper.assertValueEqual(vida.nombreDeLaRama(), "Guardián", "Y el nombre de la rama, para un cliente que no la conozca");
+		// Los jugadores de prueba informan en_us (ClientInformation.createDefault()): las filas llegan en inglés
+		helper.assertValueEqual(vida.nombreDeLaRama(), "Guardian", "Y el nombre de la rama en el idioma del jugador, para un cliente que no la conozca");
 		helper.assertValueEqual(vida.puntos(), 10, "Puntos de vida");
 		helper.assertValueEqual(vida.tope(), Configuracion.POR_DEFECTO.de(Estadistica.VIDA).tope(), "Tope de vida");
-		helper.assertValueEqual(vida.ahora(), "+3 corazones", "Lo que dan los puntos, armado en el servidor");
-		helper.assertValueEqual(vida.proximo(), "+0,3 corazones", "Lo que suma el próximo punto");
+		helper.assertValueEqual(vida.ahora(), "+3 hearts", "Lo que dan los puntos, armado en el servidor");
+		helper.assertValueEqual(vida.proximo(), "+0.3 hearts", "Lo que suma el próximo punto");
 		helper.assertValueEqual(estado.filas().get(Estadistica.DANIO.ordinal()).ahora(), "", "Sin puntos, \"ahora\" va vacío");
 
 		salir(helper, jugador);

@@ -72,7 +72,8 @@ public final class ArchivoDeConfiguracion {
 		}
 
 		// Un archivo de antes de la 0.7.0 tiene costoPorPunto y puntosPorAumento (en niveles): al reescribirlo se van
-		boolean faltaAlgo = !raiz.has("experienciaPorPunto") || !raiz.has("devolucionAlBajar") || !raiz.has("estadisticas");
+		boolean faltaAlgo = !raiz.has("experienciaPorPunto") || !raiz.has("devolucionAlBajar") || !raiz.has("estadisticas") || !raiz.has("idioma");
+		String idioma = idioma(raiz, defecto.idioma(), avisos);
 		Map<Estadistica, Configuracion.Mejora> mejoras = new EnumMap<>(Estadistica.class);
 		for (Estadistica estadistica : Estadistica.values()) {
 			Configuracion.Mejora porDefecto = defecto.de(estadistica);
@@ -89,7 +90,7 @@ public final class ArchivoDeConfiguracion {
 			mejoras.put(estadistica, new Configuracion.Mejora(porPunto, tope));
 		}
 
-		Configuracion config = new Configuracion(experiencia, devolucion, mejoras);
+		Configuracion config = new Configuracion(experiencia, devolucion, mejoras, idioma);
 		// Se reescribe con lo leído, no con los valores por defecto, así no se pisa nada que el dueño haya cambiado.
 		// Con avisos no: se perdería el valor que escribió mal en vez de dejárselo para que lo corrija
 		if (faltaAlgo && avisos.isEmpty()) {
@@ -111,12 +112,26 @@ public final class ArchivoDeConfiguracion {
 			estadisticas.add(estadistica.id(), campos);
 		}
 		raiz.add("estadisticas", estadisticas);
+		raiz.addProperty("idioma", config.idioma());
 		try {
 			Files.createDirectories(archivo.getParent());
 			Files.writeString(archivo, GSON.toJson(raiz) + "\n", StandardCharsets.UTF_8);
 		} catch (IOException e) {
 			HerosForge.LOGGER.error("No se pudo escribir {}", archivo, e);
 		}
+	}
+
+	private static String idioma(JsonObject raiz, String porDefecto, List<String> avisos) {
+		JsonElement valor = raiz.get("idioma");
+		if (valor == null) {
+			return porDefecto;
+		}
+		String idioma = valor.isJsonPrimitive() ? valor.getAsString().toLowerCase(java.util.Locale.ROOT) : "";
+		if (!Idioma.DISPONIBLES.contains(idioma)) {
+			avisos.add("idioma tiene que ser " + String.join(" o ", Idioma.DISPONIBLES) + " (dice " + valor + "): se usa " + porDefecto);
+			return porDefecto;
+		}
+		return idioma;
 	}
 
 	private static int entero(JsonObject objeto, String campo, int porDefecto, int minimo, String donde, List<String> avisos) {

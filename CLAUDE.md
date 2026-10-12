@@ -43,6 +43,7 @@ Se agregan con `/docs` a medida que se implementan las fases de [docs/plan.md](d
 | Comprar y aplicar estadísticas (fase 1) | [estadisticas](claude/mod/estadisticas.md) | [estadisticas](claude/tests/estadisticas.md) |
 | Menú de cofre (fase 2) | [menu](claude/mod/menu.md) | [menu](claude/tests/menu.md) |
 | Config y recargar (fase 4) | [configuracion](claude/mod/configuracion.md) | [configuracion](claude/tests/configuracion.md) |
+| Idioma: textos por jugador, comandos en inglés | [idioma](claude/mod/idioma.md) | [estadisticas](claude/tests/estadisticas.md) |
 | Puntos del grupo con Soul Link (fase 5) | [grupo](claude/mod/grupo.md) | [grupo](claude/tests/grupo.md) |
 | Daño a distancia: flechas y tridente (0.8.0) | [estadisticas](claude/mod/estadisticas.md#daño-a-distancia-un-mixin-no-un-atributo) | [estadisticas](claude/tests/estadisticas.md) |
 | Pantalla propia del cliente, opcional (0.9.0) | [pantalla](claude/mod/pantalla.md) | [pantalla](claude/tests/pantalla.md) |

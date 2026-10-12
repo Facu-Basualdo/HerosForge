@@ -66,7 +66,7 @@ public class SoulLinkGameTest {
 			com.herosforge.CompatibilidadSoulLink.sincronizarVida(servidor);
 			Map<Estadistica, Configuracion.Mejora> mejoras = new EnumMap<>(anterior.mejoras());
 			mejoras.put(Estadistica.VIDA, new Configuracion.Mejora(0.6, 50));
-			HerosForge.usar(new Configuracion(anterior.experienciaPorPunto(), anterior.devolucionAlBajar(), mejoras), servidor);
+			HerosForge.usar(new Configuracion(anterior.experienciaPorPunto(), anterior.devolucionAlBajar(), mejoras, anterior.idioma()), servidor);
 			for (ServerPlayer j : jugadores) cerca(helper, j.getHealth(), 50, "Recargar topes limita una sola vez");
 			HerosForge.usar(anterior, servidor);
 			Mejoras.reiniciar(a);

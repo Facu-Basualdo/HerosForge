@@ -39,7 +39,6 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 	private static final int FILA_DE_ABAJO = 18;
 	private static final int CON_SHIFT = 5;
 	private static final int CLICK_DERECHO = 1;
-	private static final Component TITULO = Component.literal("Estadísticas");
 
 	private final ServerPlayer jugador;
 	private final SimpleContainer muestra = new SimpleContainer(TAMANIO);
@@ -62,7 +61,7 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 	}
 
 	public static void abrir(ServerPlayer jugador) {
-		jugador.openMenu(new SimpleMenuProvider((id, inventario, quien) -> new MenuDeEstadisticas(id, jugador), TITULO));
+		jugador.openMenu(new SimpleMenuProvider((id, inventario, quien) -> new MenuDeEstadisticas(id, jugador), Idioma.tr(jugador, "herosforge.titulo")));
 	}
 
 	/** El slot de una estadística en la página de su rama: centradas en la fila del medio, en el orden de {@link Estadistica}. */
@@ -138,9 +137,9 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 			int cantidad = entrada == ContainerInput.QUICK_MOVE ? CON_SHIFT : 1;
 			// Con shift, vanilla también manda el botón: 1 es el derecho
 			if (boton == CLICK_DERECHO) {
-				jugador.sendSystemMessage(Mejoras.mensaje(Mejoras.bajar(jugador, estadistica, cantidad)), true);
+				jugador.sendSystemMessage(Mejoras.mensaje(Idioma.de(jugador), Mejoras.bajar(jugador, estadistica, cantidad)), true);
 			} else {
-				jugador.sendSystemMessage(Mejoras.mensaje(Mejoras.comprar(jugador, estadistica, cantidad)), true);
+				jugador.sendSystemMessage(Mejoras.mensaje(Idioma.de(jugador), Mejoras.comprar(jugador, estadistica, cantidad)), true);
 			}
 			redibujar();
 		}
@@ -183,21 +182,22 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 	private void redibujar() {
 		Configuracion config = HerosForge.config();
 		PuntosDelJugador puntos = Mejoras.puntos(jugador);
+		String idioma = Idioma.de(jugador);
 		for (int slot = 0; slot < TAMANIO; slot++) {
 			muestra.setItem(slot, relleno());
 		}
-		muestra.setItem(SLOT_INFO, info(config));
+		muestra.setItem(SLOT_INFO, info(idioma, config));
 		if (abierta == null) {
 			for (Rama rama : Rama.values()) {
-				muestra.setItem(slotDe(rama), rama(rama, config, puntos, false));
+				muestra.setItem(slotDe(rama), rama(idioma, rama, config, puntos, false));
 			}
 		} else {
-			muestra.setItem(SLOT_VOLVER, item(new ItemStack(Items.ARROW), texto("← Todas las ramas", ChatFormatting.YELLOW), List.of()));
+			muestra.setItem(SLOT_VOLVER, item(new ItemStack(Items.ARROW), texto(Idioma.tr(idioma, "herosforge.menu.volver"), ChatFormatting.YELLOW), List.of()));
 			for (Estadistica estadistica : abierta.estadisticas()) {
-				muestra.setItem(slotDe(estadistica), icono(estadistica, config, puntos.de(estadistica)));
+				muestra.setItem(slotDe(estadistica), icono(idioma, estadistica, config, puntos.de(estadistica)));
 			}
 			for (Rama rama : Rama.values()) {
-				muestra.setItem(pestania(rama), rama(rama, config, puntos, rama == abierta));
+				muestra.setItem(pestania(rama), rama(idioma, rama, config, puntos, rama == abierta));
 			}
 		}
 		experienciaMostrada = Mejoras.experiencia(jugador);
@@ -206,18 +206,18 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 	}
 
 	/** En la portada y como pestaña. La que está abierta brilla, como un ítem encantado. */
-	private static ItemStack rama(Rama rama, Configuracion config, PuntosDelJugador puntos, boolean abierta) {
+	private static ItemStack rama(String idioma, Rama rama, Configuracion config, PuntosDelJugador puntos, boolean abierta) {
 		List<Component> lore = new ArrayList<>();
-		lore.add(texto(rama.resumen(), ChatFormatting.GRAY));
+		lore.add(texto(rama.resumen(idioma), ChatFormatting.GRAY));
 		int total = 0;
 		for (Estadistica estadistica : rama.estadisticas()) {
 			int actuales = puntos.de(estadistica);
 			total += actuales;
-			lore.add(texto(" " + estadistica.nombre() + ": " + actuales + "/" + config.de(estadistica).tope(), actuales > 0 ? ChatFormatting.WHITE : ChatFormatting.DARK_GRAY));
+			lore.add(texto(" " + estadistica.nombre(idioma) + ": " + actuales + "/" + config.de(estadistica).tope(), actuales > 0 ? ChatFormatting.WHITE : ChatFormatting.DARK_GRAY));
 		}
-		lore.add(1, texto(total + (total == 1 ? " punto" : " puntos") + " en la rama", ChatFormatting.GOLD));
-		lore.add(texto(abierta ? "Es la página abierta" : "Click: ver la rama", ChatFormatting.DARK_GRAY));
-		ItemStack icono = item(new ItemStack(rama.icono()), texto(rama.nombre(), abierta ? ChatFormatting.GOLD : ChatFormatting.YELLOW), lore);
+		lore.add(1, texto(Idioma.tr(idioma, "herosforge.menu.en_la_rama", Mejoras.puntos(idioma, total)), ChatFormatting.GOLD));
+		lore.add(texto(Idioma.tr(idioma, abierta ? "herosforge.menu.pagina_abierta" : "herosforge.menu.ver_rama"), ChatFormatting.DARK_GRAY));
+		ItemStack icono = item(new ItemStack(rama.icono()), texto(rama.nombre(idioma), abierta ? ChatFormatting.GOLD : ChatFormatting.YELLOW), lore);
 		icono.set(DataComponents.TOOLTIP_DISPLAY, new TooltipDisplay(false, new LinkedHashSet<>(List.of(DataComponents.ATTRIBUTE_MODIFIERS))));
 		if (abierta) {
 			icono.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
@@ -225,43 +225,44 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 		return icono;
 	}
 
-	private ItemStack info(Configuracion config) {
+	private ItemStack info(String idioma, Configuracion config) {
 		List<Component> lore = new ArrayList<>();
-		lore.add(texto("Nivel " + jugador.experienceLevel, ChatFormatting.GRAY));
-		lore.add(texto("Cada punto cuesta " + Mejoras.experiencia(config.experienciaPorPunto()), ChatFormatting.GRAY));
+		lore.add(texto(Idioma.tr(idioma, "herosforge.menu.nivel", jugador.experienceLevel), ChatFormatting.GRAY));
+		lore.add(texto(Idioma.tr(idioma, "herosforge.menu.costo", Mejoras.experiencia(idioma, config.experienciaPorPunto())), ChatFormatting.GRAY));
 		if (Mejoras.puntosDelGrupo()) {
-			lore.add(texto("Los puntos son de todo el grupo:", ChatFormatting.GOLD));
-			lore.add(texto("lo que compra uno lo tienen todos", ChatFormatting.GOLD));
+			lore.add(texto(Idioma.tr(idioma, "herosforge.menu.grupo1"), ChatFormatting.GOLD));
+			lore.add(texto(Idioma.tr(idioma, "herosforge.menu.grupo2"), ChatFormatting.GOLD));
 		}
+		Component tenes = texto(Idioma.tr(idioma, "herosforge.menu.tenes", Mejoras.experiencia(idioma, Mejoras.experiencia(jugador))), ChatFormatting.GREEN);
 		if (abierta == null) {
-			lore.add(texto("Elegí una rama para ver sus estadísticas", ChatFormatting.DARK_GRAY));
-			return item(new ItemStack(Items.EXPERIENCE_BOTTLE), texto("Tenés " + Mejoras.experiencia(Mejoras.experiencia(jugador)), ChatFormatting.GREEN), lore);
+			lore.add(texto(Idioma.tr(idioma, "herosforge.menu.elegi_rama"), ChatFormatting.DARK_GRAY));
+			return item(new ItemStack(Items.EXPERIENCE_BOTTLE), tenes, lore);
 		}
-		lore.add(texto("Click: comprar 1 punto", ChatFormatting.DARK_GRAY));
-		lore.add(texto("Shift + click: comprar " + CON_SHIFT, ChatFormatting.DARK_GRAY));
-		lore.add(texto("Click derecho: bajar 1 y te devuelve " + Mejoras.experiencia(config.devolucionPorPunto()), ChatFormatting.DARK_GRAY));
-		lore.add(texto("Shift + click derecho: bajar " + CON_SHIFT, ChatFormatting.DARK_GRAY));
-		return item(new ItemStack(Items.EXPERIENCE_BOTTLE), texto("Tenés " + Mejoras.experiencia(Mejoras.experiencia(jugador)), ChatFormatting.GREEN), lore);
+		lore.add(texto(Idioma.tr(idioma, "herosforge.menu.click"), ChatFormatting.DARK_GRAY));
+		lore.add(texto(Idioma.tr(idioma, "herosforge.menu.shift_click", CON_SHIFT), ChatFormatting.DARK_GRAY));
+		lore.add(texto(Idioma.tr(idioma, "herosforge.menu.click_derecho", Mejoras.experiencia(idioma, config.devolucionPorPunto())), ChatFormatting.DARK_GRAY));
+		lore.add(texto(Idioma.tr(idioma, "herosforge.menu.shift_click_derecho", CON_SHIFT), ChatFormatting.DARK_GRAY));
+		return item(new ItemStack(Items.EXPERIENCE_BOTTLE), tenes, lore);
 	}
 
-	private ItemStack icono(Estadistica estadistica, Configuracion config, int puntos) {
+	private ItemStack icono(String idioma, Estadistica estadistica, Configuracion config, int puntos) {
 		Configuracion.Mejora mejora = config.de(estadistica);
 		List<Component> lore = new ArrayList<>();
-		lore.add(texto("Puntos: " + puntos + "/" + mejora.tope(), ChatFormatting.GRAY));
+		lore.add(texto(Idioma.tr(idioma, "herosforge.menu.puntos", puntos, mejora.tope()), ChatFormatting.GRAY));
 		if (puntos > 0) {
-			lore.add(texto("Ahora: " + estadistica.describir(mejora.efecto(puntos)), ChatFormatting.GRAY));
+			lore.add(texto(Idioma.tr(idioma, "herosforge.menu.ahora", estadistica.describir(idioma, mejora.efecto(puntos))), ChatFormatting.GRAY));
 		}
 		if (puntos > 0) {
-			lore.add(texto("Click derecho: bajar 1 (devuelve " + Mejoras.experiencia(config.devolucionPorPunto()) + ")", ChatFormatting.DARK_GRAY));
+			lore.add(texto(Idioma.tr(idioma, "herosforge.menu.bajar", Mejoras.experiencia(idioma, config.devolucionPorPunto())), ChatFormatting.DARK_GRAY));
 		}
 		if (puntos >= mejora.tope()) {
-			return item(new ItemStack(Items.STAINED_GLASS_PANE.gray()), texto(estadistica.nombre() + " · máximo", ChatFormatting.GRAY), lore);
+			return item(new ItemStack(Items.STAINED_GLASS_PANE.gray()), texto(Idioma.tr(idioma, "herosforge.menu.maximo", estadistica.nombre(idioma)), ChatFormatting.GRAY), lore);
 		}
 		int costo = config.experienciaPorPunto();
 		boolean alcanza = Mejoras.experiencia(jugador) >= costo;
-		lore.add(texto("Próximo punto: " + estadistica.describir(mejora.porPunto()), ChatFormatting.AQUA));
-		lore.add(texto("Cuesta " + Mejoras.experiencia(costo), alcanza ? ChatFormatting.GREEN : ChatFormatting.RED));
-		ItemStack icono = item(new ItemStack(estadistica.icono()), texto(estadistica.nombre(), alcanza ? ChatFormatting.GREEN : ChatFormatting.RED), lore);
+		lore.add(texto(Idioma.tr(idioma, "herosforge.menu.proximo", estadistica.describir(idioma, mejora.porPunto())), ChatFormatting.AQUA));
+		lore.add(texto(Idioma.tr(idioma, "herosforge.menu.cuesta", Mejoras.experiencia(idioma, costo)), alcanza ? ChatFormatting.GREEN : ChatFormatting.RED));
+		ItemStack icono = item(new ItemStack(estadistica.icono()), texto(estadistica.nombre(idioma), alcanza ? ChatFormatting.GREEN : ChatFormatting.RED), lore);
 		// La espada y el peto mostrarían su daño y su armadura de vanilla, que no tienen nada que ver con los puntos
 		icono.set(DataComponents.TOOLTIP_DISPLAY, new TooltipDisplay(false, new LinkedHashSet<>(List.of(DataComponents.ATTRIBUTE_MODIFIERS))));
 		return icono;
@@ -281,7 +282,11 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 
 	/** Vanilla pone el lore en cursiva: sin el {@code withItalic(false)} todo el menú se ve torcido. */
 	private static Component texto(String texto, ChatFormatting color) {
-		return Component.literal(texto).withStyle(color).withStyle(estilo -> estilo.withItalic(false));
+		return texto(Component.literal(texto), color);
+	}
+
+	private static Component texto(Component texto, ChatFormatting color) {
+		return texto.copy().withStyle(color).withStyle(estilo -> estilo.withItalic(false));
 	}
 
 	/** No se saca ni se pone nada: un click se convierte en una compra en {@link #clicked}. */
