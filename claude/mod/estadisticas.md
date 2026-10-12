@@ -8,7 +8,7 @@ Síntomas que esta nota evita: el jugador reaparece con 10 corazones aunque comp
 
 **`PuntosDelJugador` es la fuente de verdad. Los `AttributeModifier` se derivan de ahí con `Mejoras.aplicar`, nunca al revés.** Vanilla también guarda los modificadores permanentes en el NBT, pero no se confía en ellos: se pierden al morir (ver [Minecraft 26.x sin ofuscar](../general/minecraft-26-sin-ofuscar.md)) y quedan viejos si cambia la config.
 
-**Los puntos se leen con `Mejoras.puntos(jugador)` y se escriben con `Mejoras.guardar`, nunca con el attachment directo:** sin Soul Link van al attachment `HerosForge.PUNTOS` del jugador, pero con él van a `PuntosDelGrupo`, que es de todo el servidor (ver [Puntos del grupo](grupo.md)).
+**Los puntos se leen con `Mejoras.puntos(jugador)` y se escriben con `Mejoras.guardar`, nunca con el attachment directo:** sin Soul Link van al attachment `HerosForge.PUNTOS` del jugador, pero con él van a `PuntosDelGrupo`, por grupo de Soul Link (ver [Puntos del grupo](grupo.md)).
 
 | Cuándo | Dónde | Qué hace |
 |---|---|---|
@@ -158,7 +158,7 @@ Vanilla no tiene un atributo que cure: la regeneración natural depende del hamb
 - **`porPunto` de la regeneración es vida por segundo en medios corazones**, como `MAX_HEALTH`, pero `describir` lo muestra **por minuto** (`× 30` corazones): 0,003 por segundo con `numero` (dos decimales) daría "+0 corazones".
 - **`getEntity()` y no `getDirectEntity()`:** con flechas y tridentes, el directo es el proyectil y el dueño es el jugador. Así el robo de vida vale también a distancia.
 - **`AFTER_DAMAGE` no corre si el golpe mató** (lo dice Fabric): el golpe final no cura. Por eso el test usa un gólem, que no muere de un golpe.
-- **Con los puntos del grupo, la regeneración cura a uno solo** (el primero de la lista que puede): Soul Link suma la curación de cada jugador a la vida compartida, y si curaran todos, el grupo se regeneraría una vez por jugador conectado. El robo de vida cura sólo al que pegó, y eso Soul Link lo reparte bien.
+- **Con los puntos del grupo, la regeneración cura a uno solo por grupo de Soul Link** (el primero de cada grupo que puede): Soul Link suma la curación de cada jugador a la vida compartida, y si curaran todos, el grupo se regeneraría una vez por jugador conectado. El robo de vida cura sólo al que pegó, y eso Soul Link lo reparte bien.
 
 ## Agregar una estadística
 

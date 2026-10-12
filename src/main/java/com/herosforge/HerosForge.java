@@ -56,6 +56,8 @@ public class HerosForge implements ModInitializer {
 			Mejoras.alEntrar(jugador);
 		});
 		ServerPlayerEvents.COPY_FROM.register(Mejoras::alReaparecer);
+		// Con Soul Link, el que cambia de grupo pasa a tener los puntos de su grupo nuevo
+		CompatibilidadSoulLink.alCambiarDeGrupo(Mejoras::aplicar);
 		CommandRegistrationCallback.EVENT.register((dispatcher, contexto, seleccion) -> ComandoEstadisticas.registrar(dispatcher));
 		InterfazDelCliente.registrar();
 		Curacion.registrar();

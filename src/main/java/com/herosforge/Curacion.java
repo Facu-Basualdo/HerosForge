@@ -1,5 +1,8 @@
 package com.herosforge;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 
@@ -28,20 +31,22 @@ public final class Curacion {
 	}
 
 	/**
-	 * Una vez por segundo. Con los puntos del grupo cura uno solo: Soul Link suma la curación de cada
-	 * jugador a la vida de todos, así que si curaran todos, el grupo se regeneraría una vez por jugador conectado.
+	 * Una vez por segundo. Con los puntos del grupo cura uno solo por grupo de Soul Link: suma la curación de
+	 * cada jugador a la vida de su grupo, así que si curaran todos, el grupo se regeneraría una vez por jugador conectado.
 	 */
 	public static void regenerar(MinecraftServer servidor) {
+		Set<String> curados = new HashSet<>();
 		for (ServerPlayer jugador : servidor.getPlayerList().getPlayers()) {
 			if (!jugador.isAlive() || jugador.isSpectator() || jugador.isCreative()) {
+				continue;
+			}
+			// El primero de cada grupo cura por todos (tenga o no regeneración: los puntos son los mismos)
+			if (Mejoras.puntosDelGrupo() && !curados.add(CompatibilidadSoulLink.grupo(jugador))) {
 				continue;
 			}
 			float cura = (float) Mejoras.efecto(jugador, Estadistica.REGENERACION);
 			if (cura > 0 && jugador.getHealth() < jugador.getMaxHealth()) {
 				jugador.heal(cura);
-			}
-			if (Mejoras.puntosDelGrupo()) {
-				return;
 			}
 		}
 	}

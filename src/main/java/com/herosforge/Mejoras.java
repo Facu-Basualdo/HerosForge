@@ -50,7 +50,7 @@ public final class Mejoras {
 	/** Los del jugador, o los del grupo si están compartidos (ver {@link PuntosDelGrupo}). */
 	public static PuntosDelJugador puntos(ServerPlayer jugador) {
 		if (delGrupo) {
-			return PuntosDelGrupo.de(jugador.level().getServer()).puntos();
+			return PuntosDelGrupo.de(jugador.level().getServer()).puntos(CompatibilidadSoulLink.grupo(jugador));
 		}
 		return jugador.getAttachedOrCreate(HerosForge.PUNTOS);
 	}
@@ -176,7 +176,7 @@ public final class Mejoras {
 	public static void alEntrar(ServerPlayer jugador) {
 		if (delGrupo) {
 			MinecraftServer servidor = jugador.level().getServer();
-			if (PuntosDelGrupo.de(servidor).sumarIndividuales(jugador.getUUID(), jugador.getAttachedOrCreate(HerosForge.PUNTOS))) {
+			if (PuntosDelGrupo.de(servidor).sumarIndividuales(CompatibilidadSoulLink.grupo(jugador), jugador.getUUID(), jugador.getAttachedOrCreate(HerosForge.PUNTOS))) {
 				aplicarATodos(servidor);
 				return;
 			}
@@ -290,7 +290,7 @@ public final class Mejoras {
 	private static void guardar(ServerPlayer jugador, PuntosDelJugador puntos) {
 		if (delGrupo) {
 			MinecraftServer servidor = jugador.level().getServer();
-			PuntosDelGrupo.de(servidor).cambiar(puntos);
+			PuntosDelGrupo.de(servidor).cambiar(CompatibilidadSoulLink.grupo(jugador), puntos);
 			aplicarATodos(servidor);
 		} else {
 			jugador.setAttached(HerosForge.PUNTOS, puntos);

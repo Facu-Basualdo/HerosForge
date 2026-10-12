@@ -94,6 +94,51 @@ public class SoulLinkGameTest {
 		helper.succeed();
 	}
 
+	/**
+	 * Cada grupo de Soul Link tiene sus puntos. Usa grupos propios y no el general, así no se cruza con
+	 * transaccionesConSoulLinkReal, que corre en el mismo batch.
+	 */
+	@GameTest
+	public void puntosPorGrupoDeSoulLink(GameTestHelper helper) {
+		if (!FabricLoader.getInstance().isModLoaded(HerosForge.SOUL_LINK)) {
+			throw new AssertionError("Esta prueba requiere el jar real de Soul Link");
+		}
+		MinecraftServer servidor = helper.getLevel().getServer();
+		// Los grupos quedan en el mundo de prueba: con nombres nuevos en cada corrida arrancan sin puntos
+		String sufijo = Integer.toString((int) (System.nanoTime() & 0xFFFFF), 36);
+		String rojo = "hf-rojo-" + sufijo;
+		String azul = "hf-azul-" + sufijo;
+		ServerPlayer rojo1 = entrar(helper, "hf-rojo1");
+		ServerPlayer rojo2 = entrar(helper, "hf-rojo2");
+		ServerPlayer azul1 = entrar(helper, "hf-azul1");
+		try {
+			ejecutar(servidor, "soullink grupo " + rojo + " hf-rojo1 hf-rojo2");
+			ejecutar(servidor, "soullink grupo " + azul + " hf-azul1");
+			Mejoras.dar(rojo1, Estadistica.DANIO, 3);
+			helper.assertValueEqual(Mejoras.puntos(rojo2).de(Estadistica.DANIO), 3, "El compañero de grupo tiene los mismos puntos");
+			helper.assertValueEqual(Mejoras.puntos(azul1).de(Estadistica.DANIO), 0, "Otro grupo no recibe los puntos");
+			helper.assertTrue(rojo2.getAttribute(Estadistica.DANIO.atributos().getFirst()).hasModifier(Estadistica.DANIO.idModificador()),
+					"El compañero de grupo recibe el modificador");
+
+			// Al cambiar de grupo pasa a tener los puntos del nuevo, y se le sacan los modificadores del viejo
+			ejecutar(servidor, "soullink grupo " + azul + " hf-rojo2");
+			helper.assertValueEqual(Mejoras.puntos(rojo2).de(Estadistica.DANIO), 0, "En azul no tiene los puntos de rojo");
+			helper.assertFalse(rojo2.getAttribute(Estadistica.DANIO.atributos().getFirst()).hasModifier(Estadistica.DANIO.idModificador()),
+					"Al cambiar de grupo se le saca el modificador de rojo");
+			helper.assertValueEqual(Mejoras.puntos(rojo1).de(Estadistica.DANIO), 3, "Los puntos se quedan en rojo");
+		} finally {
+			salir(helper, rojo1);
+			salir(helper, rojo2);
+			salir(helper, azul1);
+		}
+		helper.succeed();
+	}
+
+	/** Como operador (desde la consola): /soullink grupo no lo puede usar cualquiera. */
+	private static void ejecutar(MinecraftServer servidor, String comando) {
+		servidor.getCommands().performPrefixedCommand(servidor.createCommandSourceStack(), comando);
+	}
+
 	private static void cerca(GameTestHelper helper, double actual, double esperado, String mensaje) {
 		helper.assertTrue(Math.abs(actual - esperado) < 0.001, mensaje + ": " + actual + " != " + esperado);
 	}

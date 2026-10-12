@@ -25,6 +25,9 @@
 			"environment": "client"
 		}
 	],
+	"breaks": {
+		"soullink": "<3.0.0"
+	},
 	"depends": {
 		"fabricloader": ">=0.19.5",
 		"minecraft": "~26.3",

@@ -28,9 +28,13 @@ Vale lo mismo que para la config (ver [Tests de configuración](configuracion.md
 
 ## Integración real
 
-`./gradlew runGameTest "-PsoulLinkJar=../SoulLink/build/libs/soullink-1.2.1.jar"` cambia el entrypoint de tests a `SoulLinkGameTest` y agrega ese jar únicamente al runtime de gametest. La suite normal sigue sin Soul Link.
+`./gradlew runGameTest "-PsoulLinkJar=../SoulLink/build/libs/soullink-3.0.0.jar"` cambia el entrypoint de tests a `SoulLinkGameTest` y agrega ese jar únicamente al runtime de gametest. La suite normal sigue sin Soul Link.
 
 La prueba crea cuatro jugadores conectados y ejecuta, en un mismo tick, bajas de vida, daño y curación pendientes, reinicio, recarga de un tope menor, dos compras con saldo para una, devolución y compra con XP pendiente de otro jugador. Usa la sincronización del mod real, no una simulación. Restaurá configuración, jugadores y puntos en finally.
+
+`puntosPorGrupoDeSoulLink` arma dos grupos con `/soullink grupo` (desde la consola: hace falta ser operador). Lo que compra uno de rojo lo tiene su compañero y no azul; al pasar al compañero a azul se queda sin los puntos ni el modificador de rojo, que siguen en rojo. **Usa grupos propios con un sufijo al azar**, no el general: así no se cruza con `transaccionesConSoulLinkReal`, que corre en el mismo batch con el general, y los grupos de una corrida anterior (quedan en el mundo de prueba) no traen puntos.
+
+**`RamasGameTest` falla con Soul Link cargado, y no es un bug de ninguno de los dos mods.** Sus tests corren en paralelo con jugadores que quedan todos en el grupo general: comparten inventario, hambre y vida entre sí y se pisan los números (6 a 8 fallas que cambian de corrida en corrida; ya pasaba con la 0.13.2 y Soul Link 2.1.0). En esta suite mirá sólo los `soul_link_game_test_*`.
 
 ## Ver también
 

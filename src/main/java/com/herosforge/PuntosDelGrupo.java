@@ -1,6 +1,8 @@
 package com.herosforge;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -13,14 +15,16 @@ import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
 
 /**
- * Los puntos de todo el servidor cuando está Soul Link: ahí la experiencia y la vida son de
- * todos, así que los puntos también. Se guarda en {@code data/herosforge/puntos_del_grupo.dat} dentro
- * del mundo. El attachment de cada jugador no se toca: si se saca Soul Link, cada uno vuelve a
- * tener los suyos.
+ * Los puntos de cada grupo vinculado cuando está Soul Link: ahí la experiencia y la vida son del grupo,
+ * así que los puntos también. Sin grupos armados en Soul Link, todos están en el general. Se guarda en
+ * {@code data/herosforge/puntos_del_grupo.dat} dentro del mundo: el general en {@code puntos}, como cuando
+ * había un solo grupo, y los demás en {@code grupos}. El attachment de cada jugador no se toca: si se saca
+ * Soul Link, cada uno vuelve a tener los suyos.
  */
 public class PuntosDelGrupo extends SavedData {
 	private static final Codec<PuntosDelGrupo> CODEC = RecordCodecBuilder.create(instancia -> instancia.group(
-			PuntosDelJugador.CODEC.optionalFieldOf("puntos", PuntosDelJugador.vacio()).forGetter(grupo -> grupo.puntos),
+			PuntosDelJugador.CODEC.optionalFieldOf("puntos", PuntosDelJugador.vacio()).forGetter(grupo -> grupo.puntos(CompatibilidadSoulLink.GRUPO_GENERAL)),
+			Codec.unboundedMap(Codec.STRING, PuntosDelJugador.CODEC).optionalFieldOf("grupos", Map.of()).forGetter(PuntosDelGrupo::otrosGrupos),
 			UUIDUtil.CODEC_SET.optionalFieldOf("jugadores_sumados", Set.of()).forGetter(grupo -> grupo.sumados)
 	).apply(instancia, PuntosDelGrupo::new));
 
@@ -28,15 +32,17 @@ public class PuntosDelGrupo extends SavedData {
 	private static final SavedDataType<PuntosDelGrupo> TIPO = new SavedDataType<>(
 			HerosForge.id("puntos_del_grupo"), PuntosDelGrupo::new, CODEC, null);
 
-	private PuntosDelJugador puntos;
+	private final Map<String, PuntosDelJugador> porGrupo = new HashMap<>();
+	// De todo el servidor y no por grupo: si alguien cambia de grupo, sus puntos individuales no se suman otra vez
 	private final Set<UUID> sumados;
 
 	private PuntosDelGrupo() {
-		this(PuntosDelJugador.vacio(), Set.of());
+		this(PuntosDelJugador.vacio(), Map.of(), Set.of());
 	}
 
-	private PuntosDelGrupo(PuntosDelJugador puntos, Set<UUID> sumados) {
-		this.puntos = puntos;
+	private PuntosDelGrupo(PuntosDelJugador general, Map<String, PuntosDelJugador> otros, Set<UUID> sumados) {
+		this.porGrupo.putAll(otros);
+		this.porGrupo.put(CompatibilidadSoulLink.GRUPO_GENERAL, general);
 		this.sumados = new HashSet<>(sumados);
 	}
 
@@ -44,12 +50,13 @@ public class PuntosDelGrupo extends SavedData {
 		return servidor.getDataStorage().computeIfAbsent(TIPO);
 	}
 
-	public PuntosDelJugador puntos() {
-		return puntos;
+	/** Los de ese grupo; uno que nunca compró nada no tiene puntos. */
+	public PuntosDelJugador puntos(String grupo) {
+		return porGrupo.getOrDefault(grupo, PuntosDelJugador.vacio());
 	}
 
-	public void cambiar(PuntosDelJugador nuevos) {
-		puntos = nuevos;
+	public void cambiar(String grupo, PuntosDelJugador nuevos) {
+		porGrupo.put(grupo, nuevos);
 		setDirty();
 	}
 
@@ -60,11 +67,12 @@ public class PuntosDelGrupo extends SavedData {
 	 *
 	 * @return si cambiaron los puntos del grupo
 	 */
-	public boolean sumarIndividuales(UUID jugador, PuntosDelJugador individuales) {
+	public boolean sumarIndividuales(String grupo, UUID jugador, PuntosDelJugador individuales) {
 		if (!sumados.add(jugador)) {
 			return false;
 		}
 		setDirty();
+		PuntosDelJugador puntos = puntos(grupo);
 		PuntosDelJugador combinados = puntos;
 		for (Estadistica estadistica : Estadistica.values()) {
 			if (individuales.de(estadistica) > combinados.de(estadistica)) {
@@ -74,14 +82,21 @@ public class PuntosDelGrupo extends SavedData {
 		if (combinados.equals(puntos)) {
 			return false;
 		}
-		puntos = combinados;
+		porGrupo.put(grupo, combinados);
 		return true;
 	}
 
 	/** Para los tests: vuelve al estado de un mundo nuevo. */
 	public void olvidarTodo() {
-		puntos = PuntosDelJugador.vacio();
+		porGrupo.clear();
+		porGrupo.put(CompatibilidadSoulLink.GRUPO_GENERAL, PuntosDelJugador.vacio());
 		sumados.clear();
 		setDirty();
+	}
+
+	private Map<String, PuntosDelJugador> otrosGrupos() {
+		Map<String, PuntosDelJugador> otros = new HashMap<>(porGrupo);
+		otros.remove(CompatibilidadSoulLink.GRUPO_GENERAL);
+		return otros;
 	}
 }

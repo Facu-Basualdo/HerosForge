@@ -136,7 +136,7 @@ Al actualizar a la 0.13.0, las 25 estadísticas nuevas se agregan solas a un `he
 ## Funciona con
 
 - **Bloodmoon & Bosses:** los valores por defecto están balanceados contra sus mobs de nivel 1 a 100. Con el equipo y los puntos que se esperan en cada zona, un zombi se mata en 5 o 6 golpes en todo el mundo.
-- **Soul Link:** los puntos son de todo el grupo. Lo que compra uno lo tienen todos, la compra gasta la experiencia compartida y la regeneración cura una sola vez para todos. Los puntos que cada uno tenía antes se suman al grupo (el máximo por estadística) la primera vez que entra.
+- **Soul Link** (3.0.0 o más nuevo): los puntos son de cada grupo vinculado. Lo que compra uno lo tiene todo su grupo, la compra gasta la experiencia compartida y la regeneración cura una sola vez por grupo. Si armás grupos (por ejemplo 2 y 2), cada uno tiene sus puntos, y el que cambia de grupo pasa a tener los del grupo nuevo. Los puntos que cada uno tenía antes se suman al grupo (el máximo por estadística) la primera vez que entra.
 - **Mythic Loot:** el robo de vida y el daño a distancia se suman a los afijos de sus armas.
 
 ## Requisitos e instalación
@@ -157,7 +157,7 @@ Hasta la 0.11.1 el id era `estadisticasrpg` (el mod antes se llamaba Estadístic
 ./gradlew build                # compila y corre las pruebas; el jar queda en build/libs/
 ./gradlew runGameTest          # pruebas automáticas en un servidor sin ventana
 ./gradlew runClientGameTest    # prueba la pantalla en un cliente de verdad (abre una ventana)
-./gradlew runGameTest -PsoulLinkJar=../SoulLink/build/libs/soullink-2.0.0.jar   # integración con Soul Link real
+./gradlew runGameTest -PsoulLinkJar=../SoulLink/build/libs/soullink-3.0.0.jar   # integración con Soul Link real
 ```
 
 Pide Java 25: si Gradle no encuentra tu JDK, agregá `org.gradle.java.installations.paths=<ruta a tu JDK 25>` a tu `~/.gradle/gradle.properties`. La documentación técnica está en [CLAUDE.md](CLAUDE.md).
