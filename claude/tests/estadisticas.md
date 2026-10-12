@@ -4,7 +4,7 @@
 
 Síntomas que esta nota evita: un test falla con "Expected X to be 40.0: was 20.0" y los números parecen al revés; un test espera algo que vanilla hace "en el próximo tick" y nunca pasa; un test de compra pasa en creativo y no prueba nada.
 
-Todo está en `EstadisticasRPGGameTest`. Cada test crea su propio jugador y lo saca al final: no hay estado global, así que corren en paralelo sin pisarse.
+Todo está en `HerosForgeGameTest`. Cada test crea su propio jugador y lo saca al final: no hay estado global, así que corren en paralelo sin pisarse.
 
 ## Qué cubre cada test
 
@@ -18,6 +18,7 @@ Todo está en `EstadisticasRPGGameTest`. Cada test crea su propio jugador y lo s
 | `velocidadEsPorcentajeDeLaBase` | 100 puntos → `MOVEMENT_SPEED` = base × 1,2 |
 | `alReaparecerConservaPuntosYVida` | Morir: puntos, `MAX_HEALTH` 50 y vida 50 · volver del End: vida actual (30) |
 | `guardarYCargarConservaPuntosYVida` | Guardar y cargar: puntos, `MAX_HEALTH` 50 y vida 33 |
+| `unJugadorDelIdViejoConservaSusPuntos` | Un jugador guardado con `estadisticasrpg:puntos` y el modificador `estadisticasrpg:vida` entra con sus puntos en el id nuevo, sin lo viejo y con 26 de vida (no 32: no suma dos veces) · `moverSiFalta` mueve `puntos_del_grupo.dat` y no pisa uno nuevo. Se borra el attachment nuevo antes de guardar: `entrar` ya lo creó vacío |
 | `unaEstadisticaDesconocidaNoBorraLasDemas` | El codec ignora un id que no existe y lee los demás |
 | `reiniciarDejaTodoEnCero` | Puntos vacíos, sin modificadores, vida recortada a 20 en el momento |
 | `comandos` | `subir` compra y cobra, `/stats` funciona, `bajar` baja y devuelve la mitad (y sin puntos no devuelve nada), `dar` sin op no hace nada, una estadística desconocida no cobra |

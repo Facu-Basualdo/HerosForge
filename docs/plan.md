@@ -10,32 +10,32 @@ Decisiones tomadas por defecto (se pueden cambiar antes de la fase 1; todas qued
 - **Interfaz** = un **menú tipo cofre armado en el servidor** (`/estadisticas`): un ítem por estadística, click = comprar un punto. Además, comandos para todo. **No hace falta el mod en el cliente**, igual que en los otros dos mods.
 - **Al morir** = los puntos se conservan (es progresión, no un buff).
 - **Creativo** = paga igual. Si fuera gratis, alcanzaría con pasar a creativo, comprar todo y volver a supervivencia. Para probar está `/estadisticas dar` (op).
-- **Repo** = `C:\ReposGit\ModsMinecraft\EstadisticasRPG`, con la misma base que Bloodmoon & Bosses.
+- **Repo** = `C:\ReposGit\ModsMinecraft\HerosForge`, con la misma base que Bloodmoon & Bosses.
 
 ## Paso 0 — Repo (hecho)
 
 - Base copiada de `MobsPoderosos`: `build.gradle`, `settings.gradle`, `gradle/` (con `gradle-daemon-jvm.properties` para Java 25), `gradlew`, `.gitignore`, `.gitattributes`, `LICENSE`, `.claude/commands/docs.md`, `scripts/verificar-docs.mjs`.
-- `rootProject.name = 'estadisticasrpg'`, `group=com.estadisticasrpg`, `version=0.0.1` (el esqueleto no hace nada en el juego; la fase 1 sube el minor a `0.1.0`, como pide la regla del `CLAUDE.md`), `modId = "estadisticasrpg-test"`.
+- `rootProject.name = 'herosforge'`, `group=com.herosforge`, `version=0.0.1` (el esqueleto no hace nada en el juego; la fase 1 sube el minor a `0.1.0`, como pide la regla del `CLAUDE.md`), `modId = "herosforge-test"`.
 - `CLAUDE.md`, notas transversales en `claude/general/`, índices vacíos en `claude/mod/` y `claude/tests/`.
-- Esqueleto que compila: entrypoint vacío, `fabric.mod.json`, `estadisticasrpg.mixins.json` sin mixins, un gametest de humo.
+- Esqueleto que compila: entrypoint vacío, `fabric.mod.json`, `herosforge.mixins.json` sin mixins, un gametest de humo.
 - `git init` sin commit.
-- Ícono: `assets/estadisticasrpg/icon.png`, 256×256 (pixel art; se achicó del original de 1254 px para no inflar el jar).
+- Ícono: `assets/herosforge/icon.png`, 256×256 (pixel art; se achicó del original de 1254 px para no inflar el jar).
 
 ## Arquitectura
 
-Paquete `com.estadisticasrpg`. **En principio no hace falta ningún mixin**: los atributos, los eventos de Fabric y el menú de cofre alcanzan. Si aparece uno, va en `com.estadisticasrpg.mixin` con el prefijo `estadisticasrpg$`.
+Paquete `com.herosforge`. **En principio no hace falta ningún mixin**: los atributos, los eventos de Fabric y el menú de cofre alcanzan. Si aparece uno, va en `com.herosforge.mixin` con el prefijo `herosforge$`.
 
 | Archivo | Responsabilidad |
 |---|---|
-| `EstadisticasRPG.java` | Entrypoint `main`: registra el attachment, los eventos (`JOIN`, `COPY_FROM`) y el comando |
-| `Configuracion.java` | Record con costo, valor por punto y tope de cada estadística, con valores por defecto. Se carga de `config/estadisticasrpg.json` con Gson en `ArchivoDeConfiguracion` |
+| `HerosForge.java` | Entrypoint `main`: registra el attachment, los eventos (`JOIN`, `COPY_FROM`) y el comando |
+| `Configuracion.java` | Record con costo, valor por punto y tope de cada estadística, con valores por defecto. Se carga de `config/herosforge.json` con Gson en `ArchivoDeConfiguracion` |
 | `Estadistica.java` | Enum con cada estadística: id (`vida`, `danio`…), atributo(s), operación, ítem que la representa en el menú y nombre en castellano |
 | `PuntosDelJugador.java` | Record **inmutable** `Map<Estadistica, Integer>` con su `Codec`. Es el valor del attachment |
 | `Mejoras.java` | `comprar(ServerPlayer, Estadistica, cantidad)` → `Compra(estadistica, pedidos, comprados, resultado)`: `resultado` es `OK`, o `TOPE`/`SIN_NIVELES` según qué cortó la compra (con `comprados == 0` no se compró nada) · `aplicar(ServerPlayer)` pone o quita los modificadores según los puntos · `reiniciar` |
 | `MenuDeEstadisticas.java` | Subclase de `ChestMenu` (3 filas) que no deja mover ítems: un click compra y redibuja el menú |
 | `ComandoEstadisticas.java` | Comandos (ver §5) |
 
-Recursos: `fabric.mod.json`, `estadisticasrpg.mixins.json`, `assets/estadisticasrpg/icon.png`. Sin el mod en el cliente no hay archivo de idioma, así que **los textos que ve el jugador son `Component.literal` en castellano escrito en el servidor**. `Component.translatable` sólo con claves que ya trae vanilla (como el nombre de un atributo o de un ítem); nunca con claves propias, porque el cliente vanilla mostraría la clave cruda. Por eso el mod no tiene `lang/`.
+Recursos: `fabric.mod.json`, `herosforge.mixins.json`, `assets/herosforge/icon.png`. Sin el mod en el cliente no hay archivo de idioma, así que **los textos que ve el jugador son `Component.literal` en castellano escrito en el servidor**. `Component.translatable` sólo con claves que ya trae vanilla (como el nombre de un atributo o de un ítem); nunca con claves propias, porque el cliente vanilla mostraría la clave cruda. Por eso el mod no tiene `lang/`.
 
 ### 1. Dónde se guardan los puntos
 
@@ -45,7 +45,7 @@ Recursos: `fabric.mod.json`, `estadisticasrpg.mixins.json`, `assets/estadisticas
 
 ### 2. Cómo se aplican (`Mejoras.aplicar`)
 
-Un modificador **permanente** por estadística con un `Identifier` fijo (`estadisticasrpg:vida`, `estadisticasrpg:danio`…), con `addOrReplacePermanentModifier` (existe en 26.3). Aplicar dos veces no apila. Con 0 puntos se quita con `removeModifier(Identifier)`.
+Un modificador **permanente** por estadística con un `Identifier` fijo (`herosforge:vida`, `herosforge:danio`…), con `addOrReplacePermanentModifier` (existe en 26.3). Aplicar dos veces no apila. Con 0 puntos se quita con `removeModifier(Identifier)`.
 
 | Estadística | Atributo | Operación | Por punto | Tope | Máximo |
 |---|---|---|---|---|---|
@@ -132,8 +132,8 @@ Permisos con `Commands.hasPermission(Commands.LEVEL_GAMEMASTERS)` (en 26.3 no ex
 1. **Base** (0.1.0) — **hecha**: `Configuracion`, `Estadistica` con **vida, daño, armadura y velocidad**, attachment `PUNTOS`, `comprar`, `aplicar`, `JOIN` y respawn, comandos `ver`, `subir`, `dar` y `reiniciar`.
 2. **Menú** (0.2.0) — **hecha**: `MenuDeEstadisticas` y `/estadisticas` sin argumentos lo abre.
 3. **Más estadísticas** (0.3.0) — **hecha**: velocidad de ataque, minado, alcance, empuje y suerte.
-4. **Config y pulido** (0.4.0) — **hecha**: `config/estadisticasrpg.json`, `recargar`, sonidos y partículas al comprar, README completo.
-5. **Opcional — con Soul Link** (0.5.0) — **hecha** (`PuntosDelGrupo`, un `SavedData` del mundo; los individuales se suman una vez por jugador con el máximo por estadística): puntos del grupo si los dos mods están cargados (`FabricLoader.isModLoaded("inventariocompartido")`).
+4. **Config y pulido** (0.4.0) — **hecha**: `config/herosforge.json`, `recargar`, sonidos y partículas al comprar, README completo.
+5. **Opcional — con Soul Link** (0.5.0) — **hecha** (`PuntosDelGrupo`, un `SavedData` del mundo; los individuales se suman una vez por jugador con el máximo por estadística): puntos del grupo si los dos mods están cargados (`FabricLoader.isModLoaded("soullink")`).
 6. **Daño a distancia** (0.8.0) — **hecha**: estadística `danio_distancia` (+1 % por punto, tope 100) sin atributo; el primer mixin del mod (`ProyectilMixin`) multiplica el daño de flechas y tridentes lanzados por jugadores. El menú pasa a dos filas (5 y 5).
 7. **Bajar puntos y 5 estadísticas nuevas** (0.10.0) — **hecha**: `Mejoras.bajar` devuelve `devolucionAlBajar` (0,5) del costo por punto, desde `/estadisticas bajar`, el click derecho del menú y el botón **-1** de la pantalla (canal `bajar`, y el estado pasa a `estado_v2`). Regeneración y robo de vida sin atributo (`Curacion`), salto (`JUMP_STRENGTH`), caída segura (`SAFE_FALL_DISTANCE`) y respiración (`OXYGEN_BONUS`). El menú reparte por combate / resto y la pantalla pasa a dos columnas cuando no entran.
 

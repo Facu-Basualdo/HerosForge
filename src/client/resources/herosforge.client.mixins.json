@@ -1,0 +1,14 @@
+{
+	"required": true,
+	"package": "com.herosforge.cliente.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"client": [
+		"AccesoAPantallaDeContenedor"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
+	}
+}

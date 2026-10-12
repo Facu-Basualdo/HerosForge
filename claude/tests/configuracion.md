@@ -15,13 +15,13 @@ Síntoma que esta nota evita: un test cambia la config global, falla a la mitad,
 
 ## Archivos de prueba
 
-**Los tests de lectura usan `Files.createTempDirectory`, nunca el archivo real.** El servidor de gametest crea el suyo en `build/run/gameTest/config/estadisticasrpg.json` al arrancar, y `recargar` (en el test `comandos`) lee ése. Si un test lo editara, `recargar` cargaría esos valores para todos los tests que vienen después.
+**Los tests de lectura usan `Files.createTempDirectory`, nunca el archivo real.** El servidor de gametest crea el suyo en `build/run/gameTest/config/herosforge.json` al arrancar, y `recargar` (en el test `comandos`) lee ése. Si un test lo editara, `recargar` cargaría esos valores para todos los tests que vienen después.
 
 **`runGameTest` borra `build/run/gameTest/config` antes de arrancar** (un `doFirst` en `build.gradle`). Ese archivo sobrevive entre corridas, y el mod no pisa un archivo que ya existe: después de cambiar `POR_DEFECTO`, los tests corrían con los valores viejos y fallaban con números que no tenían sentido (topes de 10 con el código pidiendo 100).
 
 ## Cambiar la config global
 
-`EstadisticasRPG.usar` cambia la config de **todo el servidor**, y los gametests corren en el mismo servidor. Es seguro sólo porque:
+`HerosForge.usar` cambia la config de **todo el servidor**, y los gametests corren en el mismo servidor. Es seguro sólo porque:
 
 1. Cada `@GameTest` sin secuencia (`startSequence`) corre de punta a punta en una sola llamada, sin que se intercale otro test.
 2. **El test restaura `POR_DEFECTO` en un `finally`.** Si una aserción falla, la excepción sale después de restaurar.

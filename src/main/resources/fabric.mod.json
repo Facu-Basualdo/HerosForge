@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"id": "estadisticasrpg",
+	"id": "herosforge",
 	"version": "${version}",
 	"name": "Hero's Forge",
 	"description": "Subí tus estadísticas estilo RPG: pagás experiencia por puntos de vida, daño, armadura, velocidad u otra estadística. En el servidor alcanza; en el cliente suma una pantalla propia (tecla K o desde el inventario).",
@@ -8,20 +8,20 @@
 		"FacuBas"
 	],
 	"license": "MIT",
-	"icon": "assets/estadisticasrpg/icon.png",
+	"icon": "assets/herosforge/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"com.estadisticasrpg.EstadisticasRPG"
+			"com.herosforge.HerosForge"
 		],
 		"client": [
-			"com.estadisticasrpg.cliente.EstadisticasRPGCliente"
+			"com.herosforge.cliente.HerosForgeCliente"
 		]
 	},
 	"mixins": [
-		"estadisticasrpg.mixins.json",
+		"herosforge.mixins.json",
 		{
-			"config": "estadisticasrpg.client.mixins.json",
+			"config": "herosforge.client.mixins.json",
 			"environment": "client"
 		}
 	],

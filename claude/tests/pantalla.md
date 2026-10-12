@@ -8,7 +8,7 @@ Síntomas que esta nota evita: los gametests del servidor pasan y el juego crash
 
 | Tarea | Dónde | Qué prueba |
 |---|---|---|
-| `gradlew runGameTest` | `EstadisticasRPGGameTest` (servidor sin ventana) | Lo que hace `InterfazDelCliente`, llamándolo directo |
+| `gradlew runGameTest` | `HerosForgeGameTest` (servidor sin ventana) | Lo que hace `InterfazDelCliente`, llamándolo directo |
 | `gradlew runClientGameTest` | `PantallaClientGameTest` (un cliente de verdad con el servidor integrado) | La tecla, la pantalla, el botón del inventario y que una compra desde la pantalla llegue al servidor |
 
 **`runClientGameTest` abre una ventana de Minecraft** y tarda medio minuto: no está colgado de `build` ni de `check` (sólo `runGameTest` lo está). Corrélo a mano cuando toques `src/client`, `Paquetes` o `InterfazDelCliente`. Se activa con `enableClientGameTests = true` en `build.gradle`, y el entrypoint es `fabric-client-gametest` en `src/gametest/resources/fabric.mod.json`. El source set `gametest` ve las clases de `src/client`.

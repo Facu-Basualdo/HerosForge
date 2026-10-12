@@ -6,7 +6,7 @@ Síntomas que esta nota evita: después de actualizar el mod, un servidor sigue 
 
 ## Dónde y cómo
 
-`config/estadisticasrpg.json` (`EstadisticasRPG.archivoDeConfiguracion()`, con `FabricLoader.getConfigDir()`). Se lee en `onInitialize` y con `/estadisticas recargar` (op).
+`config/herosforge.json` (`HerosForge.archivoDeConfiguracion()`, con `FabricLoader.getConfigDir()`). Se lee en `onInitialize` y con `/estadisticas recargar` (op).
 
 ```json
 {
@@ -45,18 +45,18 @@ Síntomas que esta nota evita: después de actualizar el mod, un servidor sigue 
 
 ## Aplicar: los conectados ya, los demás al entrar
 
-`EstadisticasRPG.usar(config, servidor)` cambia la config y llama a `Mejoras.aplicar` para **cada jugador conectado**. Los que no están conectados la toman en `JOIN`, que también llama a `aplicar` (ver [Estadísticas](estadisticas.md)).
+`HerosForge.usar(config, servidor)` cambia la config y llama a `Mejoras.aplicar` para **cada jugador conectado**. Los que no están conectados la toman en `JOIN`, que también llama a `aplicar` (ver [Estadísticas](estadisticas.md)).
 
 Como los puntos son la fuente de verdad, cambiar la config **nunca toca los puntos**, sólo lo que valen:
 
 - **Bajar un tope:** los puntos de más se guardan pero no suman (`Mejora.efecto` usa `min(puntos, tope)`). Si se vuelve a subir, vuelven a contar sin pagar de nuevo.
 - **Bajar la vida:** `aplicar` recorta la vida actual en el momento.
 
-**El menú abierto se redibuja solo**, porque `MenuDeEstadisticas.broadcastChanges` compara `EstadisticasRPG.config()` con la última config que dibujó, **por identidad** (`!=`). Cada `usar` pone un objeto nuevo, así que siempre redibuja, aunque los valores sean iguales. Ver [Menú de estadísticas](menu.md).
+**El menú abierto se redibuja solo**, porque `MenuDeEstadisticas.broadcastChanges` compara `HerosForge.config()` con la última config que dibujó, **por identidad** (`!=`). Cada `usar` pone un objeto nuevo, así que siempre redibuja, aunque los valores sean iguales. Ver [Menú de estadísticas](menu.md).
 
 ## La config es global
 
-`EstadisticasRPG.config` es un `static volatile`: hay una sola por servidor. **Un test que la cambie tiene que restaurarla en un `finally`** (ver [Tests de configuración](../tests/configuracion.md)).
+`HerosForge.config` es un `static volatile`: hay una sola por servidor. **Un test que la cambie tiene que restaurarla en un `finally`** (ver [Tests de configuración](../tests/configuracion.md)).
 
 ## Ver también
 

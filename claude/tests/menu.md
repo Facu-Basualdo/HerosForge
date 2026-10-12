@@ -4,7 +4,7 @@
 
 Síntoma que esta nota evita: un test que "prueba" que el doble click no saca el ítem del menú pasa siempre, incluso sin ninguna protección, porque el ítem del cursor no era igual al de muestra.
 
-Los tests son `menuCompraConClick` y `menuNoDejaSacarNiPonerItems`, en `EstadisticasRPGGameTest`.
+Los tests son `menuCompraConClick` y `menuNoDejaSacarNiPonerItems`, en `HerosForgeGameTest`.
 
 | Test | Qué verifica |
 |---|---|

@@ -13,7 +13,7 @@ loom {
 	splitEnvironmentSourceSets()
 
 	mods {
-		"estadisticasrpg" {
+		"herosforge" {
 			sourceSet sourceSets.main
 			sourceSet sourceSets.client
 		}
@@ -69,7 +69,7 @@ java {
 fabricApi {
 	configureTests {
 		createSourceSet = true
-		modId = "estadisticasrpg-test"
+		modId = "herosforge-test"
 		enableGameTests = true
 		enableClientGameTests = true
 		eula = true
@@ -85,14 +85,14 @@ if (soulLinkJar.isPresent()) {
 	processGametestResources {
 		inputs.property('soulLinkJar', soulLinkJar.get())
 		filesMatching('fabric.mod.json') {
-			filter { line -> line.replace('com.estadisticasrpg.test.EstadisticasRPGGameTest', 'com.estadisticasrpg.test.SoulLinkGameTest') }
+			filter { line -> line.replace('com.herosforge.test.HerosForgeGameTest', 'com.herosforge.test.SoulLinkGameTest') }
 		}
 	}
 }
 
 // El servidor de prueba guarda su config en build/run/gameTest y no la pisa: si quedara la de una corrida vieja,
 // los tests correrían con los valores por defecto de antes y no con los de Configuracion.POR_DEFECTO
-// (lo mismo con el cliente de prueba, que además guarda ahí estadisticasrpg-cliente.json)
+// (lo mismo con el cliente de prueba, que además guarda ahí herosforge-cliente.json)
 def configDePrueba = layout.buildDirectory.dir("run/gameTest/config")
 def configDelClienteDePrueba = layout.buildDirectory.dir("run/clientGameTest/config")
 tasks.matching { it.name == "runGameTest" }.configureEach {

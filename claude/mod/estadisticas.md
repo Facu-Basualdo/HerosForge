@@ -8,7 +8,7 @@ Síntomas que esta nota evita: el jugador reaparece con 10 corazones aunque comp
 
 **`PuntosDelJugador` es la fuente de verdad. Los `AttributeModifier` se derivan de ahí con `Mejoras.aplicar`, nunca al revés.** Vanilla también guarda los modificadores permanentes en el NBT, pero no se confía en ellos: se pierden al morir (ver [Minecraft 26.x sin ofuscar](../general/minecraft-26-sin-ofuscar.md)) y quedan viejos si cambia la config.
 
-**Los puntos se leen con `Mejoras.puntos(jugador)` y se escriben con `Mejoras.guardar`, nunca con el attachment directo:** sin Soul Link van al attachment `EstadisticasRPG.PUNTOS` del jugador, pero con él van a `PuntosDelGrupo`, que es de todo el servidor (ver [Puntos del grupo](grupo.md)).
+**Los puntos se leen con `Mejoras.puntos(jugador)` y se escriben con `Mejoras.guardar`, nunca con el attachment directo:** sin Soul Link van al attachment `HerosForge.PUNTOS` del jugador, pero con él van a `PuntosDelGrupo`, que es de todo el servidor (ver [Puntos del grupo](grupo.md)).
 
 | Cuándo | Dónde | Qué hace |
 |---|---|---|
@@ -18,7 +18,7 @@ Síntomas que esta nota evita: el jugador reaparece con 10 corazones aunque comp
 | Entrar al servidor | `ServerPlayerEvents.JOIN` (al final de `PlayerList.placeNewPlayer`) → `Mejoras.alEntrar` | `aplicar`: ajusta los modificadores a la config actual (en modo grupo, antes suma los puntos individuales del que entra) |
 | Reaparecer o volver del End | `ServerPlayerEvents.COPY_FROM` (al final de `ServerPlayer.restoreFrom`) → `Mejoras.alReaparecer` | copia los puntos del viejo, `aplicar`, y si murió `setHealth(getMaxHealth())` |
 
-`aplicar` es **idempotente**: un modificador por estadística con id fijo (`Estadistica.idModificador()` = `estadisticasrpg:<id>`), puesto con `addOrReplacePermanentModifier` y quitado con `removeModifier(Identifier)` cuando el efecto es 0. Llamarlo de más no apila.
+`aplicar` es **idempotente**: un modificador por estadística con id fijo (`Estadistica.idModificador()` = `herosforge:<id>`), puesto con `addOrReplacePermanentModifier` y quitado con `removeModifier(Identifier)` cuando el efecto es 0. Llamarlo de más no apila.
 
 ## Respawn
 
@@ -73,7 +73,7 @@ Comprobado con el gametest `alReaparecerConservaPuntosYVida`: sin el registro de
 
 ## Config y topes
 
-`Configuracion.POR_DEFECTO` tiene el costo (`experienciaPorPunto`) y una `Mejora(porPunto, tope)` por estadística. **Ningún número de balance va fuera de `Configuracion`.** El archivo `config/estadisticasrpg.json` pisa esos valores: cómo se lee, valida y recarga está en [Configuración](configuracion.md).
+`Configuracion.POR_DEFECTO` tiene el costo (`experienciaPorPunto`) y una `Mejora(porPunto, tope)` por estadística. **Ningún número de balance va fuera de `Configuracion`.** El archivo `config/herosforge.json` pisa esos valores: cómo se lee, valida y recarga está en [Configuración](configuracion.md).
 
 **Los valores por defecto están balanceados contra los de Bloodmoon & Bosses** (el mod hermano, con mobs de nivel 1 a 100 según la distancia al spawn): las 15 estadísticas topean en 100 puntos y cada uno cuesta 30 de experiencia, así que todo al máximo son 1500 puntos y 45.000 de experiencia. El objetivo es que, con el equipo y los puntos que se esperan en cada zona, un zombi se mate en 5 o 6 golpes en todo el mundo y lo que aguanta el jugador baje de a poco hacia el nivel 100 (tabla en el README). La tabla es sólo por distancia: Bloodmoon & Bosses además suma hasta +20 niveles por los días del mundo y un 5 % de campeones con +10. **Si se cambia un número de acá, hay que mirar el otro mod**, y al revés. Lo que más desbalancea:
 
@@ -88,7 +88,7 @@ Comprobado con el gametest `alReaparecerConservaPuntosYVida`: sin el registro de
 
 ## Formato en disco
 
-El attachment va en el NBT del jugador (`playerdata/<uuid>.dat`), bajo los attachments de Fabric, como `estadisticasrpg:puntos` → `{vida: 3, danio: 7, ...}`. Sólo se guardan las estadísticas con puntos.
+El attachment va en el NBT del jugador (`playerdata/<uuid>.dat`), bajo los attachments de Fabric, como `herosforge:puntos` → `{vida: 3, danio: 7, ...}`. Sólo se guardan las estadísticas con puntos.
 
 **El codec es `Map<String, Integer>` y no un codec del enum, a propósito.** Con un codec de enum, un id que no existe (una estadística renombrada, sacada o de una versión más nueva del mod) haría que el attachment decodifique con error. Fabric (`AttachmentSerializingImpl`) saltea los attachments que fallan, con un `promotePartial` que loguea "Skipping invalid attachments". Que se salven o no los demás puntos depende del resultado parcial de DFU, y no vale la pena apostar los puntos de un jugador a eso. `PuntosDelJugador.desdeIds` decodifica siempre bien e ignora los ids desconocidos (gametest `unaEstadisticaDesconocidaNoBorraLasDemas`). Por eso **un id de `Estadistica` no se renombra nunca**: si hay que cambiarle el nombre visible, se cambia `nombre`, no `id`.
 
@@ -141,11 +141,11 @@ El attachment va en el NBT del jugador (`playerdata/<uuid>.dat`), bajo los attac
 - **Se multiplica el daño final**, con velocidad, Poder y crítico ya sumados: el arco, la ballesta y el tridente escalan en la misma proporción. Los fuegos artificiales de la ballesta no pasan por acá.
 - **Sólo si el dueño es un `ServerPlayer`.** Esqueletos, dispensadores o una flecha cuyo dueño se desconectó (`getOwner()` `null`) pegan como en vanilla.
 - `multiplicadorADistancia` usa `Mejoras.puntos`: con Soul Link toma los del grupo sin nada aparte.
-- `defaultRequire: 1` en `estadisticasrpg.mixins.json`: si un cambio de Minecraft mueve la llamada, el juego no arranca en vez de dejar la estadística sin efecto en silencio.
+- `defaultRequire: 1` en `herosforge.mixins.json`: si un cambio de Minecraft mueve la llamada, el juego no arranca en vez de dejar la estadística sin efecto en silencio.
 
 ## Regeneración y robo de vida: sin atributo
 
-Vanilla no tiene un atributo que cure: la regeneración natural depende del hambre, y nada cura al pegar. Las dos se construyen como el daño a distancia, sin atributos, y las aplica `Curacion` (registrada en `EstadisticasRPG.onInitialize`):
+Vanilla no tiene un atributo que cure: la regeneración natural depende del hambre, y nada cura al pegar. Las dos se construyen como el daño a distancia, sin atributos, y las aplica `Curacion` (registrada en `HerosForge.onInitialize`):
 
 | Estadística | Cuándo | Qué hace |
 |---|---|---|
@@ -172,6 +172,6 @@ Con `ADD_MULTIPLIED_BASE`, el porcentaje se aplica sobre la base **más todos lo
 - [Tests de estadísticas](../tests/estadisticas.md)
 - [Menú de estadísticas](menu.md)
 - [Configuración](configuracion.md)
-- [Puntos del grupo](grupo.md): con Soul Link los puntos van a `data/estadisticasrpg/puntos_del_grupo.dat`, no al attachment, y la regeneración cura a uno solo
+- [Puntos del grupo](grupo.md): con Soul Link los puntos van a `data/herosforge/puntos_del_grupo.dat`, no al attachment, y la regeneración cura a uno solo
 - [Minecraft 26.x sin ofuscar](../general/minecraft-26-sin-ofuscar.md)
 - [Probar en el juego](../general/probar-en-el-juego.md)

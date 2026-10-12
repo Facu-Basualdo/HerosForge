@@ -6,7 +6,7 @@ Síntomas que esta nota evita: con Soul Link, el que compró 10 corazones queda 
 
 ## Cuándo se activa
 
-**Si `FabricLoader.isModLoaded("inventariocompartido")` (`EstadisticasRPG.INVENTARIO_COMPARTIDO`), en `onInitialize` se llama a `Mejoras.usarPuntosDelGrupo(true)`.** No hay opción en la config. `CompatibilidadSoulLink` resuelve por reflexión los métodos de Soul Link sólo cuando está cargado: no hay dependencia de compilación ni clases de Soul Link empaquetadas.
+**Si `FabricLoader.isModLoaded("soullink")` (`HerosForge.SOUL_LINK`), en `onInitialize` se llama a `Mejoras.usarPuntosDelGrupo(true)`.** No hay opción en la config. `CompatibilidadSoulLink` resuelve por reflexión los métodos de Soul Link sólo cuando está cargado: no hay dependencia de compilación ni clases de Soul Link empaquetadas.
 
 El porqué: Soul Link comparte la experiencia (la reparte por diferencias en `SharedExperience.sync`) y la vida (en `SharedVitals.syncHealth`, recortada contra la vida máxima de **cada uno**). Con puntos individuales:
 
@@ -19,8 +19,8 @@ Soul Link es **un único grupo para todo el servidor**: no hay equipos ni grupos
 
 | Modo | Dónde | Archivo |
 |---|---|---|
-| Individual | Attachment `EstadisticasRPG.PUNTOS` de cada jugador | `playerdata/<uuid>.dat` |
-| Grupo | `PuntosDelGrupo`, un `SavedData` del servidor (`SavedDataType` con id `estadisticasrpg:puntos_del_grupo`) | `data/estadisticasrpg/puntos_del_grupo.dat` en el mundo |
+| Individual | Attachment `HerosForge.PUNTOS` de cada jugador | `playerdata/<uuid>.dat` |
+| Grupo | `PuntosDelGrupo`, un `SavedData` del servidor (`SavedDataType` con id `herosforge:puntos_del_grupo`) | `data/herosforge/puntos_del_grupo.dat` en el mundo |
 
 `PuntosDelGrupo` guarda `puntos` (con el mismo `PuntosDelJugador.CODEC`, así que también ignora ids desconocidos) y `jugadores_sumados` (`UUIDUtil.CODEC_SET`).
 

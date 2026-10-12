@@ -54,8 +54,8 @@ Se agregan con `/docs` a medida que se implementan las fases de [docs/plan.md](d
 
 ## Convenciones de código
 
-- Paquete `com.estadisticasrpg`; mixins (si hacen falta) en `com.estadisticasrpg.mixin`, registrados en `src/main/resources/estadisticasrpg.mixins.json`.
-- **Métodos y accessors agregados por mixins llevan prefijo `estadisticasrpg$`** para no chocar con otros mods.
+- Paquete `com.herosforge`; mixins (si hacen falta) en `com.herosforge.mixin`, registrados en `src/main/resources/herosforge.mixins.json`.
+- **Métodos y accessors agregados por mixins llevan prefijo `herosforge$`** para no chocar con otros mods.
 - **Ningún número de balance escrito a mano en el código** (costo, valor por punto, topes): van en `Configuracion`.
 - **Los puntos son la fuente de verdad, no los modificadores:** los atributos se recalculan desde el attachment, nunca al revés.
 - **Textos al jugador en castellano armados en el servidor:** sin el mod en el cliente no hay archivo de idioma, así que una clave de traducción propia se vería cruda.

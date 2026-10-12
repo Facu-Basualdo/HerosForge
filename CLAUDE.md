@@ -1,4 +1,4 @@
-# Hero's Forge (antes Estadísticas RPG) — mod de Minecraft
+# Hero's Forge — mod de Minecraft
 
 Mod de Fabric para **Minecraft Java 26.3** para subir las estadísticas del jugador estilo RPG: se pagan **puntos de experiencia** (30 por punto, siempre los mismos; no niveles) por **puntos** de vida, daño, daño a distancia, armadura, regeneración, robo de vida, velocidad u otra de las 15 estadísticas, hasta 100 por cada una. Bajar un punto devuelve la mitad. Los valores por defecto están balanceados contra Bloodmoon & Bosses (mobs de nivel 1 a 100). Los puntos son permanentes (sobreviven a la muerte) y se compran desde un menú tipo cofre (`/estadisticas`) o por comando. Java 25, Gradle 9.7 + Fabric Loom 1.18, Fabric Loader 0.19.5, Fabric API 0.162.0+26.3. Toda la lógica corre en el servidor: los jugadores no necesitan instalar nada. Quien instala el mismo jar en su cliente suma una pantalla propia opcional (tecla K o botón en el inventario) que habla con el servidor por paquetes de red.
 
@@ -46,6 +46,7 @@ Se agregan con `/docs` a medida que se implementan las fases de [docs/plan.md](d
 | Puntos del grupo con Soul Link (fase 5) | [grupo](claude/mod/grupo.md) | [grupo](claude/tests/grupo.md) |
 | Daño a distancia: flechas y tridente (0.8.0) | [estadisticas](claude/mod/estadisticas.md#daño-a-distancia-un-mixin-no-un-atributo) | [estadisticas](claude/tests/estadisticas.md) |
 | Pantalla propia del cliente, opcional (0.9.0) | [pantalla](claude/mod/pantalla.md) | [pantalla](claude/tests/pantalla.md) |
+| Migración del id `estadisticasrpg` → `herosforge` (0.12.0) | [migracion-de-id](claude/mod/migracion-de-id.md) | [estadisticas](claude/tests/estadisticas.md) |
 | Bajar puntos con devolución (0.10.0): comando, click derecho del menú y **-1** de la pantalla | [estadisticas](claude/mod/estadisticas.md#bajar-mejorasbajar) | [estadisticas](claude/tests/estadisticas.md) |
 | Regeneración, robo de vida, salto, caída segura y respiración (0.10.0) | [estadisticas](claude/mod/estadisticas.md#regeneración-y-robo-de-vida-sin-atributo) | [estadisticas](claude/tests/estadisticas.md) |
 
@@ -60,12 +61,12 @@ Se agregan con `/docs` a medida que se implementan las fases de [docs/plan.md](d
 
 ## Convenciones de código
 
-- **El nombre visible es Hero's Forge, pero el id es y sigue siendo `estadisticasrpg`** (mod id, paquete, jar, config, attachment, `SavedData` y canales de red). Renombrar el id le borraría los puntos a todos los mundos existentes y rompería la conexión con clientes de otra versión.
-- Paquete `com.estadisticasrpg`; mixins (si hacen falta) en `com.estadisticasrpg.mixin`, registrados en `src/main/resources/estadisticasrpg.mixins.json`.
-- **Métodos y accessors agregados por mixins llevan prefijo `estadisticasrpg$`** para no chocar con otros mods.
+- **El id es `herosforge` desde la 0.12.0 (antes `estadisticasrpg`)**: mod id, paquete, jar, config, attachment, `SavedData` y canales de red. Lo guardado con el id viejo se pasa solo (ver [migración del id](claude/mod/migracion-de-id.md)). No lo vuelvas a cambiar sin una migración: le borraría los puntos a todos los mundos y cortaría a los clientes de otra versión.
+- Paquete `com.herosforge`; mixins (si hacen falta) en `com.herosforge.mixin`, registrados en `src/main/resources/herosforge.mixins.json`.
+- **Métodos y accessors agregados por mixins llevan prefijo `herosforge$`** para no chocar con otros mods.
 - **Ningún número de balance escrito a mano en el código** (costo, valor por punto, topes): van en `Configuracion`.
 - **Los puntos son la fuente de verdad, no los modificadores:** los atributos se recalculan desde el attachment, nunca al revés.
-- Lo del cliente va en `src/client`, paquete `com.estadisticasrpg.cliente` (mixins en `com.estadisticasrpg.cliente.mixin`, registrados en `estadisticasrpg.client.mixins.json`). El servidor no puede depender de nada de ahí.
+- Lo del cliente va en `src/client`, paquete `com.herosforge.cliente` (mixins en `com.herosforge.cliente.mixin`, registrados en `herosforge.client.mixins.json`). El servidor no puede depender de nada de ahí.
 - **Textos al jugador en castellano armados en el servidor:** sin el mod en el cliente no hay archivo de idioma, así que una clave de traducción propia se vería cruda.
 - Indentación con tabs, imports agrupados: java/terceros → `net.fabricmc` → `net.minecraft`.
 - Comentarios sólo para el porqué (qué rompería vanilla si no estuviera), no para parafrasear.

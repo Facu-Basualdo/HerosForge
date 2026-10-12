@@ -8,7 +8,7 @@ Síntomas que esta nota evita: el juego crashea en la pantalla de título con "C
 
 Un complemento **opcional** del lado del cliente: una pantalla propia (`PantallaDeEstadisticas`) para ver, comprar y bajar puntos, que se abre con la tecla **K**, con un botón en el inventario de supervivencia o con `/estadisticas`. **No decide nada:** muestra lo que manda el servidor y le pide las compras y las bajas, que el servidor valida con el mismo `Mejoras.comprar` y `Mejoras.bajar` que el cofre.
 
-**Es el mismo jar**, con `splitEnvironmentSourceSets()` en `build.gradle`: el código del cliente va en `src/client` (paquete `com.estadisticasrpg.cliente`), que el servidor no ve al compilar. Un servidor dedicado nunca carga esas clases: el entrypoint `client` y `estadisticasrpg.client.mixins.json` (con `"environment": "client"` en `fabric.mod.json`) sólo corren en el cliente.
+**Es el mismo jar**, con `splitEnvironmentSourceSets()` en `build.gradle`: el código del cliente va en `src/client` (paquete `com.herosforge.cliente`), que el servidor no ve al compilar. Un servidor dedicado nunca carga esas clases: el entrypoint `client` y `herosforge.client.mixins.json` (con `"environment": "client"` en `fabric.mod.json`) sólo corren en el cliente.
 
 | Quién tiene el mod | Qué pasa |
 |---|---|
@@ -56,10 +56,10 @@ Al agregar otro campo a un paquete, subí el sufijo (`_v3`) y cambiá esas dos p
 
 | Clase | Qué hace |
 |---|---|
-| `EstadisticasRPGCliente` | Entrypoint `client`: los receptores (guarda el último `Estado`), la tecla, la preferencia al entrar, `abrir` y `servidorConElMod` (`canSend(Bajar)`) |
+| `HerosForgeCliente` | Entrypoint `client`: los receptores (guarda el último `Estado`), la tecla, la preferencia al entrar, `abrir` y `servidorConElMod` (`canSend(Bajar)`) |
 | `PantallaDeEstadisticas` | La pantalla. Una fila por estadística con ícono, nombre, lo que da ahora, `puntos/tope`, una barra y **-1**/**+1**/**+5**; tooltip con el detalle y lo que devuelve bajar |
 | `BotonDelInventario` | Un `Button` con una botella de experiencia, a la derecha del del libro de recetas. También hace que la K funcione con el inventario abierto |
-| `ConfiguracionDelCliente` | `config/estadisticasrpg-cliente.json`: `usarPantalla` y `botonEnInventario`, los dos `true` por defecto. Un valor que no es booleano usa el de por defecto y avisa en el log |
+| `ConfiguracionDelCliente` | `config/herosforge-cliente.json`: `usarPantalla` y `botonEnInventario`, los dos `true` por defecto. Un valor que no es booleano usa el de por defecto y avisa en el log |
 | `mixin/AccesoAPantallaDeContenedor` | Accessor de `leftPos` (protegido) |
 
 - **Nada de `ItemStack` en campos estáticos de clases que se cargan antes de entrar a un mundo.** `BotonDelInventario` se carga en el `AFTER_INIT` de la pantalla de título, antes de que vanilla enlace los componentes de los ítems, y un `static final ItemStack` ahí revienta el juego al arrancar ("Components not bound yet"). Por eso el ícono es un campo de instancia (el botón sólo se crea dentro de un mundo) y la pantalla arma los suyos al dibujar. Lo encontró el client gametest.
@@ -73,7 +73,7 @@ Al agregar otro campo a un paquete, subí el sufijo (`_v3`) y cambiá esas dos p
 - **BotonForja extiende Button** y sobrescribe `extractContents` (la firma verificada con `javap`): conserva narración, foco de teclado y compatibilidad con `clickScreenButton`, pero dibuja colores propios y un borde claro al enfocarse. No sobrescribir `extractWidgetRenderState`: es final en esta versión.
 
 - Los botones mandan con el **id** de la estadística, no con la `Fila`: el renglón se reemplaza con cada estado nuevo y la lambda del botón no.
-- La tecla y su categoría usan un archivo de idioma (`src/client/resources/assets/estadisticasrpg/lang/en_us.json`, en castellano): es lo único con clave de traducción, porque *Controles* sólo acepta claves. El resto de los textos de la pantalla son `Component.literal`.
+- La tecla y su categoría usan un archivo de idioma (`src/client/resources/assets/herosforge/lang/en_us.json`, en castellano): es lo único con clave de traducción, porque *Controles* sólo acepta claves. El resto de los textos de la pantalla son `Component.literal`.
 
 ## Agregar una estadística
 
