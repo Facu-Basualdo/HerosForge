@@ -124,6 +124,8 @@ Los subcomandos también existen en inglés: `view`, `buy`, `refund`, `give`, `r
 
 `config/herosforge.json` se crea en el primer arranque. Después de editarlo, `/estadisticas recargar` lo aplica sin reiniciar.
 
+**Desde el juego, con [Mod Menu](https://modrinth.com/mod/modmenu):** en la lista de mods, el botón de configuración de Hero's Forge abre una pantalla con todas estas opciones, con su nombre y una ayuda al pasar el mouse. Al guardar se aplica enseguida, como con `/estadisticas recargar`. Si un valor no sirve, no se guarda nada y la pantalla dice por qué. Edita el archivo de tu instalación: sirve en singleplayer, en un mundo abierto en LAN desde tu juego y para preparar la config antes de crear un mundo. El de un servidor dedicado se sigue editando en el servidor. El botón **Pantalla propia…** abre las dos opciones de `config/herosforge-cliente.json` (usar la pantalla propia y el botón del inventario).
+
 | Campo | Qué es |
 |---|---|
 | `experienciaPorPunto` | Experiencia que cuesta cada punto (0 = gratis) |
@@ -141,6 +143,7 @@ Al actualizar a la 0.13.0, las 25 estadísticas nuevas se agregan solas a un `he
 - **Bloodmoon & Bosses:** los valores por defecto están balanceados contra sus mobs de nivel 1 a 100. Con el equipo y los puntos que se esperan en cada zona, un zombi se mata en 5 o 6 golpes en todo el mundo.
 - **Soul Link** (3.0.0 o más nuevo): los puntos son de cada grupo vinculado. Lo que compra uno lo tiene todo su grupo, la compra gasta la experiencia compartida y la regeneración cura una sola vez por grupo. Si armás grupos (por ejemplo 2 y 2), cada uno tiene sus puntos, y el que cambia de grupo pasa a tener los del grupo nuevo. Los puntos que cada uno tenía antes se suman al grupo (el máximo por estadística) la primera vez que entra.
 - **Mythic Loot:** el robo de vida y el daño a distancia se suman a los afijos de sus armas.
+- **[Mod Menu](https://modrinth.com/mod/modmenu)** (opcional, en el cliente): la configuración se edita desde el juego. Ver [Configuración](#configuración).
 
 ## Requisitos e instalación
 

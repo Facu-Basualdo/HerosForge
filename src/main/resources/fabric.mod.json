@@ -21,6 +21,9 @@
 		],
 		"client": [
 			"com.herosforge.cliente.HerosForgeCliente"
+		],
+		"modmenu": [
+			"com.herosforge.cliente.IntegracionConModMenu"
 		]
 	},
 	"mixins": [

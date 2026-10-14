@@ -2,6 +2,7 @@ package com.herosforge;
 
 import java.nio.file.Path;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,11 +70,16 @@ public class HerosForge implements ModInitializer {
 		return config;
 	}
 
-	/** Vuelve a leer el archivo. Si está roto, se queda con la config que había. */
-	public static ArchivoDeConfiguracion.Lectura recargar(MinecraftServer servidor) {
+	/**
+	 * Vuelve a leer el archivo. Si está roto, se queda con la config que había. {@code servidor} es null desde la
+	 * pantalla de Mod Menu sin un mundo abierto: no hay jugadores a los que aplicársela.
+	 */
+	public static ArchivoDeConfiguracion.Lectura recargar(@Nullable MinecraftServer servidor) {
 		ArchivoDeConfiguracion.Lectura lectura = ArchivoDeConfiguracion.cargar(archivoDeConfiguracion());
-		if (lectura.ok()) {
+		if (lectura.ok() && servidor != null) {
 			usar(lectura.config(), servidor);
+		} else if (lectura.ok()) {
+			config = lectura.config();
 		}
 		return lectura;
 	}

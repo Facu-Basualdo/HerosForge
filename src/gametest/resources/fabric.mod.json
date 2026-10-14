@@ -10,7 +10,8 @@
 			"com.herosforge.test.RamasGameTest"
 		],
 		"fabric-client-gametest": [
-			"com.herosforge.test.PantallaClientGameTest"
+			"com.herosforge.test.PantallaClientGameTest",
+			"com.herosforge.test.ConfiguracionClientGameTest"
 		]
 	},
 	"depends": {

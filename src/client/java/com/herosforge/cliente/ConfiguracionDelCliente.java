@@ -76,7 +76,7 @@ public record ConfiguracionDelCliente(boolean usarPantalla, boolean botonEnInven
 		}
 	}
 
-	private static Path archivo() {
+	static Path archivo() {
 		return FabricLoader.getInstance().getConfigDir().resolve(HerosForge.MOD_ID + "-cliente.json");
 	}
 }

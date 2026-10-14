@@ -64,3 +64,4 @@ Como los puntos son la fuente de verdad, cambiar la config **nunca toca los punt
 - [Menú de estadísticas](menu.md)
 - [Tests de configuración](../tests/configuracion.md)
 - [Idioma](idioma.md): de dónde salen los textos y en qué idioma.
+- [Pantalla de configuración](pantalla-de-configuracion.md): editar este archivo desde Mod Menu.

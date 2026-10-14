@@ -5,6 +5,17 @@ plugins {
 repositories {
 	// Sólo hace falta para depender de otros mods: Loom ya agrega los repositorios
 	// de Minecraft y sus librerías.
+	exclusiveContent {
+		forRepository {
+			maven {
+				name = "Modrinth"
+				url = "https://api.modrinth.com/maven"
+			}
+		}
+		filter {
+			includeGroup "maven.modrinth"
+		}
+	}
 }
 
 loom {
@@ -37,6 +48,9 @@ dependencies {
 
 	// Fabric API
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	// Mod Menu es opcional: sólo para compilar IntegracionConModMenu, que Mod Menu carga si está instalado
+	compileOnly "maven.modrinth:modmenu:${project.modmenu_version}"
 }
 
 processResources {

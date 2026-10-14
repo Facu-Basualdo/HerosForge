@@ -22,6 +22,11 @@ public class PantallaClientGameTest implements FabricClientGameTest {
 
 	@Override
 	public void runTest(ClientGameTestContext contexto) {
+		// Los botones se buscan por su texto en español: el cliente de prueba arranca en inglés
+		contexto.runOnClient(cliente -> {
+			cliente.options.languageCode = "es_ar";
+			cliente.getLanguageManager().setSelected("es_ar");
+		});
 		try (TestSingleplayerContext mundo = contexto.worldBuilder().create()) {
 			mundo.getConnection().waitForChunksRender();
 			mundo.getServer().runCommand("gamemode survival @a");

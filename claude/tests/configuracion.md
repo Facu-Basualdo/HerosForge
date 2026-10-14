@@ -33,3 +33,4 @@ Síntoma que esta nota evita: un test cambia la config global, falla a la mitad,
 - [Configuración](../mod/configuracion.md)
 - [Tests de estadísticas](estadisticas.md): cómo correr comandos y armar jugadores
 - [Tests del grupo](grupo.md): el mismo cuidado con el modo y los puntos del grupo, que también son globales
+- [Tests de la pantalla de configuración](pantalla-de-configuracion.md)

@@ -63,6 +63,14 @@ public class HerosForgeCliente implements ClientModInitializer {
 		return config;
 	}
 
+	/** Desde la pantalla de Mod Menu. El servidor guarda la preferencia al entrar: si ya se entró, se le repite. */
+	static void recargarConfig() {
+		config = ConfiguracionDelCliente.cargar();
+		if (Minecraft.getInstance().getConnection() != null && ClientPlayNetworking.canSend(Paquetes.Preferencia.TIPO)) {
+			ClientPlayNetworking.send(new Paquetes.Preferencia(config.usarPantalla()));
+		}
+	}
+
 	public static KeyMapping tecla() {
 		return TECLA;
 	}

@@ -1,5 +1,7 @@
 package com.herosforge.cliente;
 
+import org.jspecify.annotations.Nullable;
+
 import com.herosforge.Idioma;
 
 import net.minecraft.client.Minecraft;
@@ -25,5 +27,11 @@ final class IdiomaDelCliente {
 
 	static String texto(String clave, Object... args) {
 		return tr(clave, args).getString();
+	}
+
+	/** Null si el mod no tiene esa clave: la pantalla de configuración arma entonces un nombre con la clave del JSON. */
+	static @Nullable MutableComponent siExiste(String clave, Object... args) {
+		String idioma = idioma();
+		return Idioma.claves(idioma).contains(clave) ? Idioma.tr(idioma, clave, args) : null;
 	}
 }
