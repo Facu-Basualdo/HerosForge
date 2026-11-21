@@ -59,6 +59,7 @@ Se agregan con `/docs` a medida que se implementan las fases de [docs/plan.md](d
 - **Si la feature se nota en el juego, actualizá el `README.md`** (qué estadísticas hay, cuánto dan, comandos y lo que verifican las pruebas): es lo que lee quien instala el mod, y `/docs` sólo toca `claude/`.
 - **Antes de dar algo por terminado corré `gradlew runGameTest`**: compilar no alcanza, los mixins y los eventos recién se aplican en runtime. **Si tocaste `src/client`, `Paquetes` o `InterfazDelCliente`, también `gradlew runClientGameTest`** (abre una ventana) y mirá las capturas de `build/run/clientGameTest/screenshots`.
 - **Con cada cambio que se pueda notar en el juego, subí `version` en `gradle.properties`**: minor (`0.1.0` → `0.2.0`) para una feature nueva, patch (`0.1.0` → `0.1.1`) para un arreglo. El esqueleto es `0.0.1`, así que la fase 1 queda en `0.1.0`, como en el plan.
+- **Con cada versión nueva, agregá su sección `## <versión>` en `CHANGELOG.md`**, en inglés y pensada para quien juega: es el changelog que `gradlew publishMods` sube a CurseForge, y sin ella la publicación falla. Subir es sólo `gradlew publishMods` con el token de CurseForge en `~/.gradle/gradle.properties` (`curseforgeToken`) o en `CURSEFORGE_TOKEN`; sin token corre en seco y no sube nada. Publicá sólo si te lo piden.
 - **No commitees ni pushees salvo que te lo pidan.**
 - Mensajes, comentarios y docs en **español rioplatense** (vos), como el resto del proyecto.
 
