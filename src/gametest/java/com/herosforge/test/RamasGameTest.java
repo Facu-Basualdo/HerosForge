@@ -16,26 +16,27 @@ import com.herosforge.HerosForge;
 import com.herosforge.Idioma;
 import com.herosforge.Mejoras;
 import com.herosforge.Oficios;
+import com.herosforge.test.mixin.InvulnerabilidadAccessor;
 
-import net.fabricmc.fabric.api.gametest.v1.GameTest;
+import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.network.protocol.game.ServerboundPlayerLoadedPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.animal.golem.IronGolem;
+import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.projectile.arrow.Arrow;
+import net.minecraft.world.entity.projectile.Arrow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.trading.ItemCost;
@@ -47,11 +48,11 @@ import net.minecraft.world.phys.Vec3;
  * Las 25 estadísticas de las ramas (0.13.0): los atributos nuevos y lo que aplican Combate, Supervivencia, Oficios
  * y sus mixins. Las que dependen del azar se prueban con la config en 100 %, así cada medición es una sola.
  */
-public class RamasGameTest {
+public class RamasGameTest implements FabricGameTest {
 	/** Para que una probabilidad llegue a 1 con 100 puntos. */
 	private static final Configuracion.Mejora SEGURO = new Configuracion.Mejora(0.01, 100);
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void atributosNuevosAlMaximo(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "atributos");
 		record Caso(Estadistica estadistica, Holder<Attribute> atributo, double suma, double multiplica) {
@@ -83,7 +84,7 @@ public class RamasGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void descripciones(GameTestHelper helper) {
 		helper.assertValueEqual(Estadistica.CRITICO.describir(Idioma.ESPANOL, 0.2), "20 % de probabilidad de crítico (+50 % de daño)", "Crítico");
 		helper.assertValueEqual(Estadistica.METABOLISMO.describir(Idioma.ESPANOL, 0.5), "−50 % de hambre", "Lo que mejora al bajar lleva un menos");
@@ -92,27 +93,27 @@ public class RamasGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void criticoYEjecucion(GameTestHelper helper) {
 		ServerPlayer certero = entrar(helper, "certero");
 		ServerPlayer verdugo = entrar(helper, "verdugo");
 		ServerLevel level = helper.getLevel();
 		conConfig(helper, Map.of(Estadistica.CRITICO, SEGURO), () -> {
 			Mejoras.dar(certero, Estadistica.CRITICO, 100);
-			IronGolem blanco = helper.spawnWithNoFreeWill(EntityTypes.IRON_GOLEM, new BlockPos(2, 2, 2));
-			blanco.hurtServer(level, certero.damageSources().playerAttack(certero), 8);
+			IronGolem blanco = helper.spawnWithNoFreeWill(EntityType.IRON_GOLEM, new BlockPos(2, 2, 2));
+			blanco.hurt(certero.damageSources().playerAttack(certero), 8);
 			assertCerca(helper, blanco.getMaxHealth() - blanco.getHealth(), 12, "Con el crítico seguro, 8 pega 12");
 			blanco.discard();
 		});
 
 		Mejoras.dar(verdugo, Estadistica.EJECUCION, 100);
-		IronGolem sano = helper.spawnWithNoFreeWill(EntityTypes.IRON_GOLEM, new BlockPos(2, 2, 2));
-		sano.hurtServer(level, verdugo.damageSources().playerAttack(verdugo), 8);
+		IronGolem sano = helper.spawnWithNoFreeWill(EntityType.IRON_GOLEM, new BlockPos(2, 2, 2));
+		sano.hurt(verdugo.damageSources().playerAttack(verdugo), 8);
 		assertCerca(helper, sano.getMaxHealth() - sano.getHealth(), 8, "Con la vida llena, la ejecución no suma");
-		IronGolem herido = helper.spawnWithNoFreeWill(EntityTypes.IRON_GOLEM, new BlockPos(4, 2, 2));
+		IronGolem herido = helper.spawnWithNoFreeWill(EntityType.IRON_GOLEM, new BlockPos(4, 2, 2));
 		herido.setHealth(herido.getMaxHealth() * 0.2f);
 		float antes = herido.getHealth();
-		herido.hurtServer(level, verdugo.damageSources().playerAttack(verdugo), 8);
+		herido.hurt(verdugo.damageSources().playerAttack(verdugo), 8);
 		assertCerca(helper, antes - herido.getHealth(), 12, "Debajo del 30 % de vida, +50 %");
 
 		sano.discard();
@@ -123,17 +124,17 @@ public class RamasGameTest {
 	}
 
 	/** Un jugador nuevo por golpe: después de cada uno, vanilla le da medio segundo sin recibir daño. */
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void resistenciasBajanElDanioElemental(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();
 		ServerPlayer fuego = resistente(helper, "resistente-fuego");
-		fuego.hurtServer(level, fuego.damageSources().inFire(), 10);
+		fuego.hurt(fuego.damageSources().inFire(), 10);
 		assertCerca(helper, fuego.getHealth(), 13, "−30 % de fuego: 10 pega 7");
 		ServerPlayer magia = resistente(helper, "resistente-magia");
-		magia.hurtServer(level, magia.damageSources().magic(), 10);
+		magia.hurt(magia.damageSources().magic(), 10);
 		assertCerca(helper, magia.getHealth(), 13, "−30 % de magia");
 		ServerPlayer comun = resistente(helper, "resistente-comun");
-		comun.hurtServer(level, comun.damageSources().generic(), 10);
+		comun.hurt(comun.damageSources().generic(), 10);
 		assertCerca(helper, comun.getHealth(), 10, "Lo que no es fuego, explosión ni magia pega entero");
 
 		salir(helper, fuego);
@@ -148,18 +149,18 @@ public class RamasGameTest {
 		return jugador;
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void esquivaSoloAtaques(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();
 		ServerPlayer agil = vulnerable(helper, "agil");
 		ServerPlayer caido = vulnerable(helper, "agil-caido");
-		IronGolem atacante = helper.spawnWithNoFreeWill(EntityTypes.IRON_GOLEM, new BlockPos(2, 2, 2));
+		IronGolem atacante = helper.spawnWithNoFreeWill(EntityType.IRON_GOLEM, new BlockPos(2, 2, 2));
 		conConfig(helper, Map.of(Estadistica.ESQUIVA, SEGURO), () -> {
 			Mejoras.dar(agil, Estadistica.ESQUIVA, 100);
 			Mejoras.dar(caido, Estadistica.ESQUIVA, 100);
-			agil.hurtServer(level, agil.damageSources().mobAttack(atacante), 6);
+			agil.hurt(agil.damageSources().mobAttack(atacante), 6);
 			assertCerca(helper, agil.getHealth(), 20, "Con la esquiva segura, el golpe del gólem no entra");
-			caido.hurtServer(level, caido.damageSources().generic(), 6);
+			caido.hurt(caido.damageSources().generic(), 6);
 			assertCerca(helper, caido.getHealth(), 14, "Lo que no viene de nadie no se esquiva");
 		});
 
@@ -169,25 +170,25 @@ public class RamasGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void represaliaDevuelveElGolpe(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();
 		ServerPlayer espinoso = vulnerable(helper, "espinoso");
 		Mejoras.dar(espinoso, Estadistica.REPRESALIA, 100);
-		IronGolem atacante = helper.spawnWithNoFreeWill(EntityTypes.IRON_GOLEM, new BlockPos(2, 2, 2));
+		IronGolem atacante = helper.spawnWithNoFreeWill(EntityType.IRON_GOLEM, new BlockPos(2, 2, 2));
 
-		espinoso.hurtServer(level, espinoso.damageSources().mobAttack(atacante), 10);
+		espinoso.hurt(espinoso.damageSources().mobAttack(atacante), 10);
 		// Lo que entró depende de la dificultad del mundo de prueba (escala el golpe de un mob): se mide
 		float recibido = 20 - espinoso.getHealth();
 		helper.assertTrue(recibido > 0, "El golpe entra (la dificultad no es pacífica)");
 		assertCerca(helper, atacante.getMaxHealth() - atacante.getHealth(), recibido * 0.3, "Devuelve el 30 % de lo que entró");
 
 		// Una flecha no se devuelve: el que pega no es el que la tiró
-		IronGolem otro = helper.spawnWithNoFreeWill(EntityTypes.IRON_GOLEM, new BlockPos(4, 2, 2));
+		IronGolem otro = helper.spawnWithNoFreeWill(EntityType.IRON_GOLEM, new BlockPos(4, 2, 2));
 		Arrow flecha = new Arrow(level, otro, new ItemStack(Items.ARROW), new ItemStack(Items.BOW));
 		ServerPlayer flechado = vulnerable(helper, "espinoso-flechado");
 		Mejoras.dar(flechado, Estadistica.REPRESALIA, 100);
-		flechado.hurtServer(level, flechado.damageSources().arrow(flecha, otro), 4);
+		flechado.hurt(flechado.damageSources().arrow(flecha, otro), 4);
 		assertCerca(helper, otro.getHealth(), otro.getMaxHealth(), "A distancia no hay represalia");
 
 		atacante.discard();
@@ -198,7 +199,7 @@ public class RamasGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void escudoSeRecargaFueraDePelea(GameTestHelper helper) {
 		MinecraftServer servidor = helper.getLevel().getServer();
 		ServerPlayer jugador = vulnerable(helper, "escudado");
@@ -212,7 +213,7 @@ public class RamasGameTest {
 		}
 		assertCerca(helper, jugador.getAbsorptionAmount(), 8, "Hasta los 4 corazones comprados");
 
-		jugador.hurtServer(helper.getLevel(), jugador.damageSources().generic(), 3);
+		jugador.hurt(jugador.damageSources().generic(), 3);
 		assertCerca(helper, jugador.getAbsorptionAmount(), 5, "El escudo se come el golpe");
 		assertCerca(helper, jugador.getHealth(), 20, "Y la vida queda entera");
 		Combate.recargarEscudos(servidor);
@@ -225,7 +226,7 @@ public class RamasGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void destrezaTensaMasRapido(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();
 		ServerPlayer novato = enElTest(helper, "tensa-novato", 1);
@@ -262,7 +263,7 @@ public class RamasGameTest {
 		return velocidad;
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void metabolismoBajaMenosElHambre(GameTestHelper helper) {
 		ServerPlayer comun = entrar(helper, "hambriento");
 		ServerPlayer lento = entrar(helper, "metabolismo");
@@ -282,7 +283,7 @@ public class RamasGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void nutricionYGloton(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();
 		ServerPlayer comun = entrar(helper, "comensal");
@@ -322,20 +323,20 @@ public class RamasGameTest {
 		return ticks;
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void tenacidadAcortaLoNegativo(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "tenaz");
 		Mejoras.dar(jugador, Estadistica.TENACIDAD, 100);
 		jugador.addEffect(new MobEffectInstance(MobEffects.POISON, 200));
-		jugador.addEffect(new MobEffectInstance(MobEffects.SPEED, 200));
+		jugador.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 200));
 		helper.assertValueEqual(jugador.getEffect(MobEffects.POISON).getDuration(), 100, "El veneno dura la mitad");
-		helper.assertValueEqual(jugador.getEffect(MobEffects.SPEED).getDuration(), 200, "La velocidad, entera");
+		helper.assertValueEqual(jugador.getEffect(MobEffects.MOVEMENT_SPEED).getDuration(), 200, "La velocidad, entera");
 
 		salir(helper, jugador);
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void imanAtraeLoQueEstaCerca(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();
 		MinecraftServer servidor = level.getServer();
@@ -361,7 +362,7 @@ public class RamasGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void cuidadoDelEquipoSalvaDurabilidad(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();
 		ServerPlayer comun = entrar(helper, "descuidado");
@@ -383,7 +384,7 @@ public class RamasGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void sabiduriaSoloEnLosOrbes(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();
 		ServerPlayer sabio = entrar(helper, "sabio");
@@ -403,7 +404,7 @@ public class RamasGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void regateoBajaLosPrecios(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "regateador");
 		Mejoras.dar(jugador, Estadistica.REGATEO, 100);
@@ -427,17 +428,17 @@ public class RamasGameTest {
 	 */
 	private static ServerPlayer enElTest(GameTestHelper helper, String nombre, int x) {
 		ServerPlayer jugador = entrar(helper, nombre);
-		jugador.snapTo(helper.absoluteVec(new Vec3(x + 0.5, 2, 0.5)));
+		jugador.moveTo(helper.absoluteVec(new Vec3(x + 0.5, 2, 0.5)));
 		return jugador;
 	}
 
 	/**
-	 * Un jugador que ya puede recibir daño: vanilla no lastima a nadie hasta que su cliente avisa que terminó de
-	 * cargar el mundo ({@code hasClientLoaded}), y el de los tests no tiene cliente.
+	 * Un jugador que ya puede recibir daño: en 1.21.1 vanilla no lastima a nadie en sus primeros 3 segundos
+	 * ({@code spawnInvulnerableTime}), y los tests no esperan.
 	 */
 	private static ServerPlayer vulnerable(GameTestHelper helper, String nombre) {
 		ServerPlayer jugador = entrar(helper, nombre);
-		jugador.connection.handleAcceptPlayerLoad(new ServerboundPlayerLoadedPacket());
+		((InvulnerabilidadAccessor) jugador).herosforge$setInvulnerabilidad(0);
 		return jugador;
 	}
 

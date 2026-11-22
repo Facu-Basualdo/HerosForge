@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.collect.Lists;
 import org.jspecify.annotations.Nullable;
 
 import com.herosforge.Estadistica;
@@ -13,14 +14,13 @@ import com.herosforge.Paquetes;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
-import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.ARGB;
+import net.minecraft.util.FastColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
@@ -49,12 +49,12 @@ public class PantallaDeEstadisticas extends Screen {
 	private static final int ANCHO_NOMBRE = 124;
 	private static final int TICKS_DEL_MENSAJE = 100;
 
-	private static final int BLANCO = ARGB.opaque(0xEEE6D5);
-	private static final int GRIS = ARGB.opaque(0xA2ADB7);
-	private static final int GRIS_OSCURO = ARGB.opaque(0x606060);
-	private static final int VERDE = ARGB.opaque(0x8FCBA2);
-	private static final int ROJO = ARGB.opaque(0xFF5555);
-	private static final int DORADO = ARGB.opaque(0xD8B777);
+	private static final int BLANCO = FastColor.ARGB32.opaque(0xEEE6D5);
+	private static final int GRIS = FastColor.ARGB32.opaque(0xA2ADB7);
+	private static final int GRIS_OSCURO = FastColor.ARGB32.opaque(0x606060);
+	private static final int VERDE = FastColor.ARGB32.opaque(0x8FCBA2);
+	private static final int ROJO = FastColor.ARGB32.opaque(0xFF5555);
+	private static final int DORADO = FastColor.ARGB32.opaque(0xD8B777);
 
 	/** La rama que se estaba mirando: al volver a abrir la pantalla, sigue en la misma. */
 	private static @Nullable String ramaElegida;
@@ -193,19 +193,19 @@ public class PantallaDeEstadisticas extends Screen {
 		}
 
 		@Override
-		protected void extractContents(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
+		protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float delta) {
 			boolean foco = active && isHoveredOrFocused();
 			int borde = !active ? 0x34404A : foco ? 0xEEE6D5 : principal ? 0xA58A58 : 0x60717E;
 			int fondo = !active ? 0x1C252E : foco ? 0x485647 : principal ? 0x354438 : 0x293540;
-			g.fill(getX(), getY(), getRight(), getBottom(), ARGB.opaque(fondo));
-			g.outline(getX(), getY(), getWidth(), getHeight(), ARGB.opaque(borde));
+			g.fill(getX(), getY(), getRight(), getBottom(), FastColor.ARGB32.opaque(fondo));
+			g.renderOutline(getX(), getY(), getWidth(), getHeight(), FastColor.ARGB32.opaque(borde));
 			// Recortado: en 426 de ancho, "Superviviente" no entra en su pestaña
 			var font = net.minecraft.client.Minecraft.getInstance().font;
 			String texto = getMessage().getString();
 			if (font.width(texto) > getWidth() - 4) {
 				texto = font.plainSubstrByWidth(texto, Math.max(0, getWidth() - 4 - font.width("…"))) + "…";
 			}
-			g.centeredText(font, Component.literal(texto), getX() + getWidth() / 2, getY() + (getHeight() - 8) / 2, active ? BLANCO : GRIS_OSCURO);
+			g.drawCenteredString(font, Component.literal(texto), getX() + getWidth() / 2, getY() + (getHeight() - 8) / 2, active ? BLANCO : GRIS_OSCURO);
 		}
 	}
 
@@ -274,63 +274,63 @@ public class PantallaDeEstadisticas extends Screen {
 	}
 
 	@Override
-	public void extractRenderState(GuiGraphicsExtractor graficos, int mouseX, int mouseY, float delta) {
-		graficos.fill(x0 + 3, y0 + 3, x0 + ancho + 3, y0 + alto + 3, ARGB.color(0x80, 0x000000));
-		graficos.fill(x0, y0, x0 + ancho, y0 + alto, ARGB.color(0xF5, 0x17212B));
-		graficos.outline(x0, y0, ancho, alto, ARGB.opaque(0x8C7652));
-		graficos.fill(x0 + 1, y0 + 1, x0 + ancho - 1, y0 + 25, ARGB.opaque(0x24313C));
-		graficos.text(font, "HERO'S FORGE", x0 + 10, y0 + 9, DORADO);
+	public void render(GuiGraphics graficos, int mouseX, int mouseY, float delta) {
+		graficos.fill(x0 + 3, y0 + 3, x0 + ancho + 3, y0 + alto + 3, FastColor.ARGB32.color(0x80, 0x000000));
+		graficos.fill(x0, y0, x0 + ancho, y0 + alto, FastColor.ARGB32.color(0xF5, 0x17212B));
+		graficos.renderOutline(x0, y0, ancho, alto, FastColor.ARGB32.opaque(0x8C7652));
+		graficos.fill(x0 + 1, y0 + 1, x0 + ancho - 1, y0 + 25, FastColor.ARGB32.opaque(0x24313C));
+		graficos.drawString(font, "HERO'S FORGE", x0 + 10, y0 + 9, DORADO);
 		String titulo = IdiomaDelCliente.texto(dibujado != null && dibujado.grupo() ? "herosforge.pantalla.titulo_grupo" : "herosforge.titulo");
-		graficos.text(font, titulo, x0 + ancho - 10 - font.width(titulo), y0 + 9, BLANCO);
+		graficos.drawString(font, titulo, x0 + ancho - 10 - font.width(titulo), y0 + 9, BLANCO);
 		if (dibujado == null) {
-			graficos.centeredText(font, IdiomaDelCliente.tr("herosforge.pantalla.esperando"), width / 2, y0 + 35, GRIS);
+			graficos.drawCenteredString(font, IdiomaDelCliente.tr("herosforge.pantalla.esperando"), width / 2, y0 + 35, GRIS);
 		} else {
 			int mitad = ancho / 2;
 			String resumen = ajustar(resumen(dibujado), mitad - 20);
-			graficos.text(font, resumen, x0 + 10, y0 + 32, VERDE);
+			graficos.drawString(font, resumen, x0 + 10, y0 + 32, VERDE);
 			// Centrado en el panel, salvo que la experiencia llegue hasta ahí (millones de XP en 426 de ancho): ahí se corre
 			String costo = ajustar(dibujado.costo() == 0
 					? IdiomaDelCliente.texto("herosforge.pantalla.gratis")
 					: IdiomaDelCliente.texto("herosforge.pantalla.costo", numero(dibujado.costo())), mitad - 20);
 			int xCosto = Math.max(x0 + mitad - font.width(costo) / 2, x0 + 10 + font.width(resumen) + 12);
-			graficos.text(font, costo, xCosto, y0 + 32, BLANCO);
-			graficos.fill(x0 + 8, y0 + 43, x0 + ancho - 8, y0 + 44, ARGB.opaque(0x394653));
+			graficos.drawString(font, costo, xCosto, y0 + 32, BLANCO);
+			graficos.fill(x0 + 8, y0 + 43, x0 + ancho - 8, y0 + 44, FastColor.ARGB32.opaque(0x394653));
 			for (Renglon renglon : renglones) extraerRenglon(graficos, renglon, mouseX, mouseY);
 		}
 
 		if (mensaje != null) {
 			int y = y0 + alto - ALTO_PIE + 3;
 			String texto = font.plainSubstrByWidth(mensaje.texto(), ancho - 2 * MARGEN);
-			graficos.centeredText(font, Component.literal(texto), width / 2, y, mensaje.compro() ? VERDE : ROJO);
+			graficos.drawCenteredString(font, Component.literal(texto), width / 2, y, mensaje.compro() ? VERDE : ROJO);
 		}
 
 		// Los botones van arriba del panel
-		super.extractRenderState(graficos, mouseX, mouseY, delta);
+		super.render(graficos, mouseX, mouseY, delta);
 	}
 
-	private void extraerRenglon(GuiGraphicsExtractor g, Renglon renglon, int mouseX, int mouseY) {
+	private void extraerRenglon(GuiGraphics g, Renglon renglon, int mouseX, int mouseY) {
 		Paquetes.Fila fila = renglon.fila();
 		int x = renglon.x(), y = renglon.y();
 		int xBotones = x + renglon.ancho() - MARGEN - ANCHO_BOTONES;
 		boolean amplio = altoFila >= 26 && renglon.ancho() >= 260;
 		boolean hover = mouseX >= x && mouseX < x + renglon.ancho() && mouseY >= y && mouseY < y + altoFila;
-		g.fill(x, y, x + renglon.ancho(), y + altoFila - 2, ARGB.opaque(hover ? 0x303E49 : 0x202D38));
-		g.item(icono(fila), x + 4, y + (altoFila - 16) / 2 - 1);
+		g.fill(x, y, x + renglon.ancho(), y + altoFila - 2, FastColor.ARGB32.opaque(hover ? 0x303E49 : 0x202D38));
+		g.renderItem(icono(fila), x + 4, y + (altoFila - 16) / 2 - 1);
 		String puntos = amplio ? fila.puntos() + "/" + fila.tope() : Integer.toString(fila.puntos());
 		int xPuntos = xBotones - 6 - font.width(puntos);
 		String nombre = Estadistica.porId(fila.id()).map(estadistica -> estadistica.nombreCorto(IdiomaDelCliente.idioma())).orElse(fila.nombre());
 		int yTexto = amplio ? y + 4 : y + (altoFila - 8) / 2 - 1;
-		g.text(font, ajustar(nombre, xPuntos - x - X_NOMBRE - 5), x + X_NOMBRE, yTexto, BLANCO);
-		g.text(font, puntos, xPuntos, yTexto, fila.enElTope() ? DORADO : GRIS);
+		g.drawString(font, ajustar(nombre, xPuntos - x - X_NOMBRE - 5), x + X_NOMBRE, yTexto, BLANCO);
+		g.drawString(font, puntos, xPuntos, yTexto, fila.enElTope() ? DORADO : GRIS);
 		if (amplio) {
-			g.text(font, ajustar(fila.ahora().isEmpty() ? IdiomaDelCliente.texto("herosforge.pantalla.sin_mejoras") : fila.ahora(), xBotones - x - X_NOMBRE - 6),
+			g.drawString(font, ajustar(fila.ahora().isEmpty() ? IdiomaDelCliente.texto("herosforge.pantalla.sin_mejoras") : fila.ahora(), xBotones - x - X_NOMBRE - 6),
 					x + X_NOMBRE, y + 15, GRIS);
 		}
 		int largo = xBotones - x - X_NOMBRE - 6;
 		int lleno = fila.tope() <= 0 ? 0 : (int) ((long) largo * Math.min(fila.puntos(), fila.tope()) / fila.tope());
-		g.fill(x + X_NOMBRE, y + altoFila - 4, x + X_NOMBRE + largo, y + altoFila - 3, ARGB.opaque(0x3A4854));
+		g.fill(x + X_NOMBRE, y + altoFila - 4, x + X_NOMBRE + largo, y + altoFila - 3, FastColor.ARGB32.opaque(0x3A4854));
 		g.fill(x + X_NOMBRE, y + altoFila - 4, x + X_NOMBRE + lleno, y + altoFila - 3, fila.enElTope() ? DORADO : VERDE);
-		if (hover && mouseX < xBotones) g.setComponentTooltipForNextFrame(font, detalle(fila), mouseX, mouseY);
+		if (hover && mouseX < xBotones) setTooltipForNextRenderPass(Lists.transform(detalle(fila), Component::getVisualOrderText));
 	}
 
 	private String ajustar(String texto, int anchoDisponible) {
@@ -375,19 +375,19 @@ public class PantallaDeEstadisticas extends Screen {
 	}
 
 	@Override
-	public boolean keyPressed(KeyEvent evento) {
+	public boolean keyPressed(int tecla, int codigo, int modificadores) {
 		// Como el inventario: la misma tecla que la abre la cierra, y la E también
-		if (HerosForgeCliente.tecla().matches(evento) || minecraft.options.keyInventory.matches(evento)) {
-			minecraft.gui.setScreen(null);
+		if (HerosForgeCliente.tecla().matches(tecla, codigo) || minecraft.options.keyInventory.matches(tecla, codigo)) {
+			minecraft.setScreen(null);
 			return true;
 		}
-		return super.keyPressed(evento);
+		return super.keyPressed(tecla, codigo, modificadores);
 	}
 
 	@Override
 	public void onClose() {
 		if (volverAlInventario && minecraft.player != null) {
-			minecraft.gui.setScreen(new InventoryScreen(minecraft.player));
+			minecraft.setScreen(new InventoryScreen(minecraft.player));
 		} else {
 			super.onClose();
 		}

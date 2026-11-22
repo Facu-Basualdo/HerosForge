@@ -31,44 +31,41 @@ import com.herosforge.PuntosDelGrupo;
 import com.herosforge.PuntosDelJugador;
 import com.herosforge.Rama;
 
-import net.fabricmc.fabric.api.gametest.v1.GameTest;
+import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.fabricmc.loader.api.FabricLoader;
 
+import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.Connection;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.players.PlayerList;
-import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.animal.golem.IronGolem;
-import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
-import net.minecraft.world.entity.projectile.arrow.Arrow;
-import net.minecraft.world.entity.projectile.arrow.ThrownTrident;
+import net.minecraft.world.entity.animal.IronGolem;
+import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.Arrow;
+import net.minecraft.world.entity.projectile.ThrownTrident;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
-import net.minecraft.world.level.storage.TagValueInput;
-import net.minecraft.world.level.storage.TagValueOutput;
 
-public class HerosForgeGameTest {
+public class HerosForgeGameTest implements FabricGameTest {
 	private static final int COSTO = Configuracion.POR_DEFECTO.experienciaPorPunto();
 	private static final int DEVOLUCION = Configuracion.POR_DEFECTO.devolucionPorPunto();
 
 	/** Sólo lee los archivos de idioma: no toca a ningún jugador. */
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void textosEnLosDosIdiomas(GameTestHelper helper) {
 		Set<String> ingles = Idioma.claves(Idioma.INGLES);
 		Set<String> espanol = Idioma.claves(Idioma.ESPANOL);
@@ -98,13 +95,13 @@ public class HerosForgeGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void modCargado(GameTestHelper helper) {
-		helper.assertTrue(FabricLoader.getInstance().isModLoaded(HerosForge.MOD_ID), Component.literal("El mod tiene que estar cargado"));
+		helper.assertTrue(FabricLoader.getInstance().isModLoaded(HerosForge.MOD_ID), "El mod tiene que estar cargado");
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void comprarVidaCobraLaExperienciaYLlenaLaVida(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "comprador");
 		ponerExperiencia(jugador, COSTO * 3 + 10);
@@ -124,7 +121,7 @@ public class HerosForgeGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void sinExperienciaNoCambiaNada(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "pobre");
 		ponerExperiencia(jugador, COSTO - 1);
@@ -140,7 +137,7 @@ public class HerosForgeGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void enElTopeNoCobra(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "topeado");
 		Mejoras.dar(jugador, Estadistica.VIDA, 100);
@@ -156,7 +153,7 @@ public class HerosForgeGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void compraLoQueEntra(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "parcial");
 
@@ -182,7 +179,7 @@ public class HerosForgeGameTest {
 	}
 
 	/** La experiencia de cada nivel la da vanilla: si la cuenta de Mejoras.experiencia se corriera, se cobraría mal. */
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void elCostoEsElMismoEnCualquierNivel(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "veterano");
 		// Los totales de vanilla en los cambios de fórmula (nivel 16 y 31)
@@ -208,7 +205,7 @@ public class HerosForgeGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void velocidadEsPorcentajeDeLaBase(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "veloz");
 		double base = jugador.getAttributeBaseValue(Attributes.MOVEMENT_SPEED);
@@ -221,7 +218,7 @@ public class HerosForgeGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void estadisticasDeLaFase3AlMaximo(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "completo");
 		for (Estadistica estadistica : List.of(Estadistica.VELOCIDAD_ATAQUE, Estadistica.MINADO, Estadistica.ALCANCE, Estadistica.EMPUJE, Estadistica.SUERTE)) {
@@ -241,7 +238,7 @@ public class HerosForgeGameTest {
 	}
 
 	/** Si uno no se sincronizara, el cliente vanilla no vería el efecto: minaría, alcanzaría o caminaría como antes. */
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void losAtributosQueUsaElClienteSeSincronizan(GameTestHelper helper) {
 		for (var atributo : List.of(Attributes.MOVEMENT_SPEED, Attributes.ATTACK_SPEED, Attributes.BLOCK_BREAK_SPEED,
 				Attributes.BLOCK_INTERACTION_RANGE, Attributes.ENTITY_INTERACTION_RANGE, Attributes.JUMP_STRENGTH,
@@ -252,7 +249,7 @@ public class HerosForgeGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void cadaEstadisticaTieneConfigYSlot(GameTestHelper helper) {
 		for (Rama rama : Rama.values()) {
 			// La fila de arriba es de la botella de experiencia y la de abajo de las pestañas: entran 9 por rama
@@ -272,7 +269,7 @@ public class HerosForgeGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void bajarDevuelveLaMitad(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "arrepentido");
 		ponerExperiencia(jugador, COSTO * 3);
@@ -301,7 +298,7 @@ public class HerosForgeGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void estadisticasNuevasAlMaximo(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "atleta");
 		for (Estadistica estadistica : List.of(Estadistica.SALTO, Estadistica.CAIDA, Estadistica.RESPIRACION)) {
@@ -319,7 +316,7 @@ public class HerosForgeGameTest {
 	}
 
 	/** Se llama a regenerar a mano en el mismo tick: el tick del servidor también cura cada segundo y movería la cuenta. */
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void regeneracionCuraCadaSegundo(GameTestHelper helper) {
 		ServerPlayer conPuntos = entrar(helper, "regenerado");
 		ServerPlayer sinPuntos = entrar(helper, "herido");
@@ -340,20 +337,20 @@ public class HerosForgeGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void roboDeVidaCuraAlPegar(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "vampiro");
 		Mejoras.dar(jugador, Estadistica.ROBO_DE_VIDA, 100);
 		jugador.setHealth(10);
-		IronGolem blanco = helper.spawnWithNoFreeWill(EntityTypes.IRON_GOLEM, new BlockPos(2, 2, 2));
+		IronGolem blanco = helper.spawnWithNoFreeWill(EntityType.IRON_GOLEM, new BlockPos(2, 2, 2));
 
-		blanco.hurtServer(helper.getLevel(), jugador.damageSources().playerAttack(jugador), 8);
+		blanco.hurt(jugador.damageSources().playerAttack(jugador), 8);
 		assertCerca(helper, blanco.getMaxHealth() - blanco.getHealth(), 8, "El golpe pega entero (el gólem no tiene armadura)");
 		assertCerca(helper, jugador.getHealth(), 10.8, "Con 100 puntos cura el 10 % del daño");
 
 		// Un golpe que no es del jugador no lo cura
-		IronGolem otro = helper.spawnWithNoFreeWill(EntityTypes.IRON_GOLEM, new BlockPos(4, 2, 2));
-		otro.hurtServer(helper.getLevel(), helper.getLevel().damageSources().generic(), 8);
+		IronGolem otro = helper.spawnWithNoFreeWill(EntityType.IRON_GOLEM, new BlockPos(4, 2, 2));
+		otro.hurt(helper.getLevel().damageSources().generic(), 8);
 		assertCerca(helper, jugador.getHealth(), 10.8, "Un golpe de otro no cura al jugador");
 
 		blanco.discard();
@@ -363,7 +360,7 @@ public class HerosForgeGameTest {
 	}
 
 	/** El mixin se aplica recién en runtime: esto dispara flechas y tridentes de verdad contra un blanco. */
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void danioADistanciaMultiplicaFlechasYTridentes(GameTestHelper helper) {
 		ServerPlayer sinPuntos = entrar(helper, "arquero-novato");
 		ServerPlayer conPuntos = entrar(helper, "arquero-experto");
@@ -384,7 +381,7 @@ public class HerosForgeGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void multiplicadorADistanciaSegunLosPuntos(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "punteria");
 		assertCerca(helper, Mejoras.multiplicadorADistancia(null), 1, "Sin dueño");
@@ -410,7 +407,7 @@ public class HerosForgeGameTest {
 	 * tirado hacia él. El proyectil no se agrega al mundo: se tickea a mano, así cada medición es una sola.
 	 */
 	private static float danioAlBlanco(GameTestHelper helper, AbstractArrow proyectil) {
-		IronGolem blanco = helper.spawnWithNoFreeWill(EntityTypes.IRON_GOLEM, new BlockPos(2, 2, 2));
+		IronGolem blanco = helper.spawnWithNoFreeWill(EntityType.IRON_GOLEM, new BlockPos(2, 2, 2));
 		proyectil.setCritArrow(false);
 		proyectil.setPos(blanco.getX() - 2, blanco.getY() + 1.3, blanco.getZ());
 		proyectil.shoot(1, 0, 0, 1.5f, 0);
@@ -423,7 +420,7 @@ public class HerosForgeGameTest {
 		return danio;
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void alReaparecerConservaPuntosYVida(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "renacido");
 		Mejoras.dar(jugador, Estadistica.VIDA, 50);
@@ -445,15 +442,13 @@ public class HerosForgeGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void guardarYCargarConservaPuntosYVida(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "guardado");
 		Mejoras.dar(jugador, Estadistica.VIDA, 50);
 		jugador.setHealth(33);
 
-		TagValueOutput salida = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, jugador.registryAccess());
-		jugador.saveWithoutId(salida);
-		CompoundTag guardado = salida.buildResult();
+		CompoundTag guardado = jugador.saveWithoutId(new CompoundTag());
 		guardado.remove("UUID");
 		salir(helper, jugador);
 
@@ -468,24 +463,22 @@ public class HerosForgeGameTest {
 	}
 
 	/** Un jugador guardado con el id viejo (estadisticasrpg): puntos en el attachment viejo y modificadores con el id viejo. */
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void unJugadorDelIdViejoConservaSusPuntos(GameTestHelper helper) {
 		ServerPlayer antes = entrar(helper, "de-antes");
 		antes.removeAttached(HerosForge.PUNTOS);
 		antes.setAttached(MigracionDeId.PUNTOS_VIEJOS, PuntosDelJugador.vacio().con(Estadistica.VIDA, 10).con(Estadistica.DANIO, 4));
 		antes.getAttribute(Attributes.MAX_HEALTH).addOrReplacePermanentModifier(
 				new AttributeModifier(MigracionDeId.viejo("vida"), 6, AttributeModifier.Operation.ADD_VALUE));
-		TagValueOutput salida = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, antes.registryAccess());
-		antes.saveWithoutId(salida);
-		CompoundTag guardado = salida.buildResult();
+		CompoundTag guardado = antes.saveWithoutId(new CompoundTag());
 		guardado.remove("UUID");
 		salir(helper, antes);
 
 		ServerPlayer despues = entrar(helper, "de-antes-otra-vez", guardado);
 		helper.assertValueEqual(Mejoras.puntos(despues).de(Estadistica.VIDA), 10, "Los puntos de vida pasan al id nuevo");
 		helper.assertValueEqual(Mejoras.puntos(despues).de(Estadistica.DANIO), 4, "Y los de daño");
-		helper.assertFalse(despues.hasAttached(MigracionDeId.PUNTOS_VIEJOS), Component.literal("El attachment viejo se saca"));
-		helper.assertFalse(despues.getAttribute(Attributes.MAX_HEALTH).hasModifier(MigracionDeId.viejo("vida")), Component.literal("El modificador viejo se saca"));
+		helper.assertFalse(despues.hasAttached(MigracionDeId.PUNTOS_VIEJOS), "El attachment viejo se saca");
+		helper.assertFalse(despues.getAttribute(Attributes.MAX_HEALTH).hasModifier(MigracionDeId.viejo("vida")), "El modificador viejo se saca");
 		assertCerca(helper, despues.getAttributeValue(Attributes.MAX_HEALTH), 26.0, "La vida suma una sola vez: 20 + 10 × 0,6");
 
 		Path carpeta;
@@ -495,10 +488,10 @@ public class HerosForgeGameTest {
 			Files.createDirectories(vieja.getParent());
 			Files.writeString(vieja, "puntos");
 			Path nueva = carpeta.resolve("herosforge").resolve("puntos_del_grupo.dat");
-			helper.assertTrue(MigracionDeId.moverSiFalta(vieja, nueva), Component.literal("Los puntos del grupo se mueven a la carpeta nueva"));
+			helper.assertTrue(MigracionDeId.moverSiFalta(vieja, nueva), "Los puntos del grupo se mueven a la carpeta nueva");
 			helper.assertValueEqual(Files.readString(nueva), "puntos", "Enteros");
 			Files.writeString(vieja, "otros");
-			helper.assertFalse(MigracionDeId.moverSiFalta(vieja, nueva), Component.literal("Si ya hay uno nuevo, no se pisa"));
+			helper.assertFalse(MigracionDeId.moverSiFalta(vieja, nueva), "Si ya hay uno nuevo, no se pisa");
 		} catch (IOException e) {
 			throw new java.io.UncheckedIOException(e);
 		}
@@ -507,7 +500,7 @@ public class HerosForgeGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void unaEstadisticaDesconocidaNoBorraLasDemas(GameTestHelper helper) {
 		CompoundTag guardado = new CompoundTag();
 		guardado.putInt("vida", 3);
@@ -518,7 +511,7 @@ public class HerosForgeGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void reiniciarDejaTodoEnCero(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "reiniciado");
 		Mejoras.dar(jugador, Estadistica.VIDA, 50);
@@ -536,7 +529,7 @@ public class HerosForgeGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void comandos(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "comandante");
 		ponerExperiencia(jugador, COSTO * 5);
@@ -573,7 +566,7 @@ public class HerosForgeGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void menuCompraConClick(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "cliqueador");
 		ponerExperiencia(jugador, COSTO * 10);
@@ -585,32 +578,32 @@ public class HerosForgeGameTest {
 
 		// Abre en la portada, con las ramas en la fila del medio: un click en una abre su página
 		helper.assertTrue(menu.abierta() == null, "Abre en la portada");
-		menu.clicked(MenuDeEstadisticas.slotDe(Rama.GUARDIAN), 0, ContainerInput.PICKUP, jugador);
+		menu.clicked(MenuDeEstadisticas.slotDe(Rama.GUARDIAN), 0, ClickType.PICKUP, jugador);
 		helper.assertValueEqual(menu.abierta(), Rama.GUARDIAN, "Click en una rama abre su página");
 		helper.assertValueEqual(Mejoras.experiencia(jugador), COSTO * 10, "Cambiar de página no cobra");
 		helper.assertTrue(menu.getCarried().isEmpty(), "Cambiar de página no deja nada en el cursor");
 
-		menu.clicked(vida, 0, ContainerInput.PICKUP, jugador);
+		menu.clicked(vida, 0, ClickType.PICKUP, jugador);
 		helper.assertValueEqual(Mejoras.puntos(jugador).de(Estadistica.VIDA), 1, "Un click compra 1");
 		helper.assertValueEqual(Mejoras.experiencia(jugador), COSTO * 9, "Un click cobra 1 punto");
 		helper.assertTrue(menu.getCarried().isEmpty(), "El cursor queda vacío");
 		helper.assertTrue(menu.getSlot(vida).getItem().is(Items.GOLDEN_APPLE), "El ícono sigue en su lugar");
 
-		menu.clicked(vida, 0, ContainerInput.QUICK_MOVE, jugador);
+		menu.clicked(vida, 0, ClickType.QUICK_MOVE, jugador);
 		helper.assertValueEqual(Mejoras.puntos(jugador).de(Estadistica.VIDA), 6, "Shift + click compra 5");
 		helper.assertValueEqual(Mejoras.experiencia(jugador), COSTO * 4, "Shift + click cobra 5 puntos");
 
-		menu.clicked(vida, 1, ContainerInput.PICKUP, jugador);
+		menu.clicked(vida, 1, ClickType.PICKUP, jugador);
 		helper.assertValueEqual(Mejoras.puntos(jugador).de(Estadistica.VIDA), 5, "Click derecho baja 1");
 		helper.assertValueEqual(Mejoras.experiencia(jugador), COSTO * 4 + DEVOLUCION, "Click derecho devuelve la mitad");
-		menu.clicked(vida, 1, ContainerInput.QUICK_MOVE, jugador);
+		menu.clicked(vida, 1, ClickType.QUICK_MOVE, jugador);
 		helper.assertValueEqual(Mejoras.puntos(jugador).de(Estadistica.VIDA), 0, "Shift + click derecho baja 5");
 		helper.assertValueEqual(Mejoras.experiencia(jugador), COSTO * 4 + DEVOLUCION * 6, "Y devuelve la mitad de los 5");
 		helper.assertTrue(menu.getCarried().isEmpty(), "Bajar tampoco deja nada en el cursor");
-		menu.clicked(vida, 0, ContainerInput.PICKUP, jugador);
+		menu.clicked(vida, 0, ClickType.PICKUP, jugador);
 
 		// Tecla numérica, tirar (Q) y click del medio no compran ni sacan el ítem
-		for (ContainerInput entrada : List.of(ContainerInput.SWAP, ContainerInput.THROW, ContainerInput.CLONE)) {
+		for (ClickType entrada : List.of(ClickType.SWAP, ClickType.THROW, ClickType.CLONE)) {
 			menu.clicked(vida, 0, entrada, jugador);
 			helper.assertValueEqual(Mejoras.puntos(jugador).de(Estadistica.VIDA), 1, entrada + " no compra");
 			helper.assertTrue(menu.getSlot(vida).getItem().is(Items.GOLDEN_APPLE), entrada + " no saca el ícono");
@@ -620,13 +613,13 @@ public class HerosForgeGameTest {
 		// Un op le da puntos con el menú abierto: se redibuja en el próximo broadcastChanges
 		Mejoras.dar(jugador, Estadistica.VIDA, 100);
 		menu.broadcastChanges();
-		helper.assertTrue(menu.getSlot(vida).getItem().is(Items.STAINED_GLASS_PANE.gray()), "En el máximo se ve vidrio gris");
+		helper.assertTrue(menu.getSlot(vida).getItem().is(Items.GRAY_STAINED_GLASS_PANE), "En el máximo se ve vidrio gris");
 
 		// Las pestañas de abajo cambian de rama, y la flecha vuelve a la portada
-		menu.clicked(18 + 8, 0, ContainerInput.PICKUP, jugador);
+		menu.clicked(18 + 8, 0, ClickType.PICKUP, jugador);
 		helper.assertValueEqual(menu.abierta(), Rama.ARTESANO, "La última pestaña es la del artesano");
 		helper.assertTrue(menu.getSlot(MenuDeEstadisticas.slotDe(Estadistica.MINADO)).getItem().is(Items.IRON_PICKAXE), "Muestra las estadísticas de su rama");
-		menu.clicked(0, 0, ContainerInput.PICKUP, jugador);
+		menu.clicked(0, 0, ClickType.PICKUP, jugador);
 		helper.assertTrue(menu.abierta() == null, "La flecha vuelve a la portada");
 		helper.assertValueEqual(Mejoras.puntos(jugador).de(Estadistica.VIDA), 100, "Navegar no compra ni baja");
 
@@ -635,7 +628,7 @@ public class HerosForgeGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void menuNoDejaSacarNiPonerItems(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "tramposo");
 		MenuDeEstadisticas.abrir(jugador);
@@ -647,23 +640,23 @@ public class HerosForgeGameTest {
 		// Doble click en el inventario con una copia exacta del ícono en el cursor: vanilla junta los ítems con los
 		// mismos componentes de todos los slots (una manzana común no cuenta: le faltan el nombre y el lore)
 		menu.setCarried(menu.getSlot(vida).getItem().copy());
-		menu.clicked(primeroDelJugador, 0, ContainerInput.PICKUP_ALL, jugador);
+		menu.clicked(primeroDelJugador, 0, ClickType.PICKUP_ALL, jugador);
 		helper.assertValueEqual(menu.getCarried().getCount(), 1, "El doble click no junta la manzana del menú");
 		helper.assertTrue(menu.getSlot(vida).getItem().is(Items.GOLDEN_APPLE), "La manzana del menú sigue ahí");
 
 		// Arrastrar tierra por un slot del jugador, el de vida y otro del jugador
 		menu.setCarried(new ItemStack(Items.DIRT, 2));
-		menu.clicked(-999, AbstractContainerMenu.getQuickcraftMask(AbstractContainerMenu.QUICKCRAFT_HEADER_START, AbstractContainerMenu.QUICKCRAFT_TYPE_CHARITABLE), ContainerInput.QUICK_CRAFT, jugador);
+		menu.clicked(-999, AbstractContainerMenu.getQuickcraftMask(AbstractContainerMenu.QUICKCRAFT_HEADER_START, AbstractContainerMenu.QUICKCRAFT_TYPE_CHARITABLE), ClickType.QUICK_CRAFT, jugador);
 		for (int slot : new int[] {primeroDelJugador + 1, vida, primeroDelJugador + 2}) {
-			menu.clicked(slot, AbstractContainerMenu.getQuickcraftMask(AbstractContainerMenu.QUICKCRAFT_HEADER_CONTINUE, AbstractContainerMenu.QUICKCRAFT_TYPE_CHARITABLE), ContainerInput.QUICK_CRAFT, jugador);
+			menu.clicked(slot, AbstractContainerMenu.getQuickcraftMask(AbstractContainerMenu.QUICKCRAFT_HEADER_CONTINUE, AbstractContainerMenu.QUICKCRAFT_TYPE_CHARITABLE), ClickType.QUICK_CRAFT, jugador);
 		}
-		menu.clicked(-999, AbstractContainerMenu.getQuickcraftMask(AbstractContainerMenu.QUICKCRAFT_HEADER_END, AbstractContainerMenu.QUICKCRAFT_TYPE_CHARITABLE), ContainerInput.QUICK_CRAFT, jugador);
+		menu.clicked(-999, AbstractContainerMenu.getQuickcraftMask(AbstractContainerMenu.QUICKCRAFT_HEADER_END, AbstractContainerMenu.QUICKCRAFT_TYPE_CHARITABLE), ClickType.QUICK_CRAFT, jugador);
 		helper.assertTrue(menu.getSlot(vida).getItem().is(Items.GOLDEN_APPLE), "Arrastrar no pone nada en el menú");
 		helper.assertValueEqual(menu.getSlot(primeroDelJugador + 1).getItem().getCount() + menu.getSlot(primeroDelJugador + 2).getItem().getCount(), 2, "La tierra se reparte sólo en el inventario");
 		helper.assertTrue(!menu.canDragTo(menu.getSlot(vida)) && !menu.getSlot(vida).mayPlace(new ItemStack(Items.DIRT)), "Los slots del menú no aceptan nada");
 
 		// Shift + click desde el inventario no mete nada en el menú
-		menu.clicked(primeroDelJugador + 1, 0, ContainerInput.QUICK_MOVE, jugador);
+		menu.clicked(primeroDelJugador + 1, 0, ClickType.QUICK_MOVE, jugador);
 		helper.assertTrue(menu.getSlot(primeroDelJugador + 1).getItem().is(Items.DIRT), "Shift + click desde el inventario no mueve nada");
 
 		jugador.closeContainer();
@@ -671,7 +664,7 @@ public class HerosForgeGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void configNuevaSeCreaConLosValoresPorDefecto(GameTestHelper helper) throws IOException {
 		Path archivo = Files.createTempDirectory("herosforge").resolve("herosforge.json");
 
@@ -685,7 +678,7 @@ public class HerosForgeGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void configRespetaLoCambiadoYAvisaLoInvalido(GameTestHelper helper) throws IOException {
 		Path archivo = Files.createTempDirectory("herosforge").resolve("herosforge.json");
 		String escrito = """
@@ -715,7 +708,7 @@ public class HerosForgeGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void configSinAvisosAgregaLasQueFaltan(GameTestHelper helper) throws IOException {
 		Path archivo = Files.createTempDirectory("herosforge").resolve("herosforge.json");
 		// Como lo dejaba la 0.6.0: el costo en niveles, que ya no existe
@@ -736,7 +729,7 @@ public class HerosForgeGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void configRotaNoSeUsa(GameTestHelper helper) throws IOException {
 		Path archivo = Files.createTempDirectory("herosforge").resolve("herosforge.json");
 		Files.writeString(archivo, "{ \"costoPorPunto\": 2, ");
@@ -749,7 +742,7 @@ public class HerosForgeGameTest {
 	}
 
 	/** Cambia la config global: se restaura en el finally antes de que corra cualquier otro test. */
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void cambiarLaConfigSeAplicaALosConectados(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "reconfigurado");
 		Mejoras.dar(jugador, Estadistica.VIDA, 2);
@@ -775,7 +768,7 @@ public class HerosForgeGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void grupoLoQueCompraUnoLoTienenTodos(GameTestHelper helper) {
 		ServerPlayer a = entrar(helper, "grupo-a");
 		ServerPlayer b = entrar(helper, "grupo-b");
@@ -795,7 +788,7 @@ public class HerosForgeGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void grupoSumaLosPuntosIndividualesUnaSolaVez(GameTestHelper helper) {
 		ServerPlayer p = entrar(helper, "individual-p");
 		ServerPlayer q = entrar(helper, "individual-q");
@@ -821,7 +814,7 @@ public class HerosForgeGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void grupoAlReaparecerConservaLosPuntos(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "grupo-renacido");
 		ServerPlayer[] reaparecido = new ServerPlayer[1];
@@ -835,7 +828,7 @@ public class HerosForgeGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void elEstadoParaLaPantallaTieneTodo(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "pantalla-estado");
 		ponerExperiencia(jugador, COSTO * 4);
@@ -862,7 +855,7 @@ public class HerosForgeGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void elEstadoViajaPorLaRedSinPerderNada(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "pantalla-red");
 		ponerExperiencia(jugador, COSTO * 2 + 7);
@@ -885,7 +878,7 @@ public class HerosForgeGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void losPedidosDelClienteNoSeCreen(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "pantalla-tramposo");
 		ponerExperiencia(jugador, COSTO * 3);
@@ -915,7 +908,7 @@ public class HerosForgeGameTest {
 		helper.succeed();
 	}
 
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void sinElComplementoEstadisticasAbreElCofre(GameTestHelper helper) {
 		ServerPlayer jugador = entrar(helper, "pantalla-vanilla");
 		// Aunque dijera que prefiere la pantalla: si no registró los canales, no tiene con qué mostrarla
@@ -973,7 +966,7 @@ public class HerosForgeGameTest {
 		CommonListenerCookie cookie = CommonListenerCookie.createInitial(new GameProfile(UUID.randomUUID(), nombre), false);
 		ServerPlayer jugador = new ServerPlayer(level.getServer(), level, cookie.gameProfile(), cookie.clientInformation());
 		if (guardado != null) {
-			jugador.load(TagValueInput.create(ProblemReporter.DISCARDING, jugador.registryAccess(), guardado));
+			jugador.load(guardado);
 		}
 		Connection conexion = new Connection(PacketFlow.SERVERBOUND);
 		new EmbeddedChannel(conexion);

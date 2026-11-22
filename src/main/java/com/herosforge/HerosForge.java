@@ -14,7 +14,7 @@ import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.loader.api.FabricLoader;
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 
 public class HerosForge implements ModInitializer {
@@ -33,7 +33,6 @@ public class HerosForge implements ModInitializer {
 	public void onInitialize() {
 		// Antes de leer nada: hasta la 0.11.1 el id era estadisticasrpg (ver MigracionDeId)
 		MigracionDeId.migrarConfig(".json");
-		ServerLifecycleEvents.SERVER_STARTING.register(MigracionDeId::migrarMundo);
 
 		ArchivoDeConfiguracion.Lectura lectura = ArchivoDeConfiguracion.cargar(archivoDeConfiguracion());
 		lectura.avisos().forEach(aviso -> LOGGER.warn("[config] {}", aviso));
@@ -94,7 +93,7 @@ public class HerosForge implements ModInitializer {
 		return FabricLoader.getInstance().getConfigDir().resolve(MOD_ID + ".json");
 	}
 
-	public static Identifier id(String path) {
-		return Identifier.fromNamespaceAndPath(MOD_ID, path);
+	public static ResourceLocation id(String path) {
+		return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
 	}
 }

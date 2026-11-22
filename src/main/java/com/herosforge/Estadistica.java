@@ -6,7 +6,7 @@ import java.util.Optional;
 import org.jspecify.annotations.Nullable;
 
 import net.minecraft.core.Holder;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -177,7 +177,7 @@ public enum Estadistica {
 	}
 
 	/** Un modificador por estadística con id fijo: aplicar dos veces lo reemplaza en vez de apilarlo. */
-	public Identifier idModificador() {
+	public ResourceLocation idModificador() {
 		return HerosForge.id(id);
 	}
 

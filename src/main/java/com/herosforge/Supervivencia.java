@@ -1,11 +1,13 @@
 package com.herosforge;
 
-import net.minecraft.core.component.DataComponents;
+import java.util.List;
+import java.util.Optional;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.UseAnim;
 
 /**
  * Metabolismo, nutrición, glotón y tenacidad: no hay atributos de vanilla para el hambre, la comida ni los efectos,
@@ -33,7 +35,7 @@ public final class Supervivencia {
 		int alimento = (int) Math.round(comida.nutrition() * nutricion);
 		float saturacion = (float) (comida.saturation() * nutricion);
 		if (alimento > 0 || saturacion > 0) {
-			jugador.getFoodData().eat(new FoodProperties(alimento, saturacion, false));
+			jugador.getFoodData().eat(new FoodProperties(alimento, saturacion, false, 1.6f, Optional.empty(), List.of()));
 		}
 	}
 
@@ -42,7 +44,8 @@ public final class Supervivencia {
 	 * usarlo (la cuenta baja a −1 y no vuelve a pasar por 0).
 	 */
 	public static int tiempoDeComer(ServerPlayer jugador, ItemStack usado, int ticks) {
-		if (!usado.has(DataComponents.CONSUMABLE)) {
+		// En 1.21.1 no hay componente consumible: se come o se bebe lo que se usa con esas animaciones
+		if (usado.getUseAnimation() != UseAnim.EAT && usado.getUseAnimation() != UseAnim.DRINK) {
 			return ticks;
 		}
 		double gloton = Mejoras.fraccion(jugador, Estadistica.GLOTON);

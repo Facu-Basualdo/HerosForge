@@ -2,7 +2,9 @@
 
 <p align="center"><img src="src/main/resources/assets/herosforge/icon.png" alt="Hero's Forge" width="256"></p>
 
-Mod de Fabric para **Minecraft Java 26.3** para mejorar a tu personaje estilo RPG. Pagás **experiencia** y subís **puntos** de la estadística que quieras, hasta 100 en cada una. Son **40 estadísticas en 5 ramas**: más vida, más daño (también con arco y ballesta), críticos, esquiva, un escudo que se recarga, menos hambre, un imán para los ítems, descuentos con los aldeanos… Cada punto cuesta **30 puntos de experiencia**, y si te arrepentís, bajarlo te devuelve la mitad. Los puntos son tuyos para siempre: no se pierden al morir.
+Mod de Fabric para **Minecraft Java 1.21.1** (también hay versión para 26.3) para mejorar a tu personaje estilo RPG. Pagás **experiencia** y subís **puntos** de la estadística que quieras, hasta 100 en cada una. Son **40 estadísticas en 5 ramas**: más vida, más daño (también con arco y ballesta), críticos, esquiva, un escudo que se recarga, menos hambre, un imán para los ítems, descuentos con los aldeanos… Cada punto cuesta **30 puntos de experiencia**, y si te arrepentís, bajarlo te devuelve la mitad. Los puntos son tuyos para siempre: no se pierden al morir.
+
+> **Esta es la rama `mc/1.21.1`**, un backport de la versión de 26.3 (rama `main`). La lógica es la misma; los cambios de cada versión de Minecraft están en el CLAUDE.md de esta rama.
 
 ## Estadísticas
 
@@ -147,7 +149,7 @@ Al actualizar a la 0.13.0, las 25 estadísticas nuevas se agregan solas a un `he
 
 ## Requisitos e instalación
 
-Minecraft Java 26.3, [Fabric Loader](https://fabricmc.net/use/) 0.19.5 o más nuevo, [Fabric API](https://modrinth.com/mod/fabric-api) y Java 25.
+Minecraft Java 1.21.1, [Fabric Loader](https://fabricmc.net/use/) 0.16.0 o más nuevo, [Fabric API](https://modrinth.com/mod/fabric-api) y Java 21.
 
 - **Servidor:** copiá `herosforge-<versión>.jar` y Fabric API a `mods/`. Los jugadores no necesitan nada.
 - **Singleplayer o LAN:** en el cliente del que abre el mundo, junto con Fabric API.
@@ -162,11 +164,10 @@ Hasta la 0.11.1 el id era `estadisticasrpg` (el mod antes se llamaba Estadístic
 ```bash
 ./gradlew build                # compila y corre las pruebas; el jar queda en build/libs/
 ./gradlew runGameTest          # pruebas automáticas en un servidor sin ventana
-./gradlew runClientGameTest    # prueba la pantalla en un cliente de verdad (abre una ventana)
 ./gradlew runGameTest -PsoulLinkJar=../SoulLink/build/libs/soullink-3.0.0.jar   # integración con Soul Link real
 ```
 
-Pide Java 25: si Gradle no encuentra tu JDK, agregá `org.gradle.java.installations.paths=<ruta a tu JDK 25>` a tu `~/.gradle/gradle.properties`. La documentación técnica está en [CLAUDE.md](CLAUDE.md).
+Gradle corre con Java 25 (como la rama de 26.3) y compila para Java 21: si no encuentra tu JDK, agregá `org.gradle.java.installations.paths=<ruta a tu JDK 25>` a tu `~/.gradle/gradle.properties`. La documentación técnica está en [CLAUDE.md](CLAUDE.md).
 
 ## Licencia
 

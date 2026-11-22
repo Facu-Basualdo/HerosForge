@@ -10,12 +10,10 @@ import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.fabricmc.loader.api.FabricLoader;
 
 import net.minecraft.core.Holder;
-import net.minecraft.resources.Identifier;
-import net.minecraft.server.MinecraftServer;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.level.storage.LevelResource;
 
 /**
  * Hasta la 0.11.1 el id del mod era {@code estadisticasrpg}. Con el id nuevo, todo lo guardado con el viejo quedaría
@@ -40,15 +38,6 @@ public final class MigracionDeId {
 		Path carpeta = FabricLoader.getInstance().getConfigDir();
 		if (moverSiFalta(carpeta.resolve(ID_VIEJO + sufijo), carpeta.resolve(HerosForge.MOD_ID + sufijo))) {
 			HerosForge.LOGGER.info("Se renombró config/{}{} a config/{}{} (el id del mod cambió)", ID_VIEJO, sufijo, HerosForge.MOD_ID, sufijo);
-		}
-	}
-
-	/** SERVER_STARTING, antes de que se carguen los mundos: los puntos del grupo, en {@code world/data/<id>/}. */
-	public static void migrarMundo(MinecraftServer servidor) {
-		Path data = servidor.getWorldPath(LevelResource.DATA);
-		String archivo = "puntos_del_grupo.dat";
-		if (moverSiFalta(data.resolve(ID_VIEJO).resolve(archivo), data.resolve(HerosForge.MOD_ID).resolve(archivo))) {
-			HerosForge.LOGGER.info("Se movió {} de data/{} a data/{} (el id del mod cambió)", archivo, ID_VIEJO, HerosForge.MOD_ID);
 		}
 	}
 
@@ -93,7 +82,7 @@ public final class MigracionDeId {
 		}
 	}
 
-	public static Identifier viejo(String path) {
-		return Identifier.fromNamespaceAndPath(ID_VIEJO, path);
+	public static ResourceLocation viejo(String path) {
+		return ResourceLocation.fromNamespaceAndPath(ID_VIEJO, path);
 	}
 }

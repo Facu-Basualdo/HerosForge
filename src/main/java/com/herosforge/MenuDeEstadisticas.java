@@ -1,7 +1,6 @@
 package com.herosforge;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 
 import org.jspecify.annotations.Nullable;
@@ -10,17 +9,19 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Unit;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.component.ItemLore;
-import net.minecraft.world.item.component.TooltipDisplay;
 
 /**
  * Un cofre de 3 filas armado en el servidor: el cliente vanilla lo ve como {@code GENERIC_9x3}, así que no
@@ -56,7 +57,7 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 				addSlot(new SlotDeMuestra(muestra, columna + fila * 9, 8 + columna * 18, 18 + fila * 18));
 			}
 		}
-		addStandardInventorySlots(jugador.getInventory(), 8, 18 + FILAS * 18 + 13);
+		agregarInventario(jugador.getInventory(), 8, 18 + FILAS * 18 + 13);
 		redibujar();
 	}
 
@@ -121,12 +122,12 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 	}
 
 	@Override
-	public void clicked(int slotId, int boton, ContainerInput entrada, Player quien) {
+	public void clicked(int slotId, int boton, ClickType entrada, Player quien) {
 		if (slotId < 0 || slotId >= TAMANIO) {
 			super.clicked(slotId, boton, entrada, quien);
 			return;
 		}
-		boolean click = entrada == ContainerInput.PICKUP || entrada == ContainerInput.QUICK_MOVE;
+		boolean click = entrada == ClickType.PICKUP || entrada == ClickType.QUICK_MOVE;
 		Estadistica estadistica = estadisticaEn(slotId);
 		Rama rama = ramaEn(slotId);
 		if (click && rama != null) {
@@ -134,7 +135,7 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 		} else if (click && abierta != null && slotId == SLOT_VOLVER) {
 			mostrar(null);
 		} else if (estadistica != null && click) {
-			int cantidad = entrada == ContainerInput.QUICK_MOVE ? CON_SHIFT : 1;
+			int cantidad = entrada == ClickType.QUICK_MOVE ? CON_SHIFT : 1;
 			// Con shift, vanilla también manda el botón: 1 es el derecho
 			if (boton == CLICK_DERECHO) {
 				jugador.sendSystemMessage(Mejoras.mensaje(Idioma.de(jugador), Mejoras.bajar(jugador, estadistica, cantidad)), true);
@@ -218,7 +219,7 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 		lore.add(1, texto(Idioma.tr(idioma, "herosforge.menu.en_la_rama", Mejoras.puntos(idioma, total)), ChatFormatting.GOLD));
 		lore.add(texto(Idioma.tr(idioma, abierta ? "herosforge.menu.pagina_abierta" : "herosforge.menu.ver_rama"), ChatFormatting.DARK_GRAY));
 		ItemStack icono = item(new ItemStack(rama.icono()), texto(rama.nombre(idioma), abierta ? ChatFormatting.GOLD : ChatFormatting.YELLOW), lore);
-		icono.set(DataComponents.TOOLTIP_DISPLAY, new TooltipDisplay(false, new LinkedHashSet<>(List.of(DataComponents.ATTRIBUTE_MODIFIERS))));
+		icono.update(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY, modificadores -> modificadores.withTooltip(false));
 		if (abierta) {
 			icono.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
 		}
@@ -256,7 +257,7 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 			lore.add(texto(Idioma.tr(idioma, "herosforge.menu.bajar", Mejoras.experiencia(idioma, config.devolucionPorPunto())), ChatFormatting.DARK_GRAY));
 		}
 		if (puntos >= mejora.tope()) {
-			return item(new ItemStack(Items.STAINED_GLASS_PANE.gray()), texto(Idioma.tr(idioma, "herosforge.menu.maximo", estadistica.nombre(idioma)), ChatFormatting.GRAY), lore);
+			return item(new ItemStack(Items.GRAY_STAINED_GLASS_PANE), texto(Idioma.tr(idioma, "herosforge.menu.maximo", estadistica.nombre(idioma)), ChatFormatting.GRAY), lore);
 		}
 		int costo = config.experienciaPorPunto();
 		boolean alcanza = Mejoras.experiencia(jugador) >= costo;
@@ -264,13 +265,25 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 		lore.add(texto(Idioma.tr(idioma, "herosforge.menu.cuesta", Mejoras.experiencia(idioma, costo)), alcanza ? ChatFormatting.GREEN : ChatFormatting.RED));
 		ItemStack icono = item(new ItemStack(estadistica.icono()), texto(estadistica.nombre(idioma), alcanza ? ChatFormatting.GREEN : ChatFormatting.RED), lore);
 		// La espada y el peto mostrarían su daño y su armadura de vanilla, que no tienen nada que ver con los puntos
-		icono.set(DataComponents.TOOLTIP_DISPLAY, new TooltipDisplay(false, new LinkedHashSet<>(List.of(DataComponents.ATTRIBUTE_MODIFIERS))));
+		icono.update(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY, modificadores -> modificadores.withTooltip(false));
 		return icono;
 	}
 
+	/** El inventario y la barra del jugador debajo del cofre: 1.21.1 no tiene addStandardInventorySlots. */
+	private void agregarInventario(Inventory inventario, int x, int y) {
+		for (int fila = 0; fila < 3; fila++) {
+			for (int columna = 0; columna < 9; columna++) {
+				addSlot(new Slot(inventario, columna + fila * 9 + 9, x + columna * 18, y + fila * 18));
+			}
+		}
+		for (int columna = 0; columna < 9; columna++) {
+			addSlot(new Slot(inventario, columna, x + columna * 18, y + 58));
+		}
+	}
+
 	private static ItemStack relleno() {
-		ItemStack relleno = new ItemStack(Items.STAINED_GLASS_PANE.black());
-		relleno.set(DataComponents.TOOLTIP_DISPLAY, new TooltipDisplay(true, new LinkedHashSet<>()));
+		ItemStack relleno = new ItemStack(Items.BLACK_STAINED_GLASS_PANE);
+		relleno.set(DataComponents.HIDE_TOOLTIP, Unit.INSTANCE);
 		return relleno;
 	}
 

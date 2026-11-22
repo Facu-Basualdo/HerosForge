@@ -8,12 +8,11 @@
 		"fabric-gametest": [
 			"com.herosforge.test.HerosForgeGameTest",
 			"com.herosforge.test.RamasGameTest"
-		],
-		"fabric-client-gametest": [
-			"com.herosforge.test.PantallaClientGameTest",
-			"com.herosforge.test.ConfiguracionClientGameTest"
 		]
 	},
+	"mixins": [
+		"herosforge-test.mixins.json"
+	],
 	"depends": {
 		"herosforge": "*"
 	}

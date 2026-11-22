@@ -1,17 +1,21 @@
 package com.herosforge.cliente;
 
 import com.herosforge.cliente.mixin.AccesoAPantallaDeContenedor;
+import com.herosforge.cliente.mixin.AccesoAlBuscadorDeRecetas;
 
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
 import net.fabricmc.fabric.api.client.screen.v1.Screens;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.gui.screens.recipebook.RecipeBookComponent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -49,16 +53,22 @@ final class BotonDelInventario extends Button {
 			return;
 		}
 		BotonDelInventario boton = new BotonDelInventario(inventario);
-		Screens.getWidgets(pantalla).add(boton);
+		Screens.getButtons(pantalla).add(boton);
 		// Abrir o cerrar el libro de recetas corre el inventario sin volver a llamar a init
-		ScreenEvents.beforeExtract(pantalla).register((p, graficos, mouseX, mouseY, delta) -> boton.acomodar());
+		ScreenEvents.beforeRender(pantalla).register((p, graficos, mouseX, mouseY, delta) -> boton.acomodar());
 		// Con una pantalla abierta las teclas no llegan a las KeyMapping del juego: sin esto, la K no haría nada en
 		// el inventario. Escribiendo en el buscador del libro de recetas, la K es una letra
-		ScreenKeyboardEvents.afterKeyPress(pantalla).register((p, evento) -> {
-			if (HerosForgeCliente.tecla().matches(evento) && !inventario.isInputCaptured()) {
+		ScreenKeyboardEvents.afterKeyPress(pantalla).register((p, tecla, codigo, modificadores) -> {
+			if (HerosForgeCliente.tecla().matches(tecla, codigo) && !escribiendoEnElLibro(inventario)) {
 				abrirDesde(inventario);
 			}
 		});
+	}
+
+	private static boolean escribiendoEnElLibro(InventoryScreen inventario) {
+		RecipeBookComponent libro = inventario.getRecipeBookComponent();
+		EditBox buscador = ((AccesoAlBuscadorDeRecetas) libro).herosforge$buscador();
+		return libro.isVisible() && buscador != null && buscador.isFocused();
 	}
 
 	private static void abrirDesde(InventoryScreen inventario) {
@@ -71,9 +81,14 @@ final class BotonDelInventario extends Button {
 		setY(inventario.height / 2 - 22);
 	}
 
+	// En 1.21.1 el botón de vanilla dibuja el fondo y el texto juntos: se deja el fondo, se saca el texto y va el ícono
 	@Override
-	protected void extractContents(GuiGraphicsExtractor graficos, int mouseX, int mouseY, float delta) {
-		extractDefaultSprite(graficos);
-		graficos.item(icono, getX() + (ANCHO - 16) / 2, getY() + (ALTO - 16) / 2);
+	protected void renderWidget(GuiGraphics graficos, int mouseX, int mouseY, float delta) {
+		super.renderWidget(graficos, mouseX, mouseY, delta);
+		graficos.renderItem(icono, getX() + (ANCHO - 16) / 2, getY() + (ALTO - 16) / 2);
+	}
+
+	@Override
+	public void renderString(GuiGraphics graficos, Font fuente, int color) {
 	}
 }

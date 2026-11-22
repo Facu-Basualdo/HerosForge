@@ -14,9 +14,10 @@ import com.herosforge.HerosForge;
 import com.herosforge.Mejoras;
 import com.herosforge.PuntosDelGrupo;
 
-import net.fabricmc.fabric.api.gametest.v1.GameTest;
+import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.fabricmc.loader.api.FabricLoader;
 
+import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
@@ -25,12 +26,10 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
-import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.level.GameType;
-import net.minecraft.world.level.storage.TagValueInput;
 
-public class SoulLinkGameTest {
-	@GameTest
+public class SoulLinkGameTest implements FabricGameTest {
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void transaccionesConSoulLinkReal(GameTestHelper helper) {
 		if (!FabricLoader.getInstance().isModLoaded(HerosForge.SOUL_LINK)) {
 			throw new AssertionError("Esta prueba requiere el jar real de Soul Link");
@@ -98,7 +97,7 @@ public class SoulLinkGameTest {
 	 * Cada grupo de Soul Link tiene sus puntos. Usa grupos propios y no el general, así no se cruza con
 	 * transaccionesConSoulLinkReal, que corre en el mismo batch.
 	 */
-	@GameTest
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void puntosPorGrupoDeSoulLink(GameTestHelper helper) {
 		if (!FabricLoader.getInstance().isModLoaded(HerosForge.SOUL_LINK)) {
 			throw new AssertionError("Esta prueba requiere el jar real de Soul Link");
@@ -153,7 +152,7 @@ public class SoulLinkGameTest {
 		CommonListenerCookie cookie = CommonListenerCookie.createInitial(new GameProfile(UUID.randomUUID(), nombre), false);
 		ServerPlayer jugador = new ServerPlayer(level.getServer(), level, cookie.gameProfile(), cookie.clientInformation());
 		if (guardado != null) {
-			jugador.load(TagValueInput.create(ProblemReporter.DISCARDING, jugador.registryAccess(), guardado));
+			jugador.load(guardado);
 		}
 		Connection conexion = new Connection(PacketFlow.SERVERBOUND);
 		new EmbeddedChannel(conexion);

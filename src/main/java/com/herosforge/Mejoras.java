@@ -143,7 +143,7 @@ public final class Mejoras {
 			jugador.giveExperiencePoints(experiencia);
 			CompatibilidadSoulLink.sincronizarExperiencia(jugador.level().getServer());
 		}
-		ServerLevel level = jugador.level();
+		ServerLevel level = jugador.serverLevel();
 		level.playSound(null, jugador.getX(), jugador.getY(), jugador.getZ(), SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, 0.6f, 0.8f);
 		return new Devolucion(estadistica, cantidad, bajados, experiencia);
 	}
@@ -226,6 +226,9 @@ public final class Mejoras {
 		aplicar(nuevo);
 		if (!vivo) {
 			nuevo.setHealth(nuevo.getMaxHealth());
+		} else {
+			// En 1.21.1 restoreFrom copia la vida antes de que vuelvan los modificadores: con más de 20, queda en 20
+			nuevo.setHealth(viejo.getHealth());
 		}
 	}
 
@@ -273,7 +276,7 @@ public final class Mejoras {
 
 	/** Con sonido para todos los que están cerca: comprar es un momento, como subir de nivel. */
 	private static void efectos(ServerPlayer jugador, boolean compro) {
-		ServerLevel level = jugador.level();
+		ServerLevel level = jugador.serverLevel();
 		if (compro) {
 			level.playSound(null, jugador.getX(), jugador.getY(), jugador.getZ(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.6f, 1.4f);
 			level.sendParticles(ParticleTypes.HAPPY_VILLAGER, jugador.getX(), jugador.getY() + 1, jugador.getZ(), 12, 0.4, 0.6, 0.4, 0);

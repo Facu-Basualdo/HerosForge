@@ -88,7 +88,7 @@ public final class Combate {
 		if (jugador.getRandom().nextDouble() >= Mejoras.fraccion(jugador, Estadistica.ESQUIVA)) {
 			return true;
 		}
-		ServerLevel level = jugador.level();
+		ServerLevel level = jugador.serverLevel();
 		level.playSound(null, jugador.getX(), jugador.getY(), jugador.getZ(), SoundEvents.PLAYER_ATTACK_NODAMAGE, SoundSource.PLAYERS, 1.0f, 1.4f);
 		level.sendParticles(ParticleTypes.CLOUD, jugador.getX(), jugador.getY() + 1, jugador.getZ(), 6, 0.3, 0.4, 0.3, 0.02);
 		return false;
@@ -116,7 +116,7 @@ public final class Combate {
 		}
 		double represalia = Mejoras.efecto(jugador, Estadistica.REPRESALIA);
 		if (represalia > 0) {
-			atacante.hurtServer(jugador.level(), jugador.damageSources().thorns(jugador), (float) (danio * represalia));
+			atacante.hurt(jugador.damageSources().thorns(jugador), (float) (danio * represalia));
 		}
 	}
 

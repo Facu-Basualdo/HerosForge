@@ -22,13 +22,13 @@ public final class Paquetes {
 	}
 
 	public static void registrar() {
-		PayloadTypeRegistry.clientboundPlay().register(Estado.TIPO, Estado.CODEC);
-		PayloadTypeRegistry.clientboundPlay().register(Resultado.TIPO, Resultado.CODEC);
-		PayloadTypeRegistry.clientboundPlay().register(AbrirPantalla.TIPO, AbrirPantalla.CODEC);
-		PayloadTypeRegistry.serverboundPlay().register(Comprar.TIPO, Comprar.CODEC);
-		PayloadTypeRegistry.serverboundPlay().register(Bajar.TIPO, Bajar.CODEC);
-		PayloadTypeRegistry.serverboundPlay().register(Preferencia.TIPO, Preferencia.CODEC);
-		PayloadTypeRegistry.serverboundPlay().register(AbrirCofre.TIPO, AbrirCofre.CODEC);
+		PayloadTypeRegistry.playS2C().register(Estado.TIPO, Estado.CODEC);
+		PayloadTypeRegistry.playS2C().register(Resultado.TIPO, Resultado.CODEC);
+		PayloadTypeRegistry.playS2C().register(AbrirPantalla.TIPO, AbrirPantalla.CODEC);
+		PayloadTypeRegistry.playC2S().register(Comprar.TIPO, Comprar.CODEC);
+		PayloadTypeRegistry.playC2S().register(Bajar.TIPO, Bajar.CODEC);
+		PayloadTypeRegistry.playC2S().register(Preferencia.TIPO, Preferencia.CODEC);
+		PayloadTypeRegistry.playC2S().register(AbrirCofre.TIPO, AbrirCofre.CODEC);
 	}
 
 	/**
@@ -68,16 +68,19 @@ public final class Paquetes {
 	 * como id y su nombre aparte, para que un cliente más viejo muestre igual una rama que no conoce.
 	 */
 	public record Fila(String id, String nombre, String rama, String nombreDeLaRama, int puntos, int tope, String ahora, String proximo) {
-		public static final StreamCodec<ByteBuf, Fila> CODEC = StreamCodec.composite(
-				ByteBufCodecs.STRING_UTF8, Fila::id,
-				ByteBufCodecs.STRING_UTF8, Fila::nombre,
-				ByteBufCodecs.STRING_UTF8, Fila::rama,
-				ByteBufCodecs.STRING_UTF8, Fila::nombreDeLaRama,
-				ByteBufCodecs.VAR_INT, Fila::puntos,
-				ByteBufCodecs.VAR_INT, Fila::tope,
-				ByteBufCodecs.STRING_UTF8, Fila::ahora,
-				ByteBufCodecs.STRING_UTF8, Fila::proximo,
-				Fila::new);
+		// En 1.21.1 StreamCodec.composite llega hasta 6 campos: éste tiene 8, en el mismo orden
+		public static final StreamCodec<ByteBuf, Fila> CODEC = StreamCodec.of((buf, fila) -> {
+			ByteBufCodecs.STRING_UTF8.encode(buf, fila.id());
+			ByteBufCodecs.STRING_UTF8.encode(buf, fila.nombre());
+			ByteBufCodecs.STRING_UTF8.encode(buf, fila.rama());
+			ByteBufCodecs.STRING_UTF8.encode(buf, fila.nombreDeLaRama());
+			ByteBufCodecs.VAR_INT.encode(buf, fila.puntos());
+			ByteBufCodecs.VAR_INT.encode(buf, fila.tope());
+			ByteBufCodecs.STRING_UTF8.encode(buf, fila.ahora());
+			ByteBufCodecs.STRING_UTF8.encode(buf, fila.proximo());
+		}, buf -> new Fila(ByteBufCodecs.STRING_UTF8.decode(buf), ByteBufCodecs.STRING_UTF8.decode(buf), ByteBufCodecs.STRING_UTF8.decode(buf),
+				ByteBufCodecs.STRING_UTF8.decode(buf), ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.VAR_INT.decode(buf),
+				ByteBufCodecs.STRING_UTF8.decode(buf), ByteBufCodecs.STRING_UTF8.decode(buf)));
 
 		public boolean enElTope() {
 			return puntos >= tope;

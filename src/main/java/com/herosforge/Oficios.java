@@ -58,7 +58,7 @@ public final class Oficios {
 		}
 		entidad.setDeltaMovement(hacia.scale(Math.min(VELOCIDAD_DEL_IMAN, distancia) / distancia));
 		// Sin esto, el cliente sigue viendo el ítem quieto hasta la próxima actualización de movimiento
-		entidad.needsSync = true;
+		entidad.hurtMarked = true;
 	}
 
 	/** Cada punto de durabilidad que se iba a gastar tiene su probabilidad de salvarse, como Irrompibilidad. */

@@ -15,7 +15,7 @@ import net.minecraft.world.entity.LivingEntity;
 abstract class DanioMixin {
 	// Al principio, antes de la armadura y de los encantamientos: como si el golpe viniera más fuerte (o más débil).
 	// Fabric API no tiene un evento para cambiar el daño, sólo para cancelarlo
-	@ModifyVariable(method = "hurtServer", at = @At("HEAD"), argsOnly = true)
+	@ModifyVariable(method = "hurt", at = @At("HEAD"), argsOnly = true)
 	private float herosforge$danio(float danio, @Local(argsOnly = true) DamageSource fuente) {
 		return Combate.danio((LivingEntity) (Object) this, fuente, danio);
 	}

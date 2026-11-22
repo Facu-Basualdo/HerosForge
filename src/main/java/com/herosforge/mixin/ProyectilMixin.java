@@ -6,15 +6,15 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 
 import com.herosforge.Mejoras;
 
-import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
-import net.minecraft.world.entity.projectile.arrow.ThrownTrident;
+import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.ThrownTrident;
 
 // El tridente sobrescribe onHitEntity sin llamar al de AbstractArrow: hace falta inyectar en los dos
 @Mixin({AbstractArrow.class, ThrownTrident.class})
 abstract class ProyectilMixin {
 	// Las flechas y el tridente lanzado no usan ATTACK_DAMAGE: sin esto, los puntos de daño no sirven a distancia.
 	// Es el daño final (velocidad, Poder y crítico ya sumados), así el arco y la ballesta escalan igual
-	@ModifyArg(method = "onHitEntity", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;hurtOrSimulate(Lnet/minecraft/world/damagesource/DamageSource;F)Z"), index = 1)
+	@ModifyArg(method = "onHitEntity", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;hurt(Lnet/minecraft/world/damagesource/DamageSource;F)Z"), index = 1)
 	private float herosforge$danioADistancia(float danio) {
 		return (float) (danio * Mejoras.multiplicadorADistancia(((AbstractArrow) (Object) this).getOwner()));
 	}

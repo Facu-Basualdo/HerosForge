@@ -1,8 +1,24 @@
 # Hero's Forge — mod de Minecraft
 
-Mod de Fabric para **Minecraft Java 26.3** para subir las estadísticas del jugador estilo RPG: se pagan **puntos de experiencia** (30 por punto, siempre los mismos; no niveles) por **puntos** de vida, daño, crítico, esquiva, metabolismo, imán u otra de las **40 estadísticas en 5 ramas** (guerrero, guardián, superviviente, explorador, artesano; sin bloqueos), hasta 100 por cada una. Bajar un punto devuelve la mitad. Los valores por defecto están balanceados contra Bloodmoon & Bosses (mobs de nivel 1 a 100). Los puntos son permanentes (sobreviven a la muerte) y se compran desde un menú tipo cofre (`/estadisticas`) o por comando. Java 25, Gradle 9.7 + Fabric Loom 1.18, Fabric Loader 0.19.5, Fabric API 0.162.0+26.3. Toda la lógica corre en el servidor: los jugadores no necesitan instalar nada. Quien instala el mismo jar en su cliente suma una pantalla propia opcional (tecla K o botón en el inventario) que habla con el servidor por paquetes de red, y con Mod Menu, una pantalla para editar la config.
+Mod de Fabric para **Minecraft Java 1.21.1** (backport de la rama `main`, que es 26.3) para subir las estadísticas del jugador estilo RPG: se pagan **puntos de experiencia** (30 por punto, siempre los mismos; no niveles) por **puntos** de vida, daño, crítico, esquiva, metabolismo, imán u otra de las **40 estadísticas en 5 ramas** (guerrero, guardián, superviviente, explorador, artesano; sin bloqueos), hasta 100 por cada una. Bajar un punto devuelve la mitad. Los valores por defecto están balanceados contra Bloodmoon & Bosses (mobs de nivel 1 a 100). Los puntos son permanentes (sobreviven a la muerte) y se compran desde un menú tipo cofre (`/estadisticas`) o por comando. Java 21 (Gradle corre con el 25), Gradle 9.7 + Fabric Loom Remap 1.18.4 con los mappings oficiales de Mojang, Fabric Loader 0.18.4, Fabric API 0.116.18+1.21.1. Toda la lógica corre en el servidor: los jugadores no necesitan instalar nada. Quien instala el mismo jar en su cliente suma una pantalla propia opcional (tecla K o botón en el inventario) que habla con el servidor por paquetes de red, y con Mod Menu, una pantalla para editar la config.
 
 > **Estado:** las 5 fases de [docs/plan.md](docs/plan.md) hechas, más el daño a distancia (0.8.0), la pantalla propia (0.9.0), las 5 estadísticas nuevas con bajar puntos (0.10.0) y las ramas con 25 estadísticas más (0.13.0). La 0.9.1 se probó a mano en un servidor con Soul Link y Bloodmoon & Bosses y anda; lo de la 0.10.0 en adelante todavía no se probó así.
+
+## Diferencias con 26.3 (rama `main`)
+
+Para portar un cambio de `main`, aplicalo, compilá y corré `runGameTest`. Lo que cambia en esta rama:
+
+- **Build:** `net.fabricmc.fabric-loom-remap` con `mappings loom.officialMojangMappings()` (1.21.1 viene ofuscado), dependencias con `modImplementation`/`modCompileOnly`, Java 21, `compatibilityLevel` `JAVA_21` en los mixins y JSpecify como `compileOnly`. Gradle sigue corriendo con el JDK 25.
+- **Todo lo de la rama `mc/1.21.11`**, más: `ResourceLocation` en vez de `Identifier`, `MobSpawnType` en vez de `EntitySpawnReason`, `hurt` en vez de `hurtServer`, `serverLevel()`, `FastColor.ARGB32` en vez de `ARGB`, los efectos con nombre viejo (`MobEffects.HEAL`), permisos de comandos con `hasPermission(n)`.
+- **SavedData:** sin `SavedDataType`: `SavedData.Factory` y `save(CompoundTag, Provider)` a mano con el mismo codec. Id como nombre de archivo, en el overworld.
+- **Pantalla de configuración:** sin `ScrollableLayout`: `ListaDesplazable` (rueda y barra arrastrable sobre `AbstractContainerWidget`).
+- **Tests:** API vieja de gametest (`FabricGameTest`, `@GameTest(template = EMPTY_STRUCTURE)` de vanilla, mensajes `String`, guardado con `CompoundTag`). Fabric API para 1.21.1 no tiene gametests de cliente: lo del cliente se prueba a mano.
+- **Comida:** sin `Consumable`: la nutrición va en `Player.eat` (`ComidaMixin`) y "comible" es usar con animación de comer o beber.
+- **Durabilidad:** el cálculo está en `EnchantmentHelper.processDurabilityChange`, adentro de `hurtAndBreak` (`@ModifyExpressionValue`).
+- **Menú de cofre:** sin `TooltipDisplay` (`withTooltip(false)` y `HIDE_TOOLTIP`), sin `addStandardInventorySlots`; `Paquetes.Fila` tiene 8 campos y `StreamCodec.composite` llega hasta 6: codec a mano.
+- **Respawn:** `restoreFrom` copia la vida antes de que vuelvan los modificadores: `alReaparecer` la restaura al volver del End.
+- **Cliente:** categoría de tecla como `String`, eventos de teclado con enteros, botones que se dibujan con `renderWidget`, tooltips con `setTooltipForNextRenderPass`, el libro de recetas sale de `InventoryScreen.getRecipeBookComponent()`.
+- **Tests:** `InvulnerabilidadAccessor` (sólo en los tests) saca los 3 segundos de invulnerabilidad al entrar.
 
 ## Cómo obtener contexto
 

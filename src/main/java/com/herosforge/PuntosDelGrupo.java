@@ -9,15 +9,17 @@ import java.util.UUID;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.UUIDUtil;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraft.world.level.saveddata.SavedDataType;
 
 /**
  * Los puntos de cada grupo vinculado cuando está Soul Link: ahí la experiencia y la vida son del grupo,
  * así que los puntos también. Sin grupos armados en Soul Link, todos están en el general. Se guarda en
- * {@code data/herosforge/puntos_del_grupo.dat} dentro del mundo: el general en {@code puntos}, como cuando
+ * {@code data/herosforge_puntos_del_grupo.dat} dentro del mundo: el general en {@code puntos}, como cuando
  * había un solo grupo, y los demás en {@code grupos}. El attachment de cada jugador no se toca: si se saca
  * Soul Link, cada uno vuelve a tener los suyos.
  */
@@ -28,9 +30,10 @@ public class PuntosDelGrupo extends SavedData {
 			UUIDUtil.CODEC_SET.optionalFieldOf("jugadores_sumados", Set.of()).forGetter(grupo -> grupo.sumados)
 	).apply(instancia, PuntosDelGrupo::new));
 
-	// DataFixTypes null: Fabric API se encarga de que no se intente aplicar data fixers a datos de mods
-	private static final SavedDataType<PuntosDelGrupo> TIPO = new SavedDataType<>(
-			HerosForge.id("puntos_del_grupo"), PuntosDelGrupo::new, CODEC, null);
+	private static final String ID = HerosForge.MOD_ID + "_puntos_del_grupo";
+	// En 1.21.1 no hay SavedDataType: se lee y se guarda a mano con el mismo codec. DataFixTypes null: Fabric API se
+	// encarga de que no se intente aplicar data fixers a datos de mods
+	private static final SavedData.Factory<PuntosDelGrupo> TIPO = new SavedData.Factory<>(PuntosDelGrupo::new, PuntosDelGrupo::leer, null);
 
 	private final Map<String, PuntosDelJugador> porGrupo = new HashMap<>();
 	// De todo el servidor y no por grupo: si alguien cambia de grupo, sus puntos individuales no se suman otra vez
@@ -40,6 +43,17 @@ public class PuntosDelGrupo extends SavedData {
 		this(PuntosDelJugador.vacio(), Map.of(), Set.of());
 	}
 
+	private static PuntosDelGrupo leer(CompoundTag tag, HolderLookup.Provider registros) {
+		return CODEC.parse(registros.createSerializationContext(NbtOps.INSTANCE), tag).resultOrPartial(HerosForge.LOGGER::error).orElseGet(PuntosDelGrupo::new);
+	}
+
+	@Override
+	public CompoundTag save(CompoundTag tag, HolderLookup.Provider registros) {
+		CODEC.encodeStart(registros.createSerializationContext(NbtOps.INSTANCE), this).resultOrPartial(HerosForge.LOGGER::error)
+				.ifPresent(guardado -> tag.merge((CompoundTag) guardado));
+		return tag;
+	}
+
 	private PuntosDelGrupo(PuntosDelJugador general, Map<String, PuntosDelJugador> otros, Set<UUID> sumados) {
 		this.porGrupo.putAll(otros);
 		this.porGrupo.put(CompatibilidadSoulLink.GRUPO_GENERAL, general);
@@ -47,7 +61,7 @@ public class PuntosDelGrupo extends SavedData {
 	}
 
 	public static PuntosDelGrupo de(MinecraftServer servidor) {
-		return servidor.getDataStorage().computeIfAbsent(TIPO);
+		return servidor.overworld().getDataStorage().computeIfAbsent(TIPO, ID);
 	}
 
 	/** Los de ese grupo; uno que nunca compró nada no tiene puntos. */
