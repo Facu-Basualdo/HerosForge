@@ -29,7 +29,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -99,17 +99,17 @@ public class RamasGameTest {
 		ServerLevel level = helper.getLevel();
 		conConfig(helper, Map.of(Estadistica.CRITICO, SEGURO), () -> {
 			Mejoras.dar(certero, Estadistica.CRITICO, 100);
-			IronGolem blanco = helper.spawnWithNoFreeWill(EntityTypes.IRON_GOLEM, new BlockPos(2, 2, 2));
+			IronGolem blanco = helper.spawnWithNoFreeWill(EntityType.IRON_GOLEM, new BlockPos(2, 2, 2));
 			blanco.hurtServer(level, certero.damageSources().playerAttack(certero), 8);
 			assertCerca(helper, blanco.getMaxHealth() - blanco.getHealth(), 12, "Con el crítico seguro, 8 pega 12");
 			blanco.discard();
 		});
 
 		Mejoras.dar(verdugo, Estadistica.EJECUCION, 100);
-		IronGolem sano = helper.spawnWithNoFreeWill(EntityTypes.IRON_GOLEM, new BlockPos(2, 2, 2));
+		IronGolem sano = helper.spawnWithNoFreeWill(EntityType.IRON_GOLEM, new BlockPos(2, 2, 2));
 		sano.hurtServer(level, verdugo.damageSources().playerAttack(verdugo), 8);
 		assertCerca(helper, sano.getMaxHealth() - sano.getHealth(), 8, "Con la vida llena, la ejecución no suma");
-		IronGolem herido = helper.spawnWithNoFreeWill(EntityTypes.IRON_GOLEM, new BlockPos(4, 2, 2));
+		IronGolem herido = helper.spawnWithNoFreeWill(EntityType.IRON_GOLEM, new BlockPos(4, 2, 2));
 		herido.setHealth(herido.getMaxHealth() * 0.2f);
 		float antes = herido.getHealth();
 		herido.hurtServer(level, verdugo.damageSources().playerAttack(verdugo), 8);
@@ -153,7 +153,7 @@ public class RamasGameTest {
 		ServerLevel level = helper.getLevel();
 		ServerPlayer agil = vulnerable(helper, "agil");
 		ServerPlayer caido = vulnerable(helper, "agil-caido");
-		IronGolem atacante = helper.spawnWithNoFreeWill(EntityTypes.IRON_GOLEM, new BlockPos(2, 2, 2));
+		IronGolem atacante = helper.spawnWithNoFreeWill(EntityType.IRON_GOLEM, new BlockPos(2, 2, 2));
 		conConfig(helper, Map.of(Estadistica.ESQUIVA, SEGURO), () -> {
 			Mejoras.dar(agil, Estadistica.ESQUIVA, 100);
 			Mejoras.dar(caido, Estadistica.ESQUIVA, 100);
@@ -174,7 +174,7 @@ public class RamasGameTest {
 		ServerLevel level = helper.getLevel();
 		ServerPlayer espinoso = vulnerable(helper, "espinoso");
 		Mejoras.dar(espinoso, Estadistica.REPRESALIA, 100);
-		IronGolem atacante = helper.spawnWithNoFreeWill(EntityTypes.IRON_GOLEM, new BlockPos(2, 2, 2));
+		IronGolem atacante = helper.spawnWithNoFreeWill(EntityType.IRON_GOLEM, new BlockPos(2, 2, 2));
 
 		espinoso.hurtServer(level, espinoso.damageSources().mobAttack(atacante), 10);
 		// Lo que entró depende de la dificultad del mundo de prueba (escala el golpe de un mob): se mide
@@ -183,7 +183,7 @@ public class RamasGameTest {
 		assertCerca(helper, atacante.getMaxHealth() - atacante.getHealth(), recibido * 0.3, "Devuelve el 30 % de lo que entró");
 
 		// Una flecha no se devuelve: el que pega no es el que la tiró
-		IronGolem otro = helper.spawnWithNoFreeWill(EntityTypes.IRON_GOLEM, new BlockPos(4, 2, 2));
+		IronGolem otro = helper.spawnWithNoFreeWill(EntityType.IRON_GOLEM, new BlockPos(4, 2, 2));
 		Arrow flecha = new Arrow(level, otro, new ItemStack(Items.ARROW), new ItemStack(Items.BOW));
 		ServerPlayer flechado = vulnerable(helper, "espinoso-flechado");
 		Mejoras.dar(flechado, Estadistica.REPRESALIA, 100);

@@ -33,7 +33,6 @@ public class HerosForge implements ModInitializer {
 	public void onInitialize() {
 		// Antes de leer nada: hasta la 0.11.1 el id era estadisticasrpg (ver MigracionDeId)
 		MigracionDeId.migrarConfig(".json");
-		ServerLifecycleEvents.SERVER_STARTING.register(MigracionDeId::migrarMundo);
 
 		ArchivoDeConfiguracion.Lectura lectura = ArchivoDeConfiguracion.cargar(archivoDeConfiguracion());
 		lectura.avisos().forEach(aviso -> LOGGER.warn("[config] {}", aviso));

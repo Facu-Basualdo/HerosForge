@@ -22,13 +22,13 @@ public final class Paquetes {
 	}
 
 	public static void registrar() {
-		PayloadTypeRegistry.clientboundPlay().register(Estado.TIPO, Estado.CODEC);
-		PayloadTypeRegistry.clientboundPlay().register(Resultado.TIPO, Resultado.CODEC);
-		PayloadTypeRegistry.clientboundPlay().register(AbrirPantalla.TIPO, AbrirPantalla.CODEC);
-		PayloadTypeRegistry.serverboundPlay().register(Comprar.TIPO, Comprar.CODEC);
-		PayloadTypeRegistry.serverboundPlay().register(Bajar.TIPO, Bajar.CODEC);
-		PayloadTypeRegistry.serverboundPlay().register(Preferencia.TIPO, Preferencia.CODEC);
-		PayloadTypeRegistry.serverboundPlay().register(AbrirCofre.TIPO, AbrirCofre.CODEC);
+		PayloadTypeRegistry.playS2C().register(Estado.TIPO, Estado.CODEC);
+		PayloadTypeRegistry.playS2C().register(Resultado.TIPO, Resultado.CODEC);
+		PayloadTypeRegistry.playS2C().register(AbrirPantalla.TIPO, AbrirPantalla.CODEC);
+		PayloadTypeRegistry.playC2S().register(Comprar.TIPO, Comprar.CODEC);
+		PayloadTypeRegistry.playC2S().register(Bajar.TIPO, Bajar.CODEC);
+		PayloadTypeRegistry.playC2S().register(Preferencia.TIPO, Preferencia.CODEC);
+		PayloadTypeRegistry.playC2S().register(AbrirCofre.TIPO, AbrirCofre.CODEC);
 	}
 
 	/**

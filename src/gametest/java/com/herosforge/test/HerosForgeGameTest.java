@@ -48,7 +48,7 @@ import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.players.PlayerList;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.golem.IronGolem;
@@ -56,7 +56,7 @@ import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.entity.projectile.arrow.Arrow;
 import net.minecraft.world.entity.projectile.arrow.ThrownTrident;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
@@ -345,14 +345,14 @@ public class HerosForgeGameTest {
 		ServerPlayer jugador = entrar(helper, "vampiro");
 		Mejoras.dar(jugador, Estadistica.ROBO_DE_VIDA, 100);
 		jugador.setHealth(10);
-		IronGolem blanco = helper.spawnWithNoFreeWill(EntityTypes.IRON_GOLEM, new BlockPos(2, 2, 2));
+		IronGolem blanco = helper.spawnWithNoFreeWill(EntityType.IRON_GOLEM, new BlockPos(2, 2, 2));
 
 		blanco.hurtServer(helper.getLevel(), jugador.damageSources().playerAttack(jugador), 8);
 		assertCerca(helper, blanco.getMaxHealth() - blanco.getHealth(), 8, "El golpe pega entero (el gólem no tiene armadura)");
 		assertCerca(helper, jugador.getHealth(), 10.8, "Con 100 puntos cura el 10 % del daño");
 
 		// Un golpe que no es del jugador no lo cura
-		IronGolem otro = helper.spawnWithNoFreeWill(EntityTypes.IRON_GOLEM, new BlockPos(4, 2, 2));
+		IronGolem otro = helper.spawnWithNoFreeWill(EntityType.IRON_GOLEM, new BlockPos(4, 2, 2));
 		otro.hurtServer(helper.getLevel(), helper.getLevel().damageSources().generic(), 8);
 		assertCerca(helper, jugador.getHealth(), 10.8, "Un golpe de otro no cura al jugador");
 
@@ -410,7 +410,7 @@ public class HerosForgeGameTest {
 	 * tirado hacia él. El proyectil no se agrega al mundo: se tickea a mano, así cada medición es una sola.
 	 */
 	private static float danioAlBlanco(GameTestHelper helper, AbstractArrow proyectil) {
-		IronGolem blanco = helper.spawnWithNoFreeWill(EntityTypes.IRON_GOLEM, new BlockPos(2, 2, 2));
+		IronGolem blanco = helper.spawnWithNoFreeWill(EntityType.IRON_GOLEM, new BlockPos(2, 2, 2));
 		proyectil.setCritArrow(false);
 		proyectil.setPos(blanco.getX() - 2, blanco.getY() + 1.3, blanco.getZ());
 		proyectil.shoot(1, 0, 0, 1.5f, 0);
@@ -585,32 +585,32 @@ public class HerosForgeGameTest {
 
 		// Abre en la portada, con las ramas en la fila del medio: un click en una abre su página
 		helper.assertTrue(menu.abierta() == null, "Abre en la portada");
-		menu.clicked(MenuDeEstadisticas.slotDe(Rama.GUARDIAN), 0, ContainerInput.PICKUP, jugador);
+		menu.clicked(MenuDeEstadisticas.slotDe(Rama.GUARDIAN), 0, ClickType.PICKUP, jugador);
 		helper.assertValueEqual(menu.abierta(), Rama.GUARDIAN, "Click en una rama abre su página");
 		helper.assertValueEqual(Mejoras.experiencia(jugador), COSTO * 10, "Cambiar de página no cobra");
 		helper.assertTrue(menu.getCarried().isEmpty(), "Cambiar de página no deja nada en el cursor");
 
-		menu.clicked(vida, 0, ContainerInput.PICKUP, jugador);
+		menu.clicked(vida, 0, ClickType.PICKUP, jugador);
 		helper.assertValueEqual(Mejoras.puntos(jugador).de(Estadistica.VIDA), 1, "Un click compra 1");
 		helper.assertValueEqual(Mejoras.experiencia(jugador), COSTO * 9, "Un click cobra 1 punto");
 		helper.assertTrue(menu.getCarried().isEmpty(), "El cursor queda vacío");
 		helper.assertTrue(menu.getSlot(vida).getItem().is(Items.GOLDEN_APPLE), "El ícono sigue en su lugar");
 
-		menu.clicked(vida, 0, ContainerInput.QUICK_MOVE, jugador);
+		menu.clicked(vida, 0, ClickType.QUICK_MOVE, jugador);
 		helper.assertValueEqual(Mejoras.puntos(jugador).de(Estadistica.VIDA), 6, "Shift + click compra 5");
 		helper.assertValueEqual(Mejoras.experiencia(jugador), COSTO * 4, "Shift + click cobra 5 puntos");
 
-		menu.clicked(vida, 1, ContainerInput.PICKUP, jugador);
+		menu.clicked(vida, 1, ClickType.PICKUP, jugador);
 		helper.assertValueEqual(Mejoras.puntos(jugador).de(Estadistica.VIDA), 5, "Click derecho baja 1");
 		helper.assertValueEqual(Mejoras.experiencia(jugador), COSTO * 4 + DEVOLUCION, "Click derecho devuelve la mitad");
-		menu.clicked(vida, 1, ContainerInput.QUICK_MOVE, jugador);
+		menu.clicked(vida, 1, ClickType.QUICK_MOVE, jugador);
 		helper.assertValueEqual(Mejoras.puntos(jugador).de(Estadistica.VIDA), 0, "Shift + click derecho baja 5");
 		helper.assertValueEqual(Mejoras.experiencia(jugador), COSTO * 4 + DEVOLUCION * 6, "Y devuelve la mitad de los 5");
 		helper.assertTrue(menu.getCarried().isEmpty(), "Bajar tampoco deja nada en el cursor");
-		menu.clicked(vida, 0, ContainerInput.PICKUP, jugador);
+		menu.clicked(vida, 0, ClickType.PICKUP, jugador);
 
 		// Tecla numérica, tirar (Q) y click del medio no compran ni sacan el ítem
-		for (ContainerInput entrada : List.of(ContainerInput.SWAP, ContainerInput.THROW, ContainerInput.CLONE)) {
+		for (ClickType entrada : List.of(ClickType.SWAP, ClickType.THROW, ClickType.CLONE)) {
 			menu.clicked(vida, 0, entrada, jugador);
 			helper.assertValueEqual(Mejoras.puntos(jugador).de(Estadistica.VIDA), 1, entrada + " no compra");
 			helper.assertTrue(menu.getSlot(vida).getItem().is(Items.GOLDEN_APPLE), entrada + " no saca el ícono");
@@ -620,13 +620,13 @@ public class HerosForgeGameTest {
 		// Un op le da puntos con el menú abierto: se redibuja en el próximo broadcastChanges
 		Mejoras.dar(jugador, Estadistica.VIDA, 100);
 		menu.broadcastChanges();
-		helper.assertTrue(menu.getSlot(vida).getItem().is(Items.STAINED_GLASS_PANE.gray()), "En el máximo se ve vidrio gris");
+		helper.assertTrue(menu.getSlot(vida).getItem().is(Items.GRAY_STAINED_GLASS_PANE), "En el máximo se ve vidrio gris");
 
 		// Las pestañas de abajo cambian de rama, y la flecha vuelve a la portada
-		menu.clicked(18 + 8, 0, ContainerInput.PICKUP, jugador);
+		menu.clicked(18 + 8, 0, ClickType.PICKUP, jugador);
 		helper.assertValueEqual(menu.abierta(), Rama.ARTESANO, "La última pestaña es la del artesano");
 		helper.assertTrue(menu.getSlot(MenuDeEstadisticas.slotDe(Estadistica.MINADO)).getItem().is(Items.IRON_PICKAXE), "Muestra las estadísticas de su rama");
-		menu.clicked(0, 0, ContainerInput.PICKUP, jugador);
+		menu.clicked(0, 0, ClickType.PICKUP, jugador);
 		helper.assertTrue(menu.abierta() == null, "La flecha vuelve a la portada");
 		helper.assertValueEqual(Mejoras.puntos(jugador).de(Estadistica.VIDA), 100, "Navegar no compra ni baja");
 
@@ -647,23 +647,23 @@ public class HerosForgeGameTest {
 		// Doble click en el inventario con una copia exacta del ícono en el cursor: vanilla junta los ítems con los
 		// mismos componentes de todos los slots (una manzana común no cuenta: le faltan el nombre y el lore)
 		menu.setCarried(menu.getSlot(vida).getItem().copy());
-		menu.clicked(primeroDelJugador, 0, ContainerInput.PICKUP_ALL, jugador);
+		menu.clicked(primeroDelJugador, 0, ClickType.PICKUP_ALL, jugador);
 		helper.assertValueEqual(menu.getCarried().getCount(), 1, "El doble click no junta la manzana del menú");
 		helper.assertTrue(menu.getSlot(vida).getItem().is(Items.GOLDEN_APPLE), "La manzana del menú sigue ahí");
 
 		// Arrastrar tierra por un slot del jugador, el de vida y otro del jugador
 		menu.setCarried(new ItemStack(Items.DIRT, 2));
-		menu.clicked(-999, AbstractContainerMenu.getQuickcraftMask(AbstractContainerMenu.QUICKCRAFT_HEADER_START, AbstractContainerMenu.QUICKCRAFT_TYPE_CHARITABLE), ContainerInput.QUICK_CRAFT, jugador);
+		menu.clicked(-999, AbstractContainerMenu.getQuickcraftMask(AbstractContainerMenu.QUICKCRAFT_HEADER_START, AbstractContainerMenu.QUICKCRAFT_TYPE_CHARITABLE), ClickType.QUICK_CRAFT, jugador);
 		for (int slot : new int[] {primeroDelJugador + 1, vida, primeroDelJugador + 2}) {
-			menu.clicked(slot, AbstractContainerMenu.getQuickcraftMask(AbstractContainerMenu.QUICKCRAFT_HEADER_CONTINUE, AbstractContainerMenu.QUICKCRAFT_TYPE_CHARITABLE), ContainerInput.QUICK_CRAFT, jugador);
+			menu.clicked(slot, AbstractContainerMenu.getQuickcraftMask(AbstractContainerMenu.QUICKCRAFT_HEADER_CONTINUE, AbstractContainerMenu.QUICKCRAFT_TYPE_CHARITABLE), ClickType.QUICK_CRAFT, jugador);
 		}
-		menu.clicked(-999, AbstractContainerMenu.getQuickcraftMask(AbstractContainerMenu.QUICKCRAFT_HEADER_END, AbstractContainerMenu.QUICKCRAFT_TYPE_CHARITABLE), ContainerInput.QUICK_CRAFT, jugador);
+		menu.clicked(-999, AbstractContainerMenu.getQuickcraftMask(AbstractContainerMenu.QUICKCRAFT_HEADER_END, AbstractContainerMenu.QUICKCRAFT_TYPE_CHARITABLE), ClickType.QUICK_CRAFT, jugador);
 		helper.assertTrue(menu.getSlot(vida).getItem().is(Items.GOLDEN_APPLE), "Arrastrar no pone nada en el menú");
 		helper.assertValueEqual(menu.getSlot(primeroDelJugador + 1).getItem().getCount() + menu.getSlot(primeroDelJugador + 2).getItem().getCount(), 2, "La tierra se reparte sólo en el inventario");
 		helper.assertTrue(!menu.canDragTo(menu.getSlot(vida)) && !menu.getSlot(vida).mayPlace(new ItemStack(Items.DIRT)), "Los slots del menú no aceptan nada");
 
 		// Shift + click desde el inventario no mete nada en el menú
-		menu.clicked(primeroDelJugador + 1, 0, ContainerInput.QUICK_MOVE, jugador);
+		menu.clicked(primeroDelJugador + 1, 0, ClickType.QUICK_MOVE, jugador);
 		helper.assertTrue(menu.getSlot(primeroDelJugador + 1).getItem().is(Items.DIRT), "Shift + click desde el inventario no mueve nada");
 
 		jugador.closeContainer();

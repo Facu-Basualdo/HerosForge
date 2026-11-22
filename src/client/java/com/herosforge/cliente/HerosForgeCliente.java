@@ -8,7 +8,7 @@ import com.herosforge.Paquetes;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
@@ -24,7 +24,7 @@ import net.minecraft.network.chat.Component;
 public class HerosForgeCliente implements ClientModInitializer {
 	private static final KeyMapping.Category CATEGORIA = KeyMapping.Category.register(HerosForge.id("estadisticas"));
 
-	private static final KeyMapping TECLA = new KeyMapping("key.herosforge.abrir", InputConstants.Type.KEYBOARD, InputConstants.KEY_K, CATEGORIA);
+	private static final KeyMapping TECLA = new KeyMapping("key.herosforge.abrir", InputConstants.Type.KEYSYM, InputConstants.KEY_K, CATEGORIA);
 
 	private static ConfiguracionDelCliente config = ConfiguracionDelCliente.POR_DEFECTO;
 	/** Lo último que mandó el servidor. Null hasta que llega el primero, o si el servidor no tiene el mod. */
@@ -37,11 +37,11 @@ public class HerosForgeCliente implements ClientModInitializer {
 		// Los receptores del cliente corren en el hilo de render: se puede tocar la pantalla directo
 		ClientPlayNetworking.registerGlobalReceiver(Paquetes.Estado.TIPO, (nuevo, contexto) -> estado = nuevo);
 		ClientPlayNetworking.registerGlobalReceiver(Paquetes.Resultado.TIPO, (resultado, contexto) -> {
-			if (contexto.client().gui.screen() instanceof PantallaDeEstadisticas pantalla) {
+			if (contexto.client().screen instanceof PantallaDeEstadisticas pantalla) {
 				pantalla.mostrar(resultado);
 			}
 		});
-		ClientPlayNetworking.registerGlobalReceiver(Paquetes.AbrirPantalla.TIPO, (pedido, contexto) -> contexto.client().gui.setScreen(new PantallaDeEstadisticas(false)));
+		ClientPlayNetworking.registerGlobalReceiver(Paquetes.AbrirPantalla.TIPO, (pedido, contexto) -> contexto.client().setScreen(new PantallaDeEstadisticas(false)));
 		ClientPlayConnectionEvents.JOIN.register((conexion, enviador, cliente) -> {
 			if (ClientPlayNetworking.canSend(Paquetes.Preferencia.TIPO)) {
 				ClientPlayNetworking.send(new Paquetes.Preferencia(config.usarPantalla()));
@@ -49,7 +49,7 @@ public class HerosForgeCliente implements ClientModInitializer {
 		});
 		ClientPlayConnectionEvents.DISCONNECT.register((conexion, cliente) -> estado = null);
 
-		KeyMappingHelper.registerKeyMapping(TECLA);
+		KeyBindingHelper.registerKeyBinding(TECLA);
 		ClientTickEvents.END_CLIENT_TICK.register(cliente -> {
 			while (TECLA.consumeClick()) {
 				abrir(cliente, false);
@@ -93,11 +93,11 @@ public class HerosForgeCliente implements ClientModInitializer {
 			return;
 		}
 		if (!servidorConElMod()) {
-			cliente.player.sendOverlayMessage(IdiomaDelCliente.tr("herosforge.cliente.sin_mod"));
+			cliente.player.displayClientMessage(IdiomaDelCliente.tr("herosforge.cliente.sin_mod"), true);
 			return;
 		}
 		if (config.usarPantalla()) {
-			cliente.gui.setScreen(new PantallaDeEstadisticas(desdeElInventario));
+			cliente.setScreen(new PantallaDeEstadisticas(desdeElInventario));
 		} else {
 			abrirCofre();
 		}

@@ -42,7 +42,7 @@ public class ConfiguracionClientGameTest implements FabricClientGameTest {
 			cliente.getLanguageManager().setSelected("es_ar");
 		});
 		try (TestSingleplayerContext mundo = contexto.worldBuilder().create()) {
-			mundo.getConnection().waitForChunksRender();
+			mundo.getClientWorld().waitForChunksRender();
 			contexto.getInput().setCursorPos(0, 0);
 
 			contexto.setScreen(() -> new PantallaDeConfiguracionDelServidor(null));
@@ -57,7 +57,7 @@ public class ConfiguracionClientGameTest implements FabricClientGameTest {
 			}
 			contexto.runOnClient(cliente -> campo(cliente, "Experiencia por punto").setValue("45"));
 			contexto.clickScreenButton("Guardar");
-			contexto.waitFor(cliente -> cliente.gui.screen() == null);
+			contexto.waitFor(cliente -> cliente.screen == null);
 			int costo = mundo.getServer().computeOnServer(servidor -> HerosForge.config().experienciaPorPunto());
 			if (costo != 45) {
 				throw new AssertionError("Guardar tenía que dejar experienciaPorPunto en 45, quedó " + costo);
@@ -69,7 +69,7 @@ public class ConfiguracionClientGameTest implements FabricClientGameTest {
 			contexto.runOnClient(cliente -> campo(cliente, "Devolución al bajar").setValue("5"));
 			contexto.clickScreenButton("Guardar");
 			contexto.waitTicks(10);
-			if (!contexto.computeOnClient(cliente -> cliente.gui.screen() instanceof PantallaDeConfiguracionDelServidor)) {
+			if (!contexto.computeOnClient(cliente -> cliente.screen instanceof PantallaDeConfiguracionDelServidor)) {
 				throw new AssertionError("Con un valor rechazado la pantalla tenía que quedar abierta, con el aviso");
 			}
 			contexto.takeScreenshot("configuracion-rechazada");
@@ -121,7 +121,7 @@ public class ConfiguracionClientGameTest implements FabricClientGameTest {
 	/** Los de la lista están adentro del contenedor con scroll, no en la pantalla directamente. */
 	private static <T> List<T> widgets(Minecraft cliente, Class<T> tipo) {
 		List<T> encontrados = new ArrayList<>();
-		for (GuiEventListener hijo : cliente.gui.screen().children()) {
+		for (GuiEventListener hijo : cliente.screen.children()) {
 			recorrer(hijo, tipo, encontrados);
 		}
 		return encontrados;

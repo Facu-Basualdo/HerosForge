@@ -28,16 +28,16 @@ public class PantallaClientGameTest implements FabricClientGameTest {
 			cliente.getLanguageManager().setSelected("es_ar");
 		});
 		try (TestSingleplayerContext mundo = contexto.worldBuilder().create()) {
-			mundo.getConnection().waitForChunksRender();
+			mundo.getClientWorld().waitForChunksRender();
 			mundo.getServer().runCommand("gamemode survival @a");
 			mundo.getServer().runCommand("xp add @a " + COSTO * 7 + " points");
 			mundo.getServer().runCommand("estadisticas dar @p vida 40");
 			mundo.getServer().runCommand("estadisticas dar @p danio 100");
-			mundo.getConnection().waitForClientboundPackets();
+			contexto.waitTicks(5);
 
 			// El cursor en una esquina, para que ningún tooltip tape la captura
 			contexto.getInput().setCursorPos(0, 0);
-			contexto.getInput().pressKey(InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_K));
+			contexto.getInput().pressKey(InputConstants.Type.KEYSYM.getOrCreate(InputConstants.KEY_K));
 			contexto.waitForScreen(PantallaDeEstadisticas.class);
 			contexto.waitTicks(2);
 			// Abre en la primera rama, la del guerrero
@@ -48,8 +48,8 @@ public class PantallaClientGameTest implements FabricClientGameTest {
 			contexto.waitTicks(2);
 			contexto.takeScreenshot("estadisticas-guardian");
 			contexto.clickScreenButton("+1");
-			mundo.getConnection().waitForServerboundPackets();
-			mundo.getConnection().waitForClientboundPackets();
+			// En 1.21.11 la API de prueba no espera paquetes: en singleplayer llegan en un par de ticks
+			contexto.waitTicks(5);
 			contexto.waitTicks(2);
 			int vida = mundo.getServer().computeOnServer(servidor -> Mejoras.puntos(servidor.getPlayerList().getPlayers().getFirst()).de(Estadistica.VIDA));
 			if (vida != 41) {
@@ -63,8 +63,8 @@ public class PantallaClientGameTest implements FabricClientGameTest {
 
 			// El primer "-1" también es el de la vida: baja el punto y devuelve la mitad
 			contexto.clickScreenButton("-1");
-			mundo.getConnection().waitForServerboundPackets();
-			mundo.getConnection().waitForClientboundPackets();
+			// En 1.21.11 la API de prueba no espera paquetes: en singleplayer llegan en un par de ticks
+			contexto.waitTicks(5);
 			contexto.waitTicks(2);
 			vida = mundo.getServer().computeOnServer(servidor -> Mejoras.puntos(servidor.getPlayerList().getPlayers().getFirst()).de(Estadistica.VIDA));
 			if (vida != 40) {
@@ -76,8 +76,8 @@ public class PantallaClientGameTest implements FabricClientGameTest {
 			}
 
 			// La misma tecla la cierra, y desde el inventario se vuelve a abrir con el botón
-			contexto.getInput().pressKey(InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_K));
-			contexto.waitFor(cliente -> cliente.gui.screen() == null);
+			contexto.getInput().pressKey(InputConstants.Type.KEYSYM.getOrCreate(InputConstants.KEY_K));
+			contexto.waitFor(cliente -> cliente.screen == null);
 			contexto.getInput().pressKey(opciones -> opciones.keyInventory);
 			contexto.waitForScreen(InventoryScreen.class);
 			contexto.waitTicks(2);
@@ -86,14 +86,14 @@ public class PantallaClientGameTest implements FabricClientGameTest {
 			contexto.waitForScreen(PantallaDeEstadisticas.class);
 			contexto.waitTicks(2);
 			// Abierta desde el inventario, Esc vuelve ahí
-			contexto.getInput().pressKey(InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_ESCAPE));
+			contexto.getInput().pressKey(InputConstants.Type.KEYSYM.getOrCreate(InputConstants.KEY_ESCAPE));
 			contexto.waitForScreen(InventoryScreen.class);
 
 			// Con la interfaz más chica que elige la escala automática (426 × 240) tienen que entrar todas las filas.
 			// La K también la abre desde el inventario
 			contexto.getInput().resizeWindow(852, 480);
 			contexto.waitTicks(2);
-			contexto.getInput().pressKey(InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_K));
+			contexto.getInput().pressKey(InputConstants.Type.KEYSYM.getOrCreate(InputConstants.KEY_K));
 			contexto.waitForScreen(PantallaDeEstadisticas.class);
 			contexto.waitTicks(2);
 			// Sigue en la pestaña del guardián, la que tiene más filas (9)
@@ -105,7 +105,7 @@ public class PantallaClientGameTest implements FabricClientGameTest {
 			contexto.takeScreenshot("estadisticas-pantalla-chica-explorador");
 			// El caso de la captura original: millones de XP no deben invadir la otra columna.
 			mundo.getServer().runCommand("xp set @a 989 levels");
-			mundo.getConnection().waitForClientboundPackets();
+			contexto.waitTicks(5);
 			contexto.waitTicks(4);
 			contexto.getInput().setCursorPos(0, 0);
 			contexto.takeScreenshot("estadisticas-experiencia-alta");

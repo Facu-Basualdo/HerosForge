@@ -1,9 +1,11 @@
 {
 	"required": true,
 	"package": "com.herosforge.cliente.mixin",
-	"compatibilityLevel": "JAVA_25",
+	"compatibilityLevel": "JAVA_21",
 	"client": [
-		"AccesoAPantallaDeContenedor"
+		"AccesoAPantallaDeContenedor",
+		"AccesoAlBuscadorDeRecetas",
+		"AccesoAlLibroDeRecetas"
 	],
 	"injectors": {
 		"defaultRequire": 1

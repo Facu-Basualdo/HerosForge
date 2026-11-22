@@ -14,7 +14,7 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -121,12 +121,12 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 	}
 
 	@Override
-	public void clicked(int slotId, int boton, ContainerInput entrada, Player quien) {
+	public void clicked(int slotId, int boton, ClickType entrada, Player quien) {
 		if (slotId < 0 || slotId >= TAMANIO) {
 			super.clicked(slotId, boton, entrada, quien);
 			return;
 		}
-		boolean click = entrada == ContainerInput.PICKUP || entrada == ContainerInput.QUICK_MOVE;
+		boolean click = entrada == ClickType.PICKUP || entrada == ClickType.QUICK_MOVE;
 		Estadistica estadistica = estadisticaEn(slotId);
 		Rama rama = ramaEn(slotId);
 		if (click && rama != null) {
@@ -134,7 +134,7 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 		} else if (click && abierta != null && slotId == SLOT_VOLVER) {
 			mostrar(null);
 		} else if (estadistica != null && click) {
-			int cantidad = entrada == ContainerInput.QUICK_MOVE ? CON_SHIFT : 1;
+			int cantidad = entrada == ClickType.QUICK_MOVE ? CON_SHIFT : 1;
 			// Con shift, vanilla también manda el botón: 1 es el derecho
 			if (boton == CLICK_DERECHO) {
 				jugador.sendSystemMessage(Mejoras.mensaje(Idioma.de(jugador), Mejoras.bajar(jugador, estadistica, cantidad)), true);
@@ -256,7 +256,7 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 			lore.add(texto(Idioma.tr(idioma, "herosforge.menu.bajar", Mejoras.experiencia(idioma, config.devolucionPorPunto())), ChatFormatting.DARK_GRAY));
 		}
 		if (puntos >= mejora.tope()) {
-			return item(new ItemStack(Items.STAINED_GLASS_PANE.gray()), texto(Idioma.tr(idioma, "herosforge.menu.maximo", estadistica.nombre(idioma)), ChatFormatting.GRAY), lore);
+			return item(new ItemStack(Items.GRAY_STAINED_GLASS_PANE), texto(Idioma.tr(idioma, "herosforge.menu.maximo", estadistica.nombre(idioma)), ChatFormatting.GRAY), lore);
 		}
 		int costo = config.experienciaPorPunto();
 		boolean alcanza = Mejoras.experiencia(jugador) >= costo;
@@ -269,7 +269,7 @@ public class MenuDeEstadisticas extends AbstractContainerMenu {
 	}
 
 	private static ItemStack relleno() {
-		ItemStack relleno = new ItemStack(Items.STAINED_GLASS_PANE.black());
+		ItemStack relleno = new ItemStack(Items.BLACK_STAINED_GLASS_PANE);
 		relleno.set(DataComponents.TOOLTIP_DISPLAY, new TooltipDisplay(true, new LinkedHashSet<>()));
 		return relleno;
 	}

@@ -1,8 +1,19 @@
 # Hero's Forge — mod de Minecraft
 
-Mod de Fabric para **Minecraft Java 26.3** para subir las estadísticas del jugador estilo RPG: se pagan **puntos de experiencia** (30 por punto, siempre los mismos; no niveles) por **puntos** de vida, daño, crítico, esquiva, metabolismo, imán u otra de las **40 estadísticas en 5 ramas** (guerrero, guardián, superviviente, explorador, artesano; sin bloqueos), hasta 100 por cada una. Bajar un punto devuelve la mitad. Los valores por defecto están balanceados contra Bloodmoon & Bosses (mobs de nivel 1 a 100). Los puntos son permanentes (sobreviven a la muerte) y se compran desde un menú tipo cofre (`/estadisticas`) o por comando. Java 25, Gradle 9.7 + Fabric Loom 1.18, Fabric Loader 0.19.5, Fabric API 0.162.0+26.3. Toda la lógica corre en el servidor: los jugadores no necesitan instalar nada. Quien instala el mismo jar en su cliente suma una pantalla propia opcional (tecla K o botón en el inventario) que habla con el servidor por paquetes de red, y con Mod Menu, una pantalla para editar la config.
+Mod de Fabric para **Minecraft Java 1.21.11** (backport de la rama `main`, que es 26.3) para subir las estadísticas del jugador estilo RPG: se pagan **puntos de experiencia** (30 por punto, siempre los mismos; no niveles) por **puntos** de vida, daño, crítico, esquiva, metabolismo, imán u otra de las **40 estadísticas en 5 ramas** (guerrero, guardián, superviviente, explorador, artesano; sin bloqueos), hasta 100 por cada una. Bajar un punto devuelve la mitad. Los valores por defecto están balanceados contra Bloodmoon & Bosses (mobs de nivel 1 a 100). Los puntos son permanentes (sobreviven a la muerte) y se compran desde un menú tipo cofre (`/estadisticas`) o por comando. Java 21 (Gradle corre con el 25), Gradle 9.7 + Fabric Loom Remap 1.18.4 con los mappings oficiales de Mojang, Fabric Loader 0.18.4, Fabric API 0.141.6+1.21.11. Toda la lógica corre en el servidor: los jugadores no necesitan instalar nada. Quien instala el mismo jar en su cliente suma una pantalla propia opcional (tecla K o botón en el inventario) que habla con el servidor por paquetes de red, y con Mod Menu, una pantalla para editar la config.
 
 > **Estado:** las 5 fases de [docs/plan.md](docs/plan.md) hechas, más el daño a distancia (0.8.0), la pantalla propia (0.9.0), las 5 estadísticas nuevas con bajar puntos (0.10.0) y las ramas con 25 estadísticas más (0.13.0). La 0.9.1 se probó a mano en un servidor con Soul Link y Bloodmoon & Bosses y anda; lo de la 0.10.0 en adelante todavía no se probó así.
+
+## Diferencias con 26.3 (rama `main`)
+
+Para portar un cambio de `main`, aplicalo, compilá y corré `runGameTest`. Lo que cambia en esta rama:
+
+- **Build:** `net.fabricmc.fabric-loom-remap` con `mappings loom.officialMojangMappings()` (1.21.11 viene ofuscado), dependencias con `modImplementation`/`modCompileOnly`, Java 21 y `compatibilityLevel` `JAVA_21` en los mixins. Gradle sigue corriendo con el JDK 25.
+- **Renombres de 26.x:** `ContainerInput` → `ClickType`, `PayloadTypeRegistry.playS2C()/playC2S()`, `EntityType` en vez de `EntityTypes`, `Minecraft.screen`/`setScreen` en vez de `gui`, `GuiGraphics`/`render…` en vez de `GuiGraphicsExtractor`/`extract…`, `KeyBindingHelper`, `InputConstants.Type.KEYSYM`, `Items.GRAY_STAINED_GLASS_PANE` y similares.
+- **SavedData:** el id es un `String` que se usa de nombre de archivo (`data/<mod>_<nombre>.dat`) y el almacenamiento es el del overworld. La migración de datos de mundo del id viejo se sacó: ningún mundo de 1.21.x se guardó con él.
+- **Gametests de cliente:** la API de 1.21.11 no espera paquetes (`waitForClientboundPackets`): se esperan unos ticks.
+- **Aldeanos:** `updateSpecialPrices` no llama a `getTradingPlayer()`: el regateo va en el `TAIL` (las ofertas se mandan después, en `startTrading`).
+- **Botón del inventario:** sin `isInputCaptured()`; `AccesoAlLibroDeRecetas` y `AccesoAlBuscadorDeRecetas` miran si se está escribiendo en el buscador del libro de recetas.
 
 ## Cómo obtener contexto
 

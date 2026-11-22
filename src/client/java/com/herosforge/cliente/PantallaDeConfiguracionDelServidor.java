@@ -58,6 +58,6 @@ public final class PantallaDeConfiguracionDelServidor extends PantallaDeConfigur
 	@Override
 	protected void agregarBotones(LinearLayout pie) {
 		pie.addChild(Button.builder(IdiomaDelCliente.tr("herosforge.config.pantalla.cliente"),
-				boton -> minecraft.gui.setScreen(new PantallaDeConfiguracionDelCliente(this))).width(100).build());
+				boton -> minecraft.setScreen(new PantallaDeConfiguracionDelCliente(this))).width(100).build());
 	}
 }
